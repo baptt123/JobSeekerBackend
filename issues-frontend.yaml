@@ -1,0 +1,202 @@
+issues:
+  # ========================================================
+  # User features
+  # ========================================================
+  - title: "Đăng nhập: UI & State management"
+    body: |
+      Chức năng: Cho phép người dùng đăng nhập vào ứng dụng.
+      - Thiết kế màn hình đăng nhập (Form: Email, Password).
+      - Validate dữ liệu nhập.
+      - Tích hợp Provider để quản lý state của user session.
+      - Gọi API đăng nhập (mock API hoặc integrate backend sau).
+      Acceptance criteria:
+      - Người dùng nhập đúng thì chuyển sang Home.
+      - Thông báo lỗi khi sai email/password.
+    labels: ["frontend", "user", "auth"]
+    milestone: "User Features"
+
+  - title: "Đăng ký tài khoản: UI & Validation"
+    body: |
+      Chức năng: Người dùng có thể tạo tài khoản mới.
+      - Thiết kế form đăng ký.
+      - Kiểm tra điều kiện password, email hợp lệ.
+      - Gọi API đăng ký.
+      Acceptance criteria:
+      - Thông báo khi đăng ký thành công.
+      - Hiển thị lỗi hợp lệ.
+    labels: ["frontend", "user", "auth"]
+    milestone: "User Features"
+
+  - title: "Tìm kiếm công việc: UI & Search integration"
+    body: |
+      Chức năng: Người dùng tìm công việc.
+      - Thiết kế thanh tìm kiếm.
+      - Kết quả hiển thị danh sách jobs từ API.
+      - Pagination xử lý khi nhiều kết quả.
+      Acceptance criteria:
+      - Nhập từ khóa, hiển thị jobs liên quan.
+      - Loading state rõ ràng.
+    labels: ["frontend", "user", "search"]
+    milestone: "User Features"
+
+  - title: "Nhắn tin realtime (UI)"
+    body: |
+      Chức năng: Cho phép người dùng nhắn tin với recruiter.
+      - Thiết kế chat UI.
+      - Provider quản lý danh sách tin nhắn.
+      - Mock API/socket integration.
+      Acceptance criteria:
+      - Gửi và nhận tin nhắn hiển thị ngay.
+    labels: ["frontend", "chat"]
+    milestone: "User Features"
+
+  - title: "Chỉnh sửa thông tin cá nhân"
+    body: |
+      Chức năng: Người dùng update thông tin cá nhân.
+      - Màn hình Profile Edit.
+      - Form validation.
+      - API update profile.
+      Acceptance criteria:
+      - Sửa dữ liệu lưu lại thành công.
+    labels: ["frontend", "user", "profile"]
+    milestone: "User Features"
+
+  - title: "Upload và Chỉnh sửa CV cá nhân"
+    body: |
+      Chức năng: Người dùng có thể upload CV (PDF/Doc).
+      - Màn hình quản lý CV.
+      - Upload và thay thế mới.
+      - Preview CV trong app.
+      Acceptance criteria:
+      - Upload thành công -> hiển thị preview.
+    labels: ["frontend", "user", "cv"]
+    milestone: "User Features"
+
+  - title: "Nộp hồ sơ online"
+    body: |
+      Chức năng: Người dùng nộp hồ sơ cho công việc.
+      - Form apply job + đính kèm CV.
+      - Xác nhận trước khi nộp.
+      Acceptance criteria:
+      - Job đã apply hiển thị trong danh sách ứng tuyển.
+    labels: ["frontend", "user", "application"]
+    milestone: "User Features"
+
+  - title: "Thông báo"
+    body: |
+      Chức năng: Người dùng nhận thông báo (noti bell).
+      - UI hiển thị danh sách notifications.
+      - Push notification integration (sau).
+    labels: ["frontend", "user", "notification"]
+    milestone: "User Features"
+
+  - title: "Lưu công việc yêu thích"
+    body: |
+      Chức năng: Người dùng đánh dấu/lưu job.
+      - Nút ♥ trên job card.
+      - Màn Saved Jobs hiển thị danh sách.
+    labels: ["frontend", "user", "favorites"]
+    milestone: "User Features"
+
+  - title: "Tạo CV thông qua Gemini"
+    body: |
+      Chức năng: Dùng Gemini AI generate CV từ input.
+      - Form nhập thông tin cơ bản.
+      - Preview CV AI tạo.
+      Acceptance criteria:
+      - CV generated hiển thị và người dùng có thể tải về.
+    labels: ["frontend", "ai", "cv"]
+    milestone: "User Features"
+
+  - title: "Tìm kiếm việc dựa trên keyword trong CV"
+    body: |
+      Chức năng: Hệ thống tự rút trích keyword từ CV và suggest job.
+      - Tích hợp keyword parser.
+      - Hiển thị job recommendations.
+    labels: ["frontend", "user", "cv", "recommendation"]
+    milestone: "User Features"
+
+  # ========================================================
+  # Employer features
+  # ========================================================
+
+  - title: "Nhà tuyển dụng: Đăng ký & Đăng nhập"
+    body: |
+      Thiết kế UI đăng nhập/đăng ký riêng cho Recruiter.
+    labels: ["frontend", "employer", "auth"]
+    milestone: "Employer Features"
+
+  - title: "Đăng tin tuyển dụng"
+    body: |
+      Chức năng: Recruiter đăng job post.
+      - Form nhập: title, description, requirements.
+      - Validate dữ liệu.
+    labels: ["frontend", "employer", "job_post"]
+    milestone: "Employer Features"
+
+  - title: "Quản lý ứng viên"
+    body: |
+      Chức năng: Xem danh sách candidate apply.
+      - UI: List ứng viên.
+      - Detail trang candidate.
+    labels: ["frontend", "employer", "candidates"]
+    milestone: "Employer Features"
+
+  - title: "Phê duyệt/ từ chối ứng viên"
+    body: |
+      Chức năng: Approve hoặc reject hồ sơ.
+      - Nút hành động tại trang candidate.
+    labels: ["frontend", "employer", "candidates"]
+    milestone: "Employer Features"
+
+  - title: "Nhắn tin với ứng viên"
+    body: |
+      Chat UI tương tự User.
+      Conversation recruiter ↔ applicant.
+    labels: ["frontend", "chat", "employer"]
+    milestone: "Employer Features"
+
+  - title: "Chỉnh sửa thông tin công ty"
+    body: |
+      Form update company profile.
+      Upload logo.
+    labels: ["frontend", "employer", "profile"]
+    milestone: "Employer Features"
+
+  # ========================================================
+  # Admin features
+  # ========================================================
+  - title: "Admin: Đăng nhập"
+    body: |
+      Chức năng: Admin login -> dashboard.
+      - Form login.
+    labels: ["frontend", "admin", "auth"]
+    milestone: "Admin Features"
+
+  - title: "Admin: Quản lý người dùng"
+    body: |
+      Xem danh sách user, recruiter.
+      Thực hiện lock / unlock.
+    labels: ["frontend", "admin", "users"]
+    milestone: "Admin Features"
+
+  - title: "Admin: Quản lý phân quyền"
+    body: |
+      Update role cho user.
+      - role: user, recruiter, admin.
+    labels: ["frontend", "admin", "roles"]
+    milestone: "Admin Features"
+
+  - title: "Admin: Quản lý job posts"
+    body: |
+      Xem danh sách job postings.
+      Approve / remove bài đăng.
+    labels: ["frontend", "admin", "job_post"]
+    milestone: "Admin Features"
+
+  - title: "Admin: Thống kê đơn ứng tuyển"
+    body: |
+      Trang hiển thị biểu đồ số lượng ứng tuyển.
+      Filter theo thời gian.
+    labels: ["frontend", "admin", "analytics"]
+    milestone: "Admin Features"
