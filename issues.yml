@@ -1,0 +1,172 @@
+issues:
+  # =============================
+  # USER FUNCTIONS
+  # =============================
+  - title: "[User] Đăng ký tài khoản"
+    milestone: "User Features"
+    body: |
+      - API `/auth/register`
+      - Validate email/password
+      - Hash password bằng bcrypt
+    labels: ["backend", "auth", "user"]
+
+  - title: "[User] Đăng nhập"
+    milestone: "User Features"
+    body: |
+      - API `/auth/login`
+      - JWT lưu HttpOnly cookie
+    labels: ["backend", "auth", "user"]
+
+  - title: "[User] Tìm kiếm công việc"
+    milestone: "User Features"
+    body: |
+      - API `/jobs/search`
+      - Query theo từ khóa/vị trí/lương
+    labels: ["backend", "jobs", "user"]
+
+  - title: "[User] Nhắn tin"
+    milestone: "User Features"
+    body: |
+      - API `/messages`
+      - WebSocket Gateway cho real-time chat
+    labels: ["backend", "messaging", "user"]
+
+  - title: "[User] Chỉnh sửa thông tin cá nhân"
+    milestone: "User Features"
+    body: |
+      - API `/users/profile`
+      - Cập nhật thông tin cơ bản
+    labels: ["backend", "user", "profile"]
+
+  - title: "[User] Tải và chỉnh sửa CV cá nhân"
+    milestone: "User Features"
+    body: |
+      - API `/cv/upload`
+      - Upload file PDF/DOCX
+      - API `/cv/update`
+    labels: ["backend", "user", "cv"]
+
+  - title: "[User] Nộp hồ sơ trực tuyến"
+    milestone: "User Features"
+    body: |
+      - API `/applications/apply`
+      - User chọn job + CV
+    labels: ["backend", "applications", "user"]
+
+  - title: "[User] Nhận thông báo"
+    milestone: "User Features"
+    body: |
+      - API `/notifications`
+      - Push notification khi có job mới hoặc phản hồi
+    labels: ["backend", "notifications", "user"]
+
+  - title: "[User] Lưu công việc yêu thích"
+    milestone: "User Features"
+    body: |
+      - API `/jobs/favorite`
+      - Lưu job yêu thích
+    labels: ["backend", "jobs", "favorites"]
+
+  - title: "[User] Tạo CV qua Gemini API"
+    milestone: "User Features"
+    body: |
+      - API `/cv/generate`
+      - Gửi dữ liệu đến Gemini AI để tạo CV
+    labels: ["backend", "ai", "cv"]
+
+  - title: "[User] Tìm kiếm công việc dựa trên CV"
+    milestone: "User Features"
+    body: |
+      - API `/jobs/search-by-cv`
+      - Extract keyword từ CV -> match job
+    labels: ["backend", "ai", "jobs"]
+
+  # =============================
+  # RECRUITER FUNCTIONS
+  # =============================
+  - title: "[Recruiter] Đăng ký tài khoản"
+    milestone: "Recruiter Features"
+    body: |
+      - API `/recruiter/register`
+      - Validate thông tin công ty
+    labels: ["backend", "auth", "recruiter"]
+
+  - title: "[Recruiter] Đăng nhập"
+    milestone: "Recruiter Features"
+    body: |
+      - API `/recruiter/login`
+      - JWT lưu cookie
+    labels: ["backend", "auth", "recruiter"]
+
+  - title: "[Recruiter] Đăng bài tuyển dụng"
+    milestone: "Recruiter Features"
+    body: |
+      - API `/jobs/create`
+      - Recruiter đăng job mới
+    labels: ["backend", "jobs", "recruiter"]
+
+  - title: "[Recruiter] Nhắn tin ứng viên"
+    milestone: "Recruiter Features"
+    body: |
+      - API `/messages/recruiter`
+      - Chat với ứng viên qua WebSocket
+    labels: ["backend", "messaging", "recruiter"]
+
+  - title: "[Recruiter] Quản lý ứng viên ứng tuyển"
+    milestone: "Recruiter Features"
+    body: |
+      - API `/applications/manage`
+      - Xem danh sách ứng viên
+    labels: ["backend", "applications", "recruiter"]
+
+  - title: "[Recruiter] Chỉnh sửa thông tin công ty"
+    milestone: "Recruiter Features"
+    body: |
+      - API `/recruiter/profile`
+      - Cập nhật thông tin công ty
+    labels: ["backend", "profile", "recruiter"]
+
+  - title: "[Recruiter] Phê duyệt / từ chối ứng viên"
+    milestone: "Recruiter Features"
+    body: |
+      - API `/applications/review`
+      - Approve hoặc Reject ứng viên
+    labels: ["backend", "applications", "recruiter"]
+
+  # =============================
+  # ADMIN FUNCTIONS
+  # =============================
+  - title: "[Admin] Đăng nhập"
+    milestone: "Admin Features"
+    body: |
+      - API `/admin/login`
+      - Role-based Auth
+    labels: ["backend", "auth", "admin"]
+
+  - title: "[Admin] Quản lý người dùng"
+    milestone: "Admin Features"
+    body: |
+      - API `/admin/users`
+      - CRUD user
+    labels: ["backend", "admin", "users"]
+
+  - title: "[Admin] Quản lý phân quyền"
+    milestone: "Admin Features"
+    body: |
+      - API `/admin/roles`
+      - Thêm/chỉnh sửa quyền
+    labels: ["backend", "admin", "roles"]
+
+  - title: "[Admin] Quản lý bài đăng tuyển dụng"
+    milestone: "Admin Features"
+    body: |
+      - API `/admin/jobs`
+      - Quản lý job posts
+    labels: ["backend", "admin", "jobs"]
+
+  - title: "[Admin] Thống kê đơn ứng tuyển"
+    milestone: "Admin Features"
+    body: |
+      - API `/admin/statistics/applications`
+      - Biểu đồ số lượng ứng tuyển theo tháng
+    labels: ["backend", "admin", "statistics"]
