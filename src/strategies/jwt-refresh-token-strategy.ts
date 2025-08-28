@@ -10,6 +10,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
 ) {
   constructor() {
     super({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_REFRESH_TOKEN_SECRET || 'refresh-secret',
@@ -17,6 +18,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
   }
 
   async validate(payload: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     return { userId: payload.userId, email: payload.email, role: payload.role };
   }
 }

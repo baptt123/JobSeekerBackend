@@ -22,4 +22,10 @@ export class UserService {
   async findById(id: number): Promise<UserEntity | null> {
     return this.userRepo.findOne({ where: { user_id: id } });
   }
+  async findOne(email: string): Promise<UserEntity | null> {
+    return this.userRepo.findOne({ where: { email } });
+  }
+  async save(user: UserEntity): Promise<UserEntity> {
+    return this.userRepo.save(user);
+  }
 }

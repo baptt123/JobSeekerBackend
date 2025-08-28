@@ -15,9 +15,12 @@ if (!GITHUB_TOKEN) {
 
 async function fetchMilestones() {
   console.log(`Đang lấy milestones từ repo ${OWNER}/${REPO}...`);
-  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/milestones?state=all`, {
-    headers: { Authorization: `token ${GITHUB_TOKEN}` },
-  });
+  const res = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/milestones?state=all`,
+    {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` },
+    },
+  );
   if (!res.ok) {
     const errBody = await res.text();
     throw new Error(`Lỗi lấy milestone: ${res.status} - ${errBody}`);
@@ -28,21 +31,26 @@ async function fetchMilestones() {
 }
 
 async function createIssue(issue, milestoneId) {
-  console.log(`Tạo issue: "${issue.title}" với milestone ID: ${milestoneId || 'null'}`);
-  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/issues`, {
-    method: 'POST',
-    headers: {
-      Authorization: `token ${GITHUB_TOKEN}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/vnd.github+json',
+  console.log(
+    `Tạo issue: "${issue.title}" với milestone ID: ${milestoneId || 'null'}`,
+  );
+  const res = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/issues`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/vnd.github+json',
+      },
+      body: JSON.stringify({
+        title: issue.title,
+        body: issue.body,
+        labels: issue.labels || [],
+        milestone: milestoneId || undefined,
+      }),
     },
-    body: JSON.stringify({
-      title: issue.title,
-      body: issue.body,
-      labels: issue.labels || [],
-      milestone: milestoneId || undefined,
-    }),
-  });
+  );
 
   if (!res.ok) {
     const err = await res.text();
@@ -67,13 +75,17 @@ async function main() {
     console.log('Repo:', `${OWNER}/${REPO}`);
 
     const milestones = await fetchMilestones();
-    const milestoneMap = new Map(milestones.map(m => [m.title, m.number]));
+    const milestoneMap = new Map(milestones.map((m) => [m.title, m.number]));
 
     const issues = loadIssuesFromYaml();
 
     for (const issue of issues) {
-      const milestoneId = issue.milestone ? milestoneMap.get(issue.milestone) : null;
-      console.log(`\nXử lý issue: "${issue.title}" (milestone: "${issue.milestone || 'null'}" -> ID: ${milestoneId || 'null'})`);
+      const milestoneId = issue.milestone
+        ? milestoneMap.get(issue.milestone)
+        : null;
+      console.log(
+        `\nXử lý issue: "${issue.title}" (milestone: "${issue.milestone || 'null'}" -> ID: ${milestoneId || 'null'})`,
+      );
       const created = await createIssue(issue, milestoneId);
       console.log(`-> Tạo thành công issue #${created.number}`);
     }

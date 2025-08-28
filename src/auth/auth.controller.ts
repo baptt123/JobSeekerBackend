@@ -8,11 +8,15 @@ import {
   HttpCode,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import express from 'express';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { JwtAuthGuard } from '../guard/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -48,5 +52,19 @@ export class AuthController {
   logout(@Req() req: express.Request, @Res() res: express.Response) {
     // For logout just respond; token revocation can be implemented if needed
     res.sendStatus(204);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Post('forgot-password')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.requestPasswordReset(dto.email);
+    return { message: 'Password reset email sent!' };
+  }
+  @UseGuards(JwtAuthGuard)
+  @Post('reset-password')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto.token, dto.newPassword);
+    return { message: 'Password has been reset!' };
   }
 }
