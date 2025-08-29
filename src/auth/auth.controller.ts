@@ -1,15 +1,17 @@
 // src/auth/auth.controller.ts
 import {
   Controller,
-  Post,
+  UseGuards,
+  Request,
   Body,
-  UsePipes,
+  Post,
   ValidationPipe,
+  UsePipes,
   HttpCode,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
+
 import { AuthService } from './auth.service';
 import express from 'express';
 import { LoginDto } from '../dto/login.dto';
@@ -17,6 +19,7 @@ import { RegisterDto } from '../dto/register.dto';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { JwtAuthGuard } from '../guard/jwt-auth.guard';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -53,6 +56,7 @@ export class AuthController {
     // For logout just respond; token revocation can be implemented if needed
     res.sendStatus(204);
   }
+
   @UseGuards(JwtAuthGuard)
   @Post('forgot-password')
   @UsePipes(new ValidationPipe({ whitelist: true }))
@@ -60,11 +64,25 @@ export class AuthController {
     await this.authService.requestPasswordReset(dto.email);
     return { message: 'Password reset email sent!' };
   }
+
   @UseGuards(JwtAuthGuard)
   @Post('reset-password')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto.token, dto.newPassword);
     return { message: 'Password has been reset!' };
+  }
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
+    await this.authService.changePassword(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+      req.user.userId,
+      dto.oldPassword,
+      dto.newPassword,
+      dto.confirmNewPassword,
+    );
+    return { message: 'Đổi mật khẩu thành công' };
   }
 }

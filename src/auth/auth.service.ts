@@ -136,4 +136,28 @@ export class AuthService {
     user.password_hash = await bcrypt.hash(newPassword, 10);
     await this.usersService.save(user);
   }
+
+  async changePassword(
+    userId: number,
+    oldPassword: string,
+    newPassword: string,
+    confirmNewPassword: string,
+  ): Promise<void> {
+    if (newPassword !== confirmNewPassword) {
+      throw new BadRequestException('Mật khẩu mới không khớp');
+    }
+
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new BadRequestException('Người dùng không tồn tại');
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+    if (!isMatch) throw new BadRequestException('Mật khẩu cũ không đúng');
+
+    if (await bcrypt.compare(newPassword, user.password_hash)) {
+      throw new BadRequestException('Mật khẩu mới phải khác mật khẩu cũ');
+    }
+
+    user.password_hash = await bcrypt.hash(newPassword, 10);
+    await this.usersService.update(user);
+  }
 }
