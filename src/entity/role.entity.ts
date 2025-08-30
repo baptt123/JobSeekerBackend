@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+// ...các import cần thiết...
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { UserEntity } from './user.entity';
 
 @Entity({ name: 'roles' })
 export class RoleEntity {
@@ -11,4 +13,7 @@ export class RoleEntity {
     unique: true,
   })
   role_name: 'ADMIN' | 'CANDIDATE' | 'RECRUITER';
+
+  @OneToMany(() => UserEntity, (user) => user.role_id)
+  users: UserEntity[];
 }

@@ -2,15 +2,15 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { MailModule } from './mail/mail.module';
 import { UserModule } from './user/user.module';
 import { UserEntity } from './entity/user.entity';
 import { RoleEntity } from './entity/role.entity';
-import { MailerModule } from '@nestjs-modules/mailer';
+import { MailerModule, MailerService } from '@nestjs-modules/mailer';
 import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionFilter } from './filter/global-exception.filter';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
+import { JobModule } from './job/job.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -45,12 +45,12 @@ import { join } from 'path';
     }),
     UserModule,
     AuthModule,
-    MailModule,
+    MailerService,
+    JobModule,
   ],
   providers: [
     //GlobalExceptionFilter
     {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },

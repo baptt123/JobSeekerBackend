@@ -2,6 +2,28 @@ issues:
   # =============================
   # USER FUNCTIONS
   # =============================
+  - title: '[User] Đăng xuất'
+    milestone: 'User Features'
+    body: |
+      - API `/auth/logout`
+      - Xóa cookie JWT
+    labels: ['backend', 'auth', 'user']
+  - title: '[User] Đổi mật khẩu'
+    milestone: 'User Features'
+    body: |
+      - API `/auth/change-password`
+      - Validate mật khẩu cũ/mới
+      - Hash mật khẩu mới
+    labels: ['backend', 'auth', 'user']
+  - title: '[User] Quên mật khẩu'
+    milestone: 'User Features'
+    body: |
+      - API `/auth/forgot-password`
+      - Gửi email reset link (mock email)
+      - API `/auth/reset-password`
+      - Validate token + mật khẩu mới
+    labels: ['backend', 'auth', 'user']
+
   - title: '[User] Đăng ký tài khoản'
     milestone: 'User Features'
     body: |
@@ -84,6 +106,28 @@ issues:
   # =============================
   # RECRUITER FUNCTIONS
   # =============================
+  - title: '[Recruiter] Đăng xuất'
+    milestone: 'Recruiter Features'
+    body: |
+      - API `/auth/logout`
+      - Xóa cookie JWT
+    labels: ['backend', 'auth', 'user']
+  - title: '[Recruiter] Đổi mật khẩu'
+    milestone: 'Recruiter Features'
+    body: |
+      - API `/auth/change-password`
+      - Validate mật khẩu cũ/mới
+      - Hash mật khẩu mới
+    labels: ['backend', 'auth', 'user']
+  - title: '[Recruiter] Quên mật khẩu'
+    milestone: 'Recruiter Features'
+    body: |
+      - API `/auth/forgot-password`
+      - Gửi email reset link (mock email)
+      - API `/auth/reset-password`
+      - Validate token + mật khẩu mới
+    labels: ['backend', 'auth', 'user']
+
   - title: '[Recruiter] Đăng ký tài khoản'
     milestone: 'Recruiter Features'
     body: |
@@ -136,6 +180,27 @@ issues:
   # =============================
   # ADMIN FUNCTIONS
   # =============================
+  - title: '[Admin] Đăng xuất'
+    milestone: 'Admin Features'
+    body: |
+      - API `/auth/logout`
+      - Xóa cookie JWT
+    labels: ['backend', 'auth', 'user']
+  - title: '[Admin] Đổi mật khẩu'
+    milestone: 'Admin Features'
+    body: |
+      - API `/auth/change-password`
+      - Validate mật khẩu cũ/mới
+      - Hash mật khẩu mới
+    labels: ['backend', 'auth', 'user']
+  - title: '[Admin] Quên mật khẩu'
+    milestone: 'Admin Features'
+    body: |
+      - API `/auth/forgot-password`
+      - Gửi email reset link (mock email)
+      - API `/auth/reset-password`
+      - Validate token + mật khẩu mới
+    labels: ['backend', 'auth', 'user']
   - title: '[Admin] Đăng nhập'
     milestone: 'Admin Features'
     body: |
