@@ -11,6 +11,8 @@ import { GlobalExceptionFilter } from './filter/global-exception.filter';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { JobModule } from './job/job.module';
+import { JobEntity } from './entity/job.entity';
+import { MessageModule } from './message/message.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -21,7 +23,7 @@ import { JobModule } from './job/job.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [UserEntity, RoleEntity],
+      entities: [UserEntity, RoleEntity, JobEntity],
       synchronize: false, // set to true only in dev
     }),
     MailerModule.forRoot({
@@ -47,6 +49,7 @@ import { JobModule } from './job/job.module';
     AuthModule,
     MailerService,
     JobModule,
+    MessageModule,
   ],
   providers: [
     //GlobalExceptionFilter

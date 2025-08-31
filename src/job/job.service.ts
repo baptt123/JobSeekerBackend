@@ -3,12 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SavedJobEntity } from '../entity/save_job.entity';
 import { CreateSavedJobDto } from '../dto/create-saved-job.dto';
+import { CreateJobDto } from '../dto/create-job.dto';
+import { JobEntity } from '../entity/job.entity';
 
 @Injectable()
 export class JobService {
   constructor(
     @InjectRepository(SavedJobEntity)
     private savedJobRepo: Repository<SavedJobEntity>,
+    @InjectRepository(JobEntity)
+    private jobRepository: Repository<JobEntity>,
   ) {}
   async remove(user_id: number, job_id: number): Promise<void> {
     await this.savedJobRepo.delete({ user_id, job_id });
@@ -27,4 +31,8 @@ export class JobService {
   // async remove(user_id: number, job_id: number): Promise<void> {
   //   await this.savedJobRepo.delete({ user_id, job_id });
   // }
+  async createNewJob(createJobDto: CreateJobDto): Promise<JobEntity> {
+    const job = this.jobRepository.create(createJobDto);
+    return await this.jobRepository.save(job);
+  }
 }
