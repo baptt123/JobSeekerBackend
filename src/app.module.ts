@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { UserEntity } from './entity/user.entity';
@@ -13,6 +13,12 @@ import { join } from 'path';
 import { JobModule } from './job/job.module';
 import { JobEntity } from './entity/job.entity';
 import { MessageModule } from './message/message.module';
+import { GeminiModule } from './gemini/gemini.module';
+import { GenAIModule } from 'nestjs-genai';
+import { ChatgptModule } from './chatgpt/chatgpt.module';
+import { OpenAI } from 'openai';
+import * as process from 'node:process';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -50,6 +56,11 @@ import { MessageModule } from './message/message.module';
     MailerService,
     JobModule,
     MessageModule,
+    GeminiModule,
+    GenAIModule.forRoot({
+      apiKey: process.env.GEMINI_API_KEY, // Replace with your actual API key
+    }),
+    ChatgptModule,
   ],
   providers: [
     //GlobalExceptionFilter
@@ -57,6 +68,16 @@ import { MessageModule } from './message/message.module';
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
+    {
+      provide: 'OPENAI_CLIENT',
+      useFactory: (configService: ConfigService) => {
+        return new OpenAI({
+          apiKey: configService.get<string>('OPENAI_API_KEY'),
+        });
+      },
+      inject: [ConfigService],
+    },
   ],
+  exports: ['OPENAI_CLIENT'],
 })
 export class AppModule {}
