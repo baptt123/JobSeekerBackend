@@ -17,6 +17,7 @@ import { GeminiModule } from './gemini/gemini.module';
 import { GenAIModule } from 'nestjs-genai';
 import { ChatgptModule } from './chatgpt/chatgpt.module';
 import { OpenAI } from 'openai';
+import { GenerateCvModule } from './generate-cv/generate-cv.module';
 import * as process from 'node:process';
 
 @Module({
@@ -61,6 +62,7 @@ import * as process from 'node:process';
       apiKey: process.env.GEMINI_API_KEY, // Replace with your actual API key
     }),
     ChatgptModule,
+    GenerateCvModule,
   ],
   providers: [
     //GlobalExceptionFilter
