@@ -27,7 +27,6 @@ export class JobApplicationEntity {
   @Column()
   user_id: number;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   @ManyToOne(() => UserEntity, (user) => user.jobApplications, {
     onDelete: 'CASCADE',
   })

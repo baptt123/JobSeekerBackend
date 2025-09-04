@@ -2,9 +2,9 @@ import { IsNumber, IsEnum } from 'class-validator';
 
 export class AcceptCandidateDto {
   @IsNumber()
-  candidateId: string;
+  candidateId: number;
   @IsNumber()
-  jobId: string;
+  jobId: number;
   @IsEnum(['Screening', 'Interview', 'Offer', 'Accepted', 'Rejected'])
   status: string;
 }
