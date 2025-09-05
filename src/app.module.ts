@@ -19,6 +19,7 @@ import { ChatgptModule } from './chatgpt/chatgpt.module';
 import { OpenAI } from 'openai';
 import { GenerateCvModule } from './generate-cv/generate-cv.module';
 import { JobApplicationModule } from './job-application/job-application.module';
+import { NotificationModule } from './notification/notification.module';
 import * as process from 'node:process';
 
 @Module({
@@ -65,6 +66,7 @@ import * as process from 'node:process';
     ChatgptModule,
     GenerateCvModule,
     JobApplicationModule,
+    NotificationModule,
   ],
   providers: [
     //GlobalExceptionFilter
