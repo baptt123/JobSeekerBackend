@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../entity/user.entity';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 @Injectable()
 export class UserService {
@@ -33,5 +38,16 @@ export class UserService {
 
   async update(user: UserEntity): Promise<UserEntity> {
     return await this.userRepo.save(user);
+  }
+  async updateUser(id: number, dto: UpdateUserDto): Promise<UserEntity> {
+    const user = await this.userRepo.findOne({ where: { user_id: id } });
+    if (!user) throw new NotFoundException('User not found');
+    Object.assign(user, dto);
+    try {
+      return await this.userRepo.save(user);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new BadRequestException('Failed to update user');
+    }
   }
 }
