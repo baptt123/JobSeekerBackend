@@ -7,6 +7,7 @@ import { CVKeywordEntity } from '../entity/cv-keyword.entity';
 import { Repository } from 'typeorm';
 import { GeminiService } from '../gemini/gemini.service';
 import puppeteer from 'puppeteer';
+import { JobEntity } from '../entity/job.entity';
 import { CreateUserCvDto } from '../dto/create-cv.dto';
 
 @Injectable()
@@ -25,6 +26,8 @@ export class GenerateCvService {
     private readonly cvKeywordRepository: Repository<CVKeywordEntity>,
 
     private readonly geminiService: GeminiService,
+    @InjectRepository(JobEntity)
+    private readonly jobRepository: Repository<JobEntity>,
   ) {}
 
   async exportCvPdf(prompt: string): Promise<Buffer> {
@@ -80,5 +83,25 @@ export class GenerateCvService {
     }
 
     return cv;
+  }
+  async getJobsMatchingUserKeywords(userId: number) {
+    // Lấy tất cả keywords của user
+    const keywords = await this.cvKeywordRepository
+      .createQueryBuilder('k')
+      .innerJoin('k.cv', 'cv')
+      .where('cv.user_id = :userId', { userId })
+      .select('k.keyword')
+      .getMany();
+
+    const keywordList = keywords.map(k => k.keyword);
+    if (keywordList.length === 0) return [];
+
+    // Tìm job có kỹ năng matching keyword
+    return this.jobRepository
+      .createQueryBuilder('job')
+      .innerJoin('job.job_skills', 'js')
+      .innerJoin('js.skill', 'skill')
+      .where('skill.skill_name IN (:...keywordList)', { keywordList })
+      .getMany();
   }
 }
