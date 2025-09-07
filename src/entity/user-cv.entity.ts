@@ -6,8 +6,10 @@ import {
   JoinColumn,
   CreateDateColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { CVKeywordEntity } from './cv-keyword.entity';
 @Entity('User_CVs')
 @Index('idx_fulltext_content', ['content'], { fulltext: true })
 export class UserCVEntity {
@@ -35,4 +37,7 @@ export class UserCVEntity {
 
   @CreateDateColumn()
   created_at: Date;
+
+  @OneToMany(() => CVKeywordEntity, (keyword) => keyword.cv)
+  keywords: CVKeywordEntity[];
 }

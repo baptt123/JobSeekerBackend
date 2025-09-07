@@ -19,4 +19,7 @@ export class CreateUserCvDto {
   @IsOptional()
   @IsBoolean()
   is_default?: boolean;
+  @IsOptional({ each: true })
+  @IsString({ each: true })
+  keywords: string[];
 }

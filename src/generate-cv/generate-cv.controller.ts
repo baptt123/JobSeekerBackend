@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { GenerateCvService } from './generate-cv.service';
 import { RolesGuard } from '../guard/role-auth.guard';
 import { Roles } from '../decorator/role.decorator';
@@ -9,7 +9,7 @@ export class GenerateCvController {
   @UseGuards(RolesGuard)
   @Roles('USER', 'ADMIN', 'RECRUITER')
   @Post()
-  public async generateCv(@Body() prompt: string): Promise<string> {
-    return this.generateCvService.generateCv(prompt);
+  public async generateCv(@Body() prompt: string): Promise<Buffer> {
+    return await this.generateCvService.exportCvPdf(prompt);
   }
 }
