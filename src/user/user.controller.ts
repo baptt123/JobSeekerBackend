@@ -6,8 +6,9 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Put(':id')
-  async update(@Param('id') id: number, @Body() dto: UpdateUserDto) {
-    return await this.userService.updateUser(id, dto);
-  }
+  // @Put(':id')
+  // async update(@Param('id') id: number, @Body() dto: UpdateUserDto) {
+  //   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  //   return await this.userService.updateUser(id, dto);
+  // }
 }

@@ -10,7 +10,7 @@ import { JobEntity } from './job.entity';
 import { UserEntity } from './user.entity';
 import { UserCVEntity } from './user-cv.entity';
 
-@Entity('Job_Applications')
+@Entity('job_applications')
 export class JobApplicationEntity {
   @PrimaryGeneratedColumn()
   application_id: number;

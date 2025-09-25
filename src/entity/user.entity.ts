@@ -15,7 +15,7 @@ import { JobApplicationEntity } from './job-application.entity';
 import { SavedJobEntity } from './save_job.entity';
 import { MessageEntity } from './messages.entity';
 import { NotificationEntity } from './notification.entity';
-@Entity('Users')
+@Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn()
   user_id: number;

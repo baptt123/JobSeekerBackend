@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 
-@Entity('Notifications')
+@Entity('notifications')
 export class NotificationEntity {
   @PrimaryGeneratedColumn()
   notification_id: number;

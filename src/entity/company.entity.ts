@@ -8,7 +8,7 @@ import {
 import { UserEntity } from './user.entity';
 import { JobEntity } from './job.entity';
 
-@Entity('Companies')
+@Entity('companies')
 export class CompanyEntity {
   @PrimaryGeneratedColumn()
   company_id: number;

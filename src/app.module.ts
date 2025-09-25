@@ -7,7 +7,7 @@ import { UserEntity } from './entity/user.entity';
 import { RoleEntity } from './entity/role.entity';
 import { MailerModule, MailerService } from '@nestjs-modules/mailer';
 import { APP_FILTER } from '@nestjs/core';
-import { GlobalExceptionFilter } from './filter/global-exception.filter';
+import { GlobalExceptionFilter } from './exception/global-exception.filter';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { JobModule } from './job/job.module';

@@ -1,13 +1,14 @@
 // src/dto/change-password.dto.ts
-import { IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, MinLength } from 'class-validator';
 
 export class ChangePasswordDto {
-  @IsString()
+  @IsNotEmpty()
   oldPassword: string;
-  @IsString()
-  @MinLength(8)
-  confirmNewPassword: string;
-  @IsString()
-  @MinLength(8)
+
+  @IsNotEmpty()
+  @MinLength(6)
   newPassword: string;
+
+  @IsNotEmpty()
+  confirmPassword: string;
 }

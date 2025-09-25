@@ -12,7 +12,7 @@ import { JobSkillEntity } from './job-skill.entity';
 import { JobApplicationEntity } from './job-application.entity';
 import { SavedJobEntity } from './save_job.entity';
 import { CompanyEntity } from './company.entity';
-@Entity('Jobs')
+@Entity('jobs')
 export class JobEntity {
   @PrimaryGeneratedColumn()
   job_id: number;

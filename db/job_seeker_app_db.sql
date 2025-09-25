@@ -1,5 +1,5 @@
 DROP DATABASE IF EXISTS job_seeker_app_db;
-CREATE DATABASE job_portal_simplified CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE job_seeker_app_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE job_seeker_app_db;
 
 -- 1. Roles

@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { AcceptCandidateDto } from '../dto/accept-candidate.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateJobApplicationDto } from '../dto/create-job-application.dto';
-import { GlobalExceptionFilter } from '../filter/global-exception.filter';
+import { GlobalExceptionFilter } from '../exception/global-exception.filter';
 
 @Injectable()
 export class JobApplicationService {

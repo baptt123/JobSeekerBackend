@@ -11,14 +11,14 @@ export class GenerateCvController {
 
   @UseGuards(RolesGuard)
   @Roles('USER', 'ADMIN', 'RECRUITER')
-  @Post()
+  @Post('create-cv')
   public async generateCv(@Body() prompt: string): Promise<Buffer> {
     return await this.generateCvService.exportCvPdf(prompt);
   }
 
   @UseGuards(RolesGuard)
   @Roles('USER', 'ADMIN', 'RECRUITER')
-  @Get()
+  @Get('save-cv')
   public async saveCV(@Body() dto: CreateUserCvDto): Promise<UserCVEntity> {
     return await this.generateCvService.createCVWithKeywords(dto);
   }

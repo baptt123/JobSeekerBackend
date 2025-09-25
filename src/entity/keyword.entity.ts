@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { CVKeywordEntity } from './cv-keyword.entity';
 
-@Entity('Keywords')
+@Entity('keywords')
 export class KeywordEntity {
   @PrimaryGeneratedColumn()
   keyword_id: number;

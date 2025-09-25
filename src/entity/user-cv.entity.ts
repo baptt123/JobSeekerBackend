@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { CVKeywordEntity } from './cv-keyword.entity';
-@Entity('User_CVs')
+@Entity('user_cvs')
 @Index('idx_fulltext_content', ['content'], { fulltext: true })
 export class UserCVEntity {
   @PrimaryGeneratedColumn()

@@ -93,7 +93,7 @@ export class GenerateCvService {
       .select('k.keyword')
       .getMany();
 
-    const keywordList = keywords.map(k => k.keyword);
+    const keywordList = keywords.map((k) => k.keyword);
     if (keywordList.length === 0) return [];
 
     // Tìm job có kỹ năng matching keyword

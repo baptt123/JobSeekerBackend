@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { UserCVEntity } from './user-cv.entity';
 import { KeywordEntity } from './keyword.entity';
 
-@Entity('CV_Keywords')
+@Entity('cv_keywords')
 export class CVKeywordEntity {
   @PrimaryGeneratedColumn()
   id: number;

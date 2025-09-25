@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 
-@Entity('Messages')
+@Entity('messages')
 @Index('idx_messages', ['sender_id', 'receiver_id', 'sent_at'])
 export class MessageEntity {
   @PrimaryGeneratedColumn()
