@@ -1,34 +1,36 @@
 // src/auth/auth.service.ts
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
-import { MailerService } from '@nestjs-modules/mailer';
 import { RegisterDto } from '../dto/register.dto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserEntity } from '../entity/user.entity';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginDto } from '../dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { RefreshTokenDto } from '../../extra_code/refresh-token';
+
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UserService,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService,
   ) {}
 
   async createUser(dto: RegisterDto): Promise<UserEntity> {
     return this.usersService.create(dto);
   }
+
   async updatePassword(
     userId: number,
     dto: ChangePasswordDto,
   ): Promise<{ message: string }> {
     return this.usersService.updatePassword(userId, dto);
   }
-  async forgotPassword(email: ForgotPasswordDto): Promise<{ message: string }> {
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
     return this.usersService.forgotPassword(email);
   }
+
   async login(dto: LoginDto) {
     const user = await this.usersService.userRepo.findOne({
       where: { email: dto.email },
@@ -66,9 +68,29 @@ export class AuthService {
     };
   }
 
-  async validateUser(userId: number) {
-    return await this.usersService.userRepo.findOne({
-      where: { user_id: userId },
-    });
+  async refreshToken(refreshTokenDTO: RefreshTokenDto) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const payload = this.jwtService.verify(refreshTokenDTO.refreshToken, {
+        ignoreExpiration: false,
+      });
+      const user = await this.usersService.userRepo.findOne({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+        where: { user_id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+      const newPayload = { sub: user.user_id, email: user.email };
+      return {
+        accessToken: this.jwtService.sign(newPayload, { expiresIn: '15m' }),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      throw new UnauthorizedException(
+        'Refresh token hết hạn hoặc không hợp lệ',
+      );
+    }
   }
 }

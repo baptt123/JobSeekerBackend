@@ -2,8 +2,10 @@
 import {
   Body,
   Controller,
-  Post, Put,
-  Req, UseGuards,
+  Post,
+  Put,
+  Req,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -12,6 +14,7 @@ import { RegisterDto } from '../dto/register.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { RolesGuard } from '../guard/role-auth.guard';
 import { LoginDto } from '../dto/login.dto';
+import { RefreshTokenDto } from '../../extra_code/refresh-token';
 
 @Controller('auth')
 export class AuthController {
@@ -39,5 +42,9 @@ export class AuthController {
   @Post('login')
   async login(@Body(new ValidationPipe()) dto: LoginDto) {
     return this.authService.login(dto);
+  }
+  @Post('refresh')
+  async refresh(@Body('refreshToken') refreshToken: RefreshTokenDto) {
+    return this.authService.refreshToken(refreshToken);
   }
 }

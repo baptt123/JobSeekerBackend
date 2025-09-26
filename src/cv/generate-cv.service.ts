@@ -5,7 +5,7 @@ import { UserEntity } from '../entity/user.entity';
 import { KeywordEntity } from '../entity/keyword.entity';
 import { CVKeywordEntity } from '../entity/cv-keyword.entity';
 import { Repository } from 'typeorm';
-import { GeminiService } from '../gemini/gemini.service';
+import { GeminiService } from '../gemini-generating-cv/gemini.service';
 import puppeteer from 'puppeteer';
 import { JobEntity } from '../entity/job.entity';
 import { CreateUserCvDto } from '../dto/create-cv.dto';
@@ -84,24 +84,73 @@ export class GenerateCvService {
 
     return cv;
   }
-  async getJobsMatchingUserKeywords(userId: number) {
-    // Lấy tất cả keywords của user
-    const keywords = await this.cvKeywordRepository
-      .createQueryBuilder('k')
-      .innerJoin('k.cv', 'cv')
-      .where('cv.user_id = :userId', { userId })
-      .select('k.keyword')
-      .getMany();
+  // async getJobsMatchingUserKeywords(userId: number) {
+  //   // Lấy tất cả keywords của user
+  //   const keywords = await this.cvKeywordRepository
+  //     .createQueryBuilder('k')
+  //     .innerJoin('k.cv', 'cv')
+  //     .where('cv.user_id = :userId', { userId })
+  //     .select('k.keyword')
+  //     .getMany();
+  //
+  //   const keywordList = keywords.map((k) => k.keyword);
+  //   if (keywordList.length === 0) return [];
+  //
+  //   // Tìm job có kỹ năng matching keyword
+  //   return this.jobRepository
+  //     .createQueryBuilder('job')
+  //     .innerJoin('job.job_skills', 'js')
+  //     .innerJoin('js.skill', 'skill')
+  //     .where('skill.skill_name IN (:...keywordList)', { keywordList })
+  //     .getMany();
+  // }
+  async saveCVAfterUpload(
+    userId: number,
+    file: Express.Multer.File,
+    title: string,
+    content: string,
+    keywords: string[],
+  ) {
+    // Lưu bản CV
+    const cv = this.cvRepository.create({
+      user_id: userId,
+      title,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+      file_url: file.filename, // Nếu dùng Cloudinary thì thay bằng file.path hoặc secure_url
+      content,
+      is_default: false,
+    });
+    const savedCV = await this.cvRepository.save(cv);
 
-    const keywordList = keywords.map((k) => k.keyword);
-    if (keywordList.length === 0) return [];
+    // Lưu keywords và mapping với CV
+    const cvKeywordEntities: CVKeywordEntity[] = [];
 
-    // Tìm job có kỹ năng matching keyword
-    return this.jobRepository
-      .createQueryBuilder('job')
-      .innerJoin('job.job_skills', 'js')
-      .innerJoin('js.skill', 'skill')
-      .where('skill.skill_name IN (:...keywordList)', { keywordList })
-      .getMany();
+    for (const k of keywords) {
+      // Tìm hoặc tạo mới keyword
+      let keyword = await this.keywordRepository.findOne({
+        where: { keyword_name: k },
+      });
+
+      if (!keyword) {
+        keyword = this.keywordRepository.create({ keyword_name: k });
+        keyword = await this.keywordRepository.save(keyword);
+      }
+
+      // Tạo entity liên kết CV - Keyword
+      const cvKeyword = this.cvKeywordRepository.create({
+        cv: savedCV,
+        keyword: keyword, // 🔥 gán quan hệ keyword vào đây
+      });
+
+      cvKeywordEntities.push(cvKeyword);
+    }
+
+    // Lưu các liên kết vào bảng cv_keywords
+    await this.cvKeywordRepository.save(cvKeywordEntities);
+
+    return {
+      ...savedCV,
+      keywords: keywords,
+    };
   }
 }

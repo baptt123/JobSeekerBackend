@@ -13,13 +13,14 @@ import { join } from 'path';
 import { JobModule } from './job/job.module';
 import { JobEntity } from './entity/job.entity';
 import { MessageModule } from './message/message.module';
-import { GeminiModule } from './gemini/gemini.module';
+import { GeminiModule } from './gemini-generating-cv/gemini.module';
 import { GenAIModule } from 'nestjs-genai';
-import { ChatgptModule } from './chatgpt/chatgpt.module';
+import { ChatgptModule } from './chatgpt-checking-prompt/chatgpt.module';
 import { OpenAI } from 'openai';
-import { GenerateCvModule } from './generate-cv/generate-cv.module';
+import { GenerateCvModule } from './cv/generate-cv.module';
 import { JobApplicationModule } from './job-application/job-application.module';
 import { NotificationModule } from './notification/notification.module';
+import { CloudinaryCustomModule } from './cloudinary-custom/cloudinary-custom.module';
 import * as process from 'node:process';
 
 @Module({
@@ -67,6 +68,7 @@ import * as process from 'node:process';
     GenerateCvModule,
     JobApplicationModule,
     NotificationModule,
+    CloudinaryCustomModule,
   ],
   providers: [
     //GlobalExceptionFilter

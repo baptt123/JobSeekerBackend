@@ -144,4 +144,10 @@
 
 
 
+  async validateUser(userId: number) {
+    return await this.usersService.userRepo.findOne({
+      where: { user_id: userId },
+    });
+  }
+
 

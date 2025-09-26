@@ -11,7 +11,6 @@ import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
 import crypto from 'crypto';
-import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -55,7 +54,7 @@ export class UserService {
 
     return { message: 'Cập nhật mật khẩu thành công' };
   }
-  async forgotPassword(email: ForgotPasswordDto) {
+  async forgotPassword(email: string) {
     const user = await this.userRepo.findOne({ where: { email: email } });
     if (!user) throw new BadRequestException('Email không tồn tại ');
 
