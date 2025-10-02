@@ -1,0 +1,523 @@
+```import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { UserEntity } from './user.entity';
+import { JobEntity } from './job.entity';
+
+@Entity('companies')
+export class CompanyEntity {
+  @PrimaryGeneratedColumn()
+  company_id: number;
+
+  @Column({ length: 255 })
+  name: string;
+
+  @Column('text', { nullable: true })
+  description: string;
+
+  @Column({ length: 255, nullable: true })
+  website: string;
+
+  @Column({ length: 255, nullable: true })
+  address: string;
+
+  @Column({ length: 500, nullable: true })
+  logo_url: string;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @OneToMany(() => UserEntity, (user) => user.company)
+  users: UserEntity[];
+
+  @OneToMany(() => JobEntity, (job) => job.company)
+  jobs: JobEntity[];
+}
+```
+```import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { UserCVEntity } from './user-cv.entity';
+import { KeywordEntity } from './keyword.entity';
+
+@Entity('cv_keywords')
+export class CVKeywordEntity {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @ManyToOne(() => UserCVEntity, (cv) => cv.keywords, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'cv_id' })
+  cv: UserCVEntity;
+
+  @ManyToOne(() => KeywordEntity, (keyword) => keyword.cvKeywords, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'keyword_id' })
+  keyword: KeywordEntity;
+}
+```
+```import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { UserEntity } from './user.entity';
+import { JobSkillEntity } from './job-skill.entity';
+import { JobApplicationEntity } from './job-application.entity';
+import { SavedJobEntity } from './save_job.entity';
+import { CompanyEntity } from './company.entity';
+@Entity('jobs')
+export class JobEntity {
+  @PrimaryGeneratedColumn()
+  job_id: number;
+
+  @Column()
+  company_id: number;
+
+  @ManyToOne(() => CompanyEntity, (company) => company.jobs, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'company_id' })
+  company: CompanyEntity;
+
+  @Column()
+  posted_by: number;
+
+  @ManyToOne(() => UserEntity, (user) => user.postedJobs, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'posted_by' })
+  postedBy: UserEntity;
+
+  @Column({ length: 255 })
+  title: string;
+
+  @Column('text')
+  description: string;
+
+  @Column('text', { nullable: true })
+  requirements: string;
+
+  @Column('decimal', { precision: 12, scale: 2, nullable: true })
+  salary_min: number;
+
+  @Column('decimal', { precision: 12, scale: 2, nullable: true })
+  salary_max: number;
+
+  @Column({ length: 255, nullable: true })
+  location: string;
+
+  @Column({
+    type: 'enum',
+    enum: ['Full-time', 'Part-time', 'Internship', 'Contract', 'Freelance'],
+    nullable: true,
+  })
+  job_type: 'Full-time' | 'Part-time' | 'Internship' | 'Contract' | 'Freelance';
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @OneToMany(() => JobSkillEntity, (jobSkill) => jobSkill.job)
+  jobSkills: JobSkillEntity[];
+
+  @OneToMany(() => JobApplicationEntity, (application) => application.job)
+  applications: JobApplicationEntity[];
+
+  @OneToMany(() => SavedJobEntity, (savedJob) => savedJob.job)
+  savedJobs: SavedJobEntity[];
+}
+```
+```import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+} from 'typeorm';
+import { JobEntity } from './job.entity';
+import { UserEntity } from './user.entity';
+import { UserCVEntity } from './user-cv.entity';
+
+@Entity('job_applications')
+export class JobApplicationEntity {
+  @PrimaryGeneratedColumn()
+  application_id: number;
+
+  @Column()
+  job_id: number;
+
+  @ManyToOne(() => JobEntity, (job) => job.applications, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'job_id' })
+  job: JobEntity;
+
+  @Column()
+  user_id: number;
+
+  @ManyToOne(() => UserEntity, (user) => user.jobApplications, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'user_id' })
+  user: UserEntity;
+
+  @Column({ nullable: true })
+  cv_id: number;
+
+  @ManyToOne(() => UserCVEntity, (cv) => cv, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'cv_id' })
+  cv: UserCVEntity;
+
+  @Column('text', { nullable: true })
+  cover_letter: string;
+
+  @Column({
+    type: 'enum',
+    enum: [
+      'Applied',
+      'Screening',
+      'Interview',
+      'Offer',
+      'Accepted',
+      'Rejected',
+    ],
+    default: 'Applied',
+  })
+  status:
+    | 'Applied'
+    | 'Screening'
+    | 'Interview'
+    | 'Offer'
+    | 'Accepted'
+    | 'Rejected';
+
+  @CreateDateColumn()
+  applied_at: Date;
+}
+```
+import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { JobEntity } from './job.entity';
+import { SkillEntity } from './skill.entity';
+
+@Entity('job_skills')
+export class JobSkillEntity {
+  @PrimaryColumn()
+  job_id: number;
+
+  @PrimaryColumn()
+  skill_id: number;
+
+  @Column('boolean', { default: true })
+  is_required: boolean;
+
+  @ManyToOne(() => JobEntity, (job) => job.jobSkills, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'job_id' })
+  job: JobEntity;
+
+  @ManyToOne(() => SkillEntity, (skill) => skill.jobSkills, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'skill_id' })
+  skill: SkillEntity;
+}
+```
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { CVKeywordEntity } from './cv-keyword.entity';
+
+@Entity('keywords')
+export class KeywordEntity {
+  @PrimaryGeneratedColumn()
+  keyword_id: number;
+
+  @Column({ unique: true })
+  keyword_name: string;
+
+  @OneToMany(() => CVKeywordEntity, (cvKeyword) => cvKeyword.keyword)
+  cvKeywords: CVKeywordEntity[];
+}
+```
+```import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
+import { UserEntity } from './user.entity';
+
+@Entity('messages')
+@Index('idx_messages', ['sender_id', 'receiver_id', 'sent_at'])
+export class MessageEntity {
+  @PrimaryGeneratedColumn()
+  message_id: number;
+
+  @Column()
+  sender_id: number;
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  @ManyToOne(() => UserEntity, (user) => user.sentMessages, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'sender_id' })
+  sender: UserEntity;
+
+  @Column()
+  receiver_id: number;
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  @ManyToOne(() => UserEntity, (user) => user.receivedMessages, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'receiver_id' })
+  receiver: UserEntity;
+
+  @Column('text')
+  content: string;
+
+  @Column('boolean', { default: false })
+  is_read: boolean;
+
+  @CreateDateColumn()
+  sent_at: Date;
+}
+```
+```import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+} from 'typeorm';
+import { UserEntity } from './user.entity';
+
+@Entity('notifications')
+export class NotificationEntity {
+  @PrimaryGeneratedColumn()
+  notification_id: number;
+
+  @Column()
+  user_id: number;
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  @ManyToOne(() => UserEntity, (user) => user.notifications, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'user_id' })
+  user: UserEntity;
+
+  @Column({ length: 255, nullable: true })
+  title: string;
+
+  @Column('text', { nullable: true })
+  message: string;
+
+  @Column('boolean', { default: false })
+  is_read: boolean;
+
+  @CreateDateColumn()
+  created_at: Date;
+}
+```
+```// ...các import cần thiết...
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { UserEntity } from './user.entity';
+
+@Entity({ name: 'roles' })
+export class RoleEntity {
+  @PrimaryGeneratedColumn({ name: 'role_id' })
+  role_id: number;
+
+  @Column({
+    type: 'enum',
+    enum: ['ADMIN', 'CANDIDATE', 'RECRUITER'],
+    unique: true,
+  })
+  role_name: 'ADMIN' | 'CANDIDATE' | 'RECRUITER';
+
+  @OneToMany(() => UserEntity, (user) => user.role_id)
+  users: UserEntity[];
+}
+```
+```import {
+  Entity,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+} from 'typeorm';
+import { UserEntity } from './user.entity';
+import { JobEntity } from './job.entity';
+
+@Entity('saved_jobs')
+export class SavedJobEntity {
+  @PrimaryColumn()
+  user_id: number;
+
+  @PrimaryColumn()
+  job_id: number;
+
+  @CreateDateColumn()
+  saved_at: Date;
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  @ManyToOne(() => UserEntity, (user) => user.savedJobs, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'user_id' })
+  user: UserEntity;
+
+  @ManyToOne(() => JobEntity, (job) => job.savedJobs, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'job_id' })
+  job: JobEntity;
+}
+```
+```import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { JobSkillEntity } from './job-skill.entity';
+
+@Entity('skills')
+export class SkillEntity {
+  @PrimaryGeneratedColumn()
+  skill_id: number;
+
+  @Column({ length: 100, unique: true })
+  skill_name: string;
+
+  @OneToMany(() => JobSkillEntity, (jobSkill) => jobSkill.skill)
+  jobSkills: JobSkillEntity[];
+}
+```
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { RoleEntity } from './role.entity';
+import { CompanyEntity } from './company.entity';
+import { UserCVEntity } from './user-cv.entity';
+import { JobEntity } from './job.entity';
+import { JobApplicationEntity } from './job-application.entity';
+import { SavedJobEntity } from './save_job.entity';
+import { MessageEntity } from './messages.entity';
+import { NotificationEntity } from './notification.entity';
+@Entity('users')
+export class UserEntity {
+  @PrimaryGeneratedColumn()
+  user_id: number;
+
+  @Column({ unique: true, length: 255 })
+  email: string;
+
+  @Column()
+  password_hash: string;
+
+  @Column({ length: 200 })
+  full_name: string;
+
+  @Column({ length: 20, nullable: true })
+  phone: string;
+
+  @Column({ length: 100, nullable: true })
+  city: string;
+
+  @Column({ length: 500, nullable: true })
+  avatar_url: string;
+
+  @Column()
+  role_id: number;
+
+  @ManyToOne(() => RoleEntity, (role) => role.users)
+  @JoinColumn({ name: 'role_id' })
+  role: RoleEntity;
+
+  @Column({ nullable: true })
+  company_id: number;
+
+  @ManyToOne(() => CompanyEntity, (company) => company.users, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'company_id' })
+  company: CompanyEntity;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @OneToMany(() => UserCVEntity, (cv) => cv.user)
+  cvs: UserCVEntity[];
+
+  @OneToMany(() => JobEntity, (job) => job.postedBy)
+  postedJobs: JobEntity[];
+
+  @OneToMany(() => JobApplicationEntity, (app) => app.user)
+  jobApplications: JobApplicationEntity[];
+
+  @OneToMany(() => SavedJobEntity, (saved) => saved.user)
+  savedJobs: SavedJobEntity[];
+
+  @OneToMany(() => MessageEntity, (message) => message.sender)
+  sentMessages: MessageEntity[];
+
+  @OneToMany(() => MessageEntity, (message) => message.receiver)
+  receivedMessages: MessageEntity[];
+
+  @OneToMany(() => NotificationEntity, (notification) => notification.user)
+  notifications: NotificationEntity[];
+}
+```
+```import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  Index,
+  OneToMany,
+} from 'typeorm';
+import { UserEntity } from './user.entity';
+import { CVKeywordEntity } from './cv-keyword.entity';
+@Entity('user_cvs')
+@Index('idx_fulltext_content', ['content'], { fulltext: true })
+export class UserCVEntity {
+  @PrimaryGeneratedColumn()
+  cv_id: number;
+
+  @Column()
+  user_id: number;
+
+  @ManyToOne(() => UserEntity, (user) => user.cvs, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: UserEntity;
+
+  @Column({ length: 255, nullable: true })
+  title: string;
+
+  @Column({ length: 500, nullable: true })
+  file_url: string;
+
+  @Column('text', { nullable: true })
+  content: string;
+
+  @Column('boolean', { default: false })
+  is_default: boolean;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @OneToMany(() => CVKeywordEntity, (keyword) => keyword.cv)
+  keywords: CVKeywordEntity[];
+}
+```

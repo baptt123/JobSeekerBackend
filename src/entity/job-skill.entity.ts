@@ -17,7 +17,6 @@ export class JobSkillEntity {
   @JoinColumn({ name: 'job_id' })
   job: JobEntity;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   @ManyToOne(() => SkillEntity, (skill) => skill.jobSkills, {
     onDelete: 'CASCADE',
   })

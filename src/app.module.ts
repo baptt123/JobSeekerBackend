@@ -10,7 +10,6 @@ import { APP_FILTER } from '@nestjs/core';
 import { GlobalExceptionFilter } from './exception/global-exception.filter';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
-import { JobModule } from './job/job.module';
 import { JobEntity } from './entity/job.entity';
 import { MessageModule } from './message/message.module';
 import { GeminiModule } from './gemini-generating-cv/gemini.module';
@@ -18,9 +17,8 @@ import { GenAIModule } from 'nestjs-genai';
 import { ChatgptModule } from './chatgpt-checking-prompt/chatgpt.module';
 import { OpenAI } from 'openai';
 import { GenerateCvModule } from './cv/generate-cv.module';
-import { JobApplicationModule } from './job-application/job-application.module';
-import { NotificationModule } from './notification/notification.module';
 import { CloudinaryCustomModule } from './cloudinary-custom/cloudinary-custom.module';
+import { JobModule } from './job/job.module';
 import * as process from 'node:process';
 
 @Module({
@@ -66,8 +64,6 @@ import * as process from 'node:process';
     }),
     ChatgptModule,
     GenerateCvModule,
-    JobApplicationModule,
-    NotificationModule,
     CloudinaryCustomModule,
   ],
   providers: [
