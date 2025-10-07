@@ -5,49 +5,44 @@ import { UserEntity } from '../entity/user.entity';
 import { KeywordEntity } from '../entity/keyword.entity';
 import { CVKeywordEntity } from '../entity/cv-keyword.entity';
 import { Repository } from 'typeorm';
-import { GeminiService } from '../gemini-generating-cv/gemini.service';
 import puppeteer from 'puppeteer';
 import { JobEntity } from '../entity/job.entity';
 import { CreateUserCvDto } from '../dto/create-cv.dto';
+import { GoogleGenAI } from '@google/genai';
 
 @Injectable()
 export class GenerateCvService {
+  private ai: GoogleGenAI;
+
   constructor(
     @InjectRepository(UserCVEntity)
     private readonly cvRepository: Repository<UserCVEntity>,
-
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-
     @InjectRepository(KeywordEntity)
     private readonly keywordRepository: Repository<KeywordEntity>,
-
     @InjectRepository(CVKeywordEntity)
     private readonly cvKeywordRepository: Repository<CVKeywordEntity>,
-
-    private readonly geminiService: GeminiService,
     @InjectRepository(JobEntity)
     private readonly jobRepository: Repository<JobEntity>,
-  ) {}
-
-  async exportCvPdf(prompt: string): Promise<Buffer> {
-    const finalHtml = await this.geminiService.generateText(prompt);
-
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    if (finalHtml) {
-      await page.setContent(finalHtml, { waitUntil: 'networkidle0' });
-    }
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-    });
-    await browser.close();
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    return pdfBuffer;
+  ) {
+    this.ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
   }
+
+  async getCvHtml(prompt: string): Promise<string> {
+    const response = await this.ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: { thinkingConfig: { thinkingBudget: 0 } },
+    });
+
+    const html = response.text?.trim();
+    if (!html || !html.startsWith('<!DOCTYPE html>')) {
+      throw new Error('AI không trả về HTML hợp lệ');
+    }
+    return html;
+  }
+
 
   async createCVWithKeywords(dto: CreateUserCvDto) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -84,6 +79,7 @@ export class GenerateCvService {
 
     return cv;
   }
+
   // async getJobsMatchingUserKeywords(userId: number) {
   //   // Lấy tất cả keywords của user
   //   const keywords = await this.cvKeywordRepository
@@ -115,7 +111,6 @@ export class GenerateCvService {
     const cv = this.cvRepository.create({
       user_id: userId,
       title,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
       file_url: file.filename, // Nếu dùng Cloudinary thì thay bằng file.path hoặc secure_url
       content,
       is_default: false,

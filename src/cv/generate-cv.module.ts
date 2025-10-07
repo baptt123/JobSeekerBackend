@@ -6,8 +6,9 @@ import { KeywordEntity } from '../entity/keyword.entity';
 import { CVKeywordEntity } from '../entity/cv-keyword.entity';
 import { JobEntity } from '../entity/job.entity';
 import { GenerateCvService } from './generate-cv.service';
-import { GeminiModule } from '../gemini-generating-cv/gemini.module';
-
+import { GenAIModule } from 'nestjs-genai';
+import { GenerateCvController } from './generate-cv.controller';
+import { CloudinaryCustomModule } from '../cloudinary-custom/cloudinary-custom.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -17,8 +18,12 @@ import { GeminiModule } from '../gemini-generating-cv/gemini.module';
       CVKeywordEntity,
       JobEntity,
     ]),
-    GeminiModule,
+    GenAIModule.forRoot({
+      apiKey: process.env.GEMINI_API_KEY, // .env
+    }),
+    CloudinaryCustomModule,
   ],
+  controllers: [GenerateCvController],
   providers: [GenerateCvService],
   exports: [GenerateCvService],
 })

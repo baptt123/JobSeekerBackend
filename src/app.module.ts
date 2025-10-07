@@ -11,12 +11,10 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { join } from 'path';
 import { JobEntity } from './entity/job.entity';
 import { MessageModule } from './message/message.module';
-import { GeminiModule } from './gemini-generating-cv/gemini.module';
 import { GenerateCvModule } from './cv/generate-cv.module';
 import { CloudinaryCustomModule } from './cloudinary-custom/cloudinary-custom.module';
 import { JobModule } from './job/job.module';
 import * as process from 'node:process';
-import { GeminiService } from './gemini-generating-cv/gemini.service';
 import { CompanyEntity } from './entity/company.entity';
 import { CVKeywordEntity } from './entity/cv-keyword.entity';
 import { JobApplicationEntity } from './entity/job-application.entity';
@@ -60,7 +58,8 @@ import { GenAIModule } from 'nestjs-genai';
         SkillEntity,
         UserCVEntity,
       ],
-      synchronize: false, // chỉ bật true khi dev
+      autoLoadEntities: true,
+      synchronize: true, // chỉ bật true khi dev
     }),
 
     MailerModule.forRootAsync({
@@ -77,7 +76,7 @@ import { GenAIModule } from 'nestjs-genai';
           },
         },
         defaults: {
-          from: `"Your App" <${configService.get<string>('EMAIL_ID')}>`,
+          from: `"Backend Job Seeker App" <${configService.get<string>('EMAIL_ID')}>`,
         },
         template: {
           dir: join(__dirname, '..', 'src', 'templates'), // <-- quan trọng
@@ -90,7 +89,6 @@ import { GenAIModule } from 'nestjs-genai';
     AuthModule,
     JobModule,
     MessageModule,
-    GeminiModule,
     GenerateCvModule,
     CloudinaryCustomModule,
   ],
@@ -99,7 +97,6 @@ import { GenAIModule } from 'nestjs-genai';
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
-    GeminiService,
   ],
   exports: [],
 })

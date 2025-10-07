@@ -20,14 +20,30 @@ export class JobService {
   }
 
   async findJobsByUserCV(userId: number): Promise<JobDto[]> {
+    // 🔹 Lấy CV mặc định của user (chấp nhận is_default = true hoặc 1)
     const cv = await this.cvRepo.findOne({
-      where: { user_id: userId, is_default: true },
+      where: [
+        { user_id: userId, is_default: true },
+
+      ],
       relations: ['keywords', 'keywords.keyword'],
     });
-    if (!cv) return [];
 
-    const keywordNames = cv.keywords.map((ck) => ck.keyword.keyword_name);
+    if (!cv) {
+      console.log('>>> Không tìm thấy CV mặc định cho user:', userId);
+      return [];
+    }
 
+    // 🔹 Lấy danh sách keyword name từ CV
+    const keywordNames =
+      cv.keywords?.map((ck) => ck.keyword?.keyword_name).filter(Boolean) || [];
+
+    if (keywordNames.length === 0) {
+      console.log('>>> CV không có keyword nào');
+      return [];
+    }
+
+    // 🔹 Truy vấn các job có skill_name trùng với keyword_name
     const jobs = await this.jobRepo
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.company', 'company')
@@ -36,6 +52,15 @@ export class JobService {
       .where('skill.skill_name IN (:...keywords)', { keywords: keywordNames })
       .getMany();
 
+    // 🔹 Debug log
+    console.log('>>> CV keywords:', keywordNames);
+    console.log('>>> Found jobs count:', jobs.length);
+    console.log(
+      '>>> Found job titles:',
+      jobs.map((j) => j.title),
+    );
+
+    // 🔹 Trả về dữ liệu dạng DTO
     return jobs.map((job) => ({
       job_id: job.job_id,
       title: job.title,
@@ -45,11 +70,12 @@ export class JobService {
       salary_max: job.salary_max,
       location: job.location,
       job_type: job.job_type,
-      company_name: job.company?.name,
-      skills: job.jobSkills.map((js) => js.skill.skill_name),
+      company_name: job.company?.name ?? null,
+      skills: job.jobSkills?.map((js) => js.skill.skill_name) ?? [],
       created_at: job.created_at,
     }));
   }
+
 
   async searchJobs(dto: SearchJobDto) {
     const { query, size } = dto;

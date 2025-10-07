@@ -5,5 +5,6 @@ import { CloudinaryCustomController } from './cloudinary-custom.controller';
 @Module({
   controllers: [CloudinaryCustomController],
   providers: [CloudinaryCustomService],
+  exports: [CloudinaryCustomService],
 })
 export class CloudinaryCustomModule {}
