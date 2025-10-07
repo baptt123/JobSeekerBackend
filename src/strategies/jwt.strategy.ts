@@ -11,12 +11,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_ACCESS_TOKEN_SECRET || 'access-secret',
+      secretOrKey: process.env.JWT_ACCESS_SECRET || 'access-secret',
     });
   }
 
-  validate(payload: any): { userId: number; email: string; role: string } {
+  validate(payload: any) {
+    console.log('JWT payload:', payload);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-    return { userId: payload.userId, email: payload.email, role: payload.role };
+    return { userId: payload.sub, email: payload.email, role: payload.role };
   }
 }

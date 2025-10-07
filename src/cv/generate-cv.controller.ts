@@ -15,6 +15,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CloudinaryCustomService } from '../cloudinary-custom/cloudinary-custom.service';
+import { JwtAuthGuard } from '../guard/jwt-auth.guard';
 
 @Controller('generate-cv')
 export class GenerateCvController {
@@ -23,9 +24,9 @@ export class GenerateCvController {
     private readonly cloudinaryService: CloudinaryCustomService,
   ) {}
 
-  @UseGuards(RolesGuard)
-  @Roles('USER', 'ADMIN', 'RECRUITER')
-  @Post('create-cv')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'RECRUITER', 'USER')
+  @Get('gen-cv')
   public async generateCv(@Body() prompt: string): Promise<Buffer> {
     return await this.generateCvService.exportCvPdf(prompt);
   }
