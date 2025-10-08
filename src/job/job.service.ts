@@ -22,10 +22,7 @@ export class JobService {
   async findJobsByUserCV(userId: number): Promise<JobDto[]> {
     // 🔹 Lấy CV mặc định của user (chấp nhận is_default = true hoặc 1)
     const cv = await this.cvRepo.findOne({
-      where: [
-        { user_id: userId, is_default: true },
-
-      ],
+      where: [{ user_id: userId, is_default: true }],
       relations: ['keywords', 'keywords.keyword'],
     });
 
@@ -76,39 +73,86 @@ export class JobService {
     }));
   }
 
+  // async searchJobs(dto: SearchJobDto) {
+  //   const { query, size } = dto;
+  //
+  //   const { hits } = await this.esClient.search({
+  //     index: 'jobs',
+  //     size,
+  //     query: {
+  //       multi_match: {
+  //         query,
+  //         fields: ['title', 'description', 'requirements', 'location'],
+  //         fuzziness: 'AUTO',
+  //       },
+  //     },
+  //     highlight: {
+  //       fields: {
+  //         title: {},
+  //         description: {},
+  //       },
+  //     },
+  //   });
+  //
+  //   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  //   return hits.hits.map((hit: any) => ({
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+  //     id: hit._id,
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+  //     score: hit._score,
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  //     ...hit._source,
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+  //     highlight: hit.highlight,
+  //   }));
+  // }
 
   async searchJobs(dto: SearchJobDto) {
     const { query, size } = dto;
 
-    const { hits } = await this.esClient.search({
-      index: 'jobs',
-      size,
-      query: {
-        multi_match: {
-          query,
-          fields: ['title^3', 'description', 'requirements', 'location'],
-          fuzziness: 'AUTO',
+    try {
+      const result = await this.esClient.search({
+        index: 'jobs',
+        size,
+        query: {
+          multi_match: {
+            query,
+            fields: ['title', 'description', 'requirements', 'location'],
+            fuzziness: 'AUTO',
+          },
         },
-      },
-      highlight: {
-        fields: {
-          title: {},
-          description: {},
+        highlight: {
+          fields: {
+            title: {},
+            description: {},
+          },
         },
-      },
-    });
+      });
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return hits.hits.map((hit: any) => ({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      id: hit._id,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      score: hit._score,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ...hit._source,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      highlight: hit.highlight,
-    }));
+      const hits = result.hits?.hits || [];
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return hits.map((hit: any) => ({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+        id: hit._id,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+        score: hit._score,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        ...hit._source,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+        highlight: hit.highlight,
+      }));
+    } catch (error) {
+      console.error('🔴 Elasticsearch error:', error); // log chi tiết lỗi ở đây
+      throw new Error(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+        error.meta?.body?.error?.reason ||
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          error.meta?.body?.error?.caused_by?.reason ||
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          error.message,
+      );
+    }
   }
 
   async suggestJobs(query: string) {

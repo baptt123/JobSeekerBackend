@@ -20,15 +20,15 @@ export class JobController {
     return this.jobService.findJobsByUserCV(userId);
   }
   @Get('search-jobs')
-  @UseGuards(RolesGuard)
-  @Roles('USER', 'ADMIN', 'RECRUITER')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async searchJobs(@Query() dto: SearchJobDto) {
     return this.jobService.searchJobs(dto);
   }
 
   @Get('suggest')
-  @UseGuards(RolesGuard)
-  @Roles('USER', 'ADMIN', 'RECRUITER')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async suggestJobs(@Query('q') q: string) {
     return this.jobService.suggestJobs(q);
   }
