@@ -158,7 +158,7 @@ export class JobService {
   async suggestJobs(query: string) {
     const { hits } = await this.esClient.search({
       index: 'jobs',
-      size: 5,
+      size: 20,
       query: {
         prefix: {
           title: {

@@ -27,8 +27,8 @@ export class JobController {
   }
 
   @Get('suggest')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async suggestJobs(@Query('q') q: string) {
     return this.jobService.suggestJobs(q);
   }

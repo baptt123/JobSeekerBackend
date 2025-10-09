@@ -43,7 +43,6 @@ export class GenerateCvService {
     return html;
   }
 
-
   async createCVWithKeywords(dto: CreateUserCvDto) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error

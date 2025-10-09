@@ -2,12 +2,17 @@
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { RegisterDto } from '../dto/register.dto';
-import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserEntity } from '../entity/user.entity';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { LoginDto } from '../dto/login.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import * as argon2 from 'argon2';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -133,21 +138,33 @@ export class AuthService {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const payload = this.jwtService.verify(refreshTokenDTO.refreshToken, {
         ignoreExpiration: false,
+        secret: process.env.JWT_REFRESH_SECRET,
       });
+
       const user = await this.usersService.userRepo.findOne({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         where: { user_id: payload.sub },
+        relations: ['role'],
       });
 
       if (!user) {
-        throw new UnauthorizedException();
+        throw new UnauthorizedException('Người dùng không tồn tại');
       }
-      const newPayload = { sub: user.user_id, email: user.email };
-      return {
-        accessToken: this.jwtService.sign(newPayload, { expiresIn: '15m' }),
+
+      const newPayload = {
+        sub: user.user_id,
+        email: user.email,
+        role: user.role.role_name,
       };
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+      const newAccessToken = await this.jwtService.signAsync(newPayload, {
+        secret: process.env.JWT_ACCESS_SECRET,
+        expiresIn: process.env.JWT_ACCESS_EXPIRATION || '30m',
+      });
+
+      return { accessToken: newAccessToken };
     } catch (err) {
+      console.error('Refresh ERROR:', err);
       throw new UnauthorizedException(
         'Refresh token hết hạn hoặc không hợp lệ',
       );

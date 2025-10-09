@@ -4,7 +4,7 @@ import { UserEntity } from '../entity/user.entity';
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
+  InternalServerErrorException, NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterDto } from '../dto/register.dto';
@@ -13,12 +13,15 @@ import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
 import crypto from 'crypto';
 import * as argon2 from 'argon2';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { CloudinaryCustomService } from '../cloudinary-custom/cloudinary-custom.service';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     public readonly userRepo: Repository<UserEntity>,
     private readonly mailerService: MailerService,
+    private readonly cloudinaryService: CloudinaryCustomService,
   ) {}
   // async create(dto: RegisterDto): Promise<UserEntity> {
   //   const existingUser = await this.userRepo.findOne({
@@ -59,8 +62,6 @@ export class UserService {
 
     return this.userRepo.save(user);
   }
-
-
 
   // async updatePassword(userId: number, dto: ChangePasswordDto) {
   //   const user = await this.userRepo.findOne({ where: { user_id: userId } });
@@ -135,7 +136,6 @@ export class UserService {
   //
   //   return { message: 'Cập nhật mật khẩu thành công' };
   // }
-
 
   // async updatePassword(userId: number, dto: ChangePasswordDto) {
   //   const user = await this.userRepo.findOne({ where: { user_id: userId } });
@@ -252,5 +252,34 @@ export class UserService {
       console.error(' forgotPassword ERROR:', error);
       throw new InternalServerErrorException('Server bị lỗi');
     }
+  }
+
+  async updateUser(
+    userId: number,
+    dto: UpdateUserDto,
+    file?: Express.Multer.File,
+  ): Promise<UserEntity> {
+    const user = await this.userRepo.findOne({ where: { user_id: userId } });
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy user');
+    }
+
+    if (file) {
+      try {
+        const result = await this.cloudinaryService.uploadFile(file);
+        if ('secure_url' in result) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          dto.avatar_url = result.secure_url;
+        } else {
+          throw new BadRequestException('Upload avatar thất bại');
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (err) {
+        throw new BadRequestException('Upload avatar thất bại');
+      }
+    }
+
+    Object.assign(user, dto);
+    return this.userRepo.save(user);
   }
 }

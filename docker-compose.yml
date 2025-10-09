@@ -29,7 +29,7 @@ services:
     container_name: logstash
     volumes:
       - ./pipeline:/usr/share/logstash/pipeline
-      - ./mysql-connector-j-9.4.0.jar:/usr/share/logstash/mysql-connector-j-9.4.0.jar
+      - ./drivers:/usr/share/logstash/drivers # mount folder chứa mysql-connector
     depends_on:
       - elasticsearch
     networks:
