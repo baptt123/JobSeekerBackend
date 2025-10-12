@@ -4,6 +4,7 @@ import { Roles } from '../decorator/role.decorator';
 import { RolesGuard } from '../guard/role-auth.guard';
 import { SearchJobDto } from '../dto/search-job.dto';
 import { JwtAuthGuard } from '../guard/jwt-auth.guard';
+import { FilterJobDto } from '../dto/filter-job.dto';
 
 @Controller('job')
 export class JobController {
@@ -31,5 +32,9 @@ export class JobController {
   // @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async suggestJobs(@Query('q') q: string) {
     return this.jobService.suggestJobs(q);
+  }
+  @Get('filter')
+  async filterJobs(@Query() dto: FilterJobDto) {
+    return this.jobService.filterJobs(dto);
   }
 }

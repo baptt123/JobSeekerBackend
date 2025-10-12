@@ -4,7 +4,8 @@ import { UserEntity } from '../entity/user.entity';
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException, NotFoundException,
+  InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterDto } from '../dto/register.dto';

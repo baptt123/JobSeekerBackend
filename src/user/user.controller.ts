@@ -3,8 +3,10 @@ import {
   Controller,
   Param,
   ParseIntPipe,
-  Put, Req,
-  UploadedFile, UseGuards,
+  Put,
+  Req,
+  UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';

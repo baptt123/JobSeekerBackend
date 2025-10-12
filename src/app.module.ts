@@ -27,6 +27,8 @@ import { SkillEntity } from './entity/skill.entity';
 import { UserCVEntity } from './entity/user-cv.entity';
 import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { GenAIModule } from 'nestjs-genai';
+import { CallHistoryEntity } from './entity/call-history.entity';
+import { LivekitCustomModule } from './livekit-custom/livekit-custom.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -57,6 +59,7 @@ import { GenAIModule } from 'nestjs-genai';
         SavedJobEntity,
         SkillEntity,
         UserCVEntity,
+        CallHistoryEntity,
       ],
       autoLoadEntities: true,
       synchronize: true, // chỉ bật true khi dev
@@ -91,6 +94,7 @@ import { GenAIModule } from 'nestjs-genai';
     MessageModule,
     GenerateCvModule,
     CloudinaryCustomModule,
+    LivekitCustomModule,
   ],
   providers: [
     {

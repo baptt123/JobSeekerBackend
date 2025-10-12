@@ -7,6 +7,7 @@ import { UserCVEntity } from '../entity/user-cv.entity';
 import { JobDto } from '../dto/job.dto';
 import { Client } from '@elastic/elasticsearch';
 import { SearchJobDto } from '../dto/search-job.dto';
+import { FilterJobDto } from '../dto/filter-job.dto';
 
 @Injectable()
 export class JobService {
@@ -171,5 +172,64 @@ export class JobService {
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access
     return hits.hits.map((hit: any) => hit._source.title);
+  }
+  async filterJobs(dto: FilterJobDto) {
+    const { location, salary_min, salary_max, job_type, size } = dto;
+
+    try {
+      const must: any[] = [];
+
+      // Lọc theo địa điểm
+      if (location) {
+        must.push({
+          match_phrase: { location },
+        });
+      }
+
+      // Lọc theo mức lương
+      if (salary_min || salary_max) {
+        const range: any = {};
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (salary_min) range.gte = salary_min;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (salary_max) range.lte = salary_max;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        must.push({ range: { salary_min: range } });
+      }
+
+      // Lọc theo loại hình công việc
+      if (job_type) {
+        must.push({
+          term: { type: job_type },
+        });
+      }
+
+      const result = await this.esClient.search({
+        index: 'jobs',
+        size: size || 20,
+        query: { bool: { must } },
+        sort: [{ salary_min: { order: 'desc' } }],
+      });
+
+      const hits = result.hits?.hits || [];
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return hits.map((hit: any) => ({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+        id: hit._id,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        ...hit._source,
+      }));
+    } catch (error) {
+      console.error('🔴 Elasticsearch filter error:', error);
+      throw new Error(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
+        error.meta?.body?.error?.reason ||
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          error.meta?.body?.error?.caused_by?.reason ||
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          error.message,
+      );
+    }
   }
 }

@@ -34,7 +34,23 @@ services:
       - elasticsearch
     networks:
       - elk
-
+    # === LIVEKIT SERVER ===
+#  livekit:
+#    image: livekit/livekit-server:latest
+#    container_name: livekit
+#    restart: unless-stopped
+#    environment:
+#      LIVEKIT_KEYS: "devkey: secret"
+#      LIVEKIT_ANNOUNCE_URL: "http://192.168.67.109:7880"
+#      LIVEKIT_LOG_LEVEL: info
+#      LIVEKIT_WEBRTC_UDP_PORT: 5349
+#      LIVEKIT_TURN_ENABLED: "true"
+#    ports:
+#      - '7880:7880' # HTTP / WebSocket
+#      - '7881:7881' # gRPC (optional)
+#      - '5349:5349/udp' # TURN / ICE UDP
+#    networks:
+#      - elk
 networks:
   elk:
     driver: bridge
