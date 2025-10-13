@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LivekitCustomService } from './livekit-custom.service';
+import { ZoomService } from './zoom.service';
 
-describe('LivekitCustomService', () => {
-  let service: LivekitCustomService;
+describe('ZoomService', () => {
+  let service: ZoomService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [LivekitCustomService],
+      providers: [ZoomService],
     }).compile();
 
-    service = module.get<LivekitCustomService>(LivekitCustomService);
+    service = module.get<ZoomService>(ZoomService);
   });
 
   it('should be defined', () => {

@@ -28,7 +28,7 @@ import { UserCVEntity } from './entity/user-cv.entity';
 import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { GenAIModule } from 'nestjs-genai';
 import { CallHistoryEntity } from './entity/call-history.entity';
-import { LivekitCustomModule } from './livekit-custom/livekit-custom.module';
+import { ZoomModule } from './zoom/zoom.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -94,7 +94,7 @@ import { LivekitCustomModule } from './livekit-custom/livekit-custom.module';
     MessageModule,
     GenerateCvModule,
     CloudinaryCustomModule,
-    LivekitCustomModule,
+    ZoomModule,
   ],
   providers: [
     {
