@@ -37,4 +37,8 @@ export class JobController {
   async filterJobs(@Query() dto: FilterJobDto) {
     return this.jobService.filterJobs(dto);
   }
+  @Get('detail/:title')
+  async getJobDetail(@Query('title') title: string) {
+    return this.jobService.getJobDetail(title);
+  }
 }

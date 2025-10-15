@@ -18,7 +18,6 @@ export class MessageEntity {
   @Column()
   sender_id: number;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   @ManyToOne(() => UserEntity, (user) => user.sentMessages, {
     onDelete: 'CASCADE',
   })

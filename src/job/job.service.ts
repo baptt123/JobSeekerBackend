@@ -232,4 +232,10 @@ export class JobService {
       );
     }
   }
+  async getJobDetail(title: string): Promise<JobEntity | null> {
+    return await this.jobRepo.findOne({
+      where: { title },
+      relations: ['company', 'postedBy'], // nếu bạn có định nghĩa trong entity
+    });
+  }
 }

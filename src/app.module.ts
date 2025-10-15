@@ -10,7 +10,6 @@ import { GlobalExceptionFilter } from './exception/global-exception.filter';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { JobEntity } from './entity/job.entity';
-import { MessageModule } from './message/message.module';
 import { GenerateCvModule } from './cv/generate-cv.module';
 import { CloudinaryCustomModule } from './cloudinary-custom/cloudinary-custom.module';
 import { JobModule } from './job/job.module';
@@ -29,6 +28,7 @@ import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { GenAIModule } from 'nestjs-genai';
 import { CallHistoryEntity } from './entity/call-history.entity';
 import { ZoomModule } from './zoom/zoom.module';
+import { MessageModule } from './message/message.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
