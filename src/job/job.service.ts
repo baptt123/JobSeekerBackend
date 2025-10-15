@@ -1,5 +1,9 @@
 // job.service.ts
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JobEntity } from '../entity/job.entity';
@@ -8,6 +12,8 @@ import { JobDto } from '../dto/job.dto';
 import { Client } from '@elastic/elasticsearch';
 import { SearchJobDto } from '../dto/search-job.dto';
 import { FilterJobDto } from '../dto/filter-job.dto';
+import { SavedJobDto } from '../dto/save-job.dto';
+import { SavedJobEntity } from '../entity/save_job.entity';
 
 @Injectable()
 export class JobService {
@@ -16,6 +22,9 @@ export class JobService {
   constructor(
     @InjectRepository(JobEntity) private jobRepo: Repository<JobEntity>,
     @InjectRepository(UserCVEntity) private cvRepo: Repository<UserCVEntity>,
+    @InjectRepository(SavedJobEntity)
+    private savedJobRepo: Repository<SavedJobEntity>,
+    @InjectRepository(UserCVEntity) private userRepo: Repository<UserCVEntity>,
   ) {
     this.esClient = new Client({ node: 'http://localhost:9200' });
   }
@@ -173,6 +182,7 @@ export class JobService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access
     return hits.hits.map((hit: any) => hit._source.title);
   }
+
   async filterJobs(dto: FilterJobDto) {
     const { location, salary_min, salary_max, job_type, size } = dto;
 
@@ -232,10 +242,47 @@ export class JobService {
       );
     }
   }
+
   async getJobDetail(title: string): Promise<JobEntity | null> {
     return await this.jobRepo.findOne({
       where: { title },
       relations: ['company', 'postedBy'], // nếu bạn có định nghĩa trong entity
+    });
+  }
+
+  async saveJob(createSavedJobDto: SavedJobDto): Promise<SavedJobEntity> {
+    const { user_id, job_id } = createSavedJobDto;
+
+    const user = await this.userRepo.findOne({ where: { user_id } });
+    const job = await this.jobRepo.findOne({ where: { job_id } });
+
+    if (!user || !job) {
+      throw new NotFoundException('User hoặc Job không tồn tại');
+    }
+
+    const existed = await this.savedJobRepo.findOne({
+      where: { user: { user_id }, job: { job_id } },
+    });
+    if (existed) {
+      throw new ConflictException('Công việc này đã được lưu trước đó');
+    }
+
+    const savedJob = this.savedJobRepo.create({ user, job });
+    return await this.savedJobRepo.save(savedJob);
+  }
+
+  async getSavedJobs(userId: number): Promise<SavedJobEntity[]> {
+    return await this.savedJobRepo.find({
+      where: { user: { user_id: userId } },
+      relations: ['job', 'job.company'],
+      order: { saved_at: 'DESC' },
+    });
+  }
+
+  async removeSavedJob(userId: number, jobId: number): Promise<void> {
+    await this.savedJobRepo.delete({
+      user: { user_id: userId },
+      job: { job_id: jobId },
     });
   }
 }
