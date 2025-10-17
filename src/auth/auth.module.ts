@@ -7,6 +7,9 @@ import { UserModule } from '../user/user.module';
 import { AuthService } from './auth.service';
 import { JwtRefreshTokenStrategy } from '../strategies/jwt-refresh-token-strategy';
 import { AuthController } from './auth.controller';
+import { FirebaseModuleModule } from '../firebase-module/firebase-module.module';
+import { FirebaseAuthStrategy } from '../strategies/firebase-auth.strategy';
+
 @Module({
   imports: [
     UserModule,
@@ -15,9 +18,15 @@ import { AuthController } from './auth.controller';
       secret: process.env.JWT_ACCESS_TOKEN_SECRET || 'access-secret',
       signOptions: { expiresIn: '15m' },
     }),
+    FirebaseModuleModule,
   ],
-  providers: [AuthService, JwtStrategy, JwtRefreshTokenStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtRefreshTokenStrategy,
+    FirebaseAuthStrategy,
+  ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, PassportModule],
 })
 export class AuthModule {}

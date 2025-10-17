@@ -2,6 +2,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   Put,
   Req,
@@ -17,10 +18,14 @@ import { LoginDto } from '../dto/login.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { Roles } from '../decorator/role.decorator';
 import { JwtAuthGuard } from '../guard/jwt-auth.guard';
+import { FirebaseAuthGuard } from '../guard/firebase-auth.guard';
+import { GetUser } from '../decorator/get-user.decorator';
+import * as auth from 'firebase-admin/auth';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
   @Post('register')
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async signup(@Body() dto: RegisterDto) {
@@ -28,6 +33,7 @@ export class AuthController {
     console.log('Body:', JSON.stringify(dto));
     return await this.authService.createUser(dto);
   }
+
   @Put('update-password')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
@@ -41,6 +47,7 @@ export class AuthController {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
     return this.authService.updatePassword(req.user.userId, dto);
   }
+
   @Put('forgot-password')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
@@ -48,6 +55,7 @@ export class AuthController {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
     return this.authService.forgotPassword(req.user.email);
   }
+
   @Post('login')
   async login(
     @Body(new ValidationPipe({ whitelist: true, transform: true }))
@@ -55,8 +63,22 @@ export class AuthController {
   ) {
     return this.authService.login(dto);
   }
+
   @Post('refresh')
   async refresh(@Body() refreshToken: RefreshTokenDto) {
     return this.authService.refreshToken(refreshToken);
+  }
+
+  @Get('profile')
+  @UseGuards(FirebaseAuthGuard) // ✨ Bảo vệ route này
+  getProfile(@GetUser() user: auth.DecodedIdToken): any {
+    // Nhờ @GetUser, chúng ta có thể truy cập thẳng vào thông tin người dùng
+    // đã được xác thực từ token.
+    console.log(user);
+    return {
+      message: `Hello, this is a protected route!`,
+      userId: user.uid,
+      email: user.email,
+    };
   }
 }

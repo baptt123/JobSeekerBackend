@@ -29,6 +29,7 @@ import { GenAIModule } from 'nestjs-genai';
 import { CallHistoryEntity } from './entity/call-history.entity';
 import { ZoomModule } from './zoom/zoom.module';
 import { MessageModule } from './message/message.module';
+import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -60,6 +61,7 @@ import { MessageModule } from './message/message.module';
         SkillEntity,
         UserCVEntity,
         CallHistoryEntity,
+        ConfigModule,
       ],
       autoLoadEntities: true,
       synchronize: true, // chỉ bật true khi dev
@@ -95,6 +97,7 @@ import { MessageModule } from './message/message.module';
     GenerateCvModule,
     CloudinaryCustomModule,
     ZoomModule,
+    FirebaseModuleModule,
   ],
   providers: [
     {
