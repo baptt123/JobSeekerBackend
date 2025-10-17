@@ -34,46 +34,6 @@ export class AuthService {
   async forgotPassword(email: string): Promise<{ message: string }> {
     return this.usersService.forgotPassword(email);
   }
-
-  // async login(dto: LoginDto) {
-  //   const user = await this.usersService.userRepo.findOne({
-  //     where: { email: dto.email },
-  //     relations: ['role'], // 👈 thêm dòng này
-  //   });
-  //   if (!user) throw new UnauthorizedException('Không tìm thấy người dùng');
-  //
-  //   const match = await bcrypt.compare(dto.password, user.password_hash);
-  //   console.log(match);
-  //   if (!match) throw new UnauthorizedException('Mật khẩu không đúng');
-  //
-  //   const payload = {
-  //     sub: user.user_id,
-  //     email: user.email,
-  //     role: user.role.role_name,
-  //   };
-  //
-  //   const accessToken = await this.jwtService.signAsync(payload, {
-  //     secret: process.env.JWT_ACCESS_SECRET,
-  //     expiresIn: process.env.JWT_ACCESS_EXPIRATION,
-  //   });
-  //
-  //   const refreshToken = await this.jwtService.signAsync(payload, {
-  //     secret: process.env.JWT_REFRESH_SECRET,
-  //     expiresIn: process.env.JWT_REFRESH_EXPIRATION,
-  //   });
-  //
-  //   return {
-  //     message: 'Đăng nhập thành công',
-  //     accessToken,
-  //     refreshToken,
-  //     user: {
-  //       id: user.user_id,
-  //       email: user.email,
-  //       fullName: user.full_name,
-  //       role: user.role_id,
-  //     },
-  //   };
-  // }
   async login(dto: LoginDto) {
     try {
       // Lấy user từ DB, kèm role
