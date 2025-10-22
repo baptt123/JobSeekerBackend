@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '../guard/jwt-auth.guard';
 import { FirebaseAuthGuard } from '../guard/firebase-auth.guard';
 import { GetUser } from '../decorator/get-user.decorator';
 import * as auth from 'firebase-admin/auth';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -49,11 +50,8 @@ export class AuthController {
   }
 
   @Put('forgot-password')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  async forgotPassword(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
-    return this.authService.forgotPassword(req.user.email);
+  async forgotPassword(@Body() forgotPasswordDTO: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDTO.email);
   }
 
   @Post('login')

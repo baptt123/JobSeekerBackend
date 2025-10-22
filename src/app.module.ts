@@ -28,8 +28,9 @@ import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { GenAIModule } from 'nestjs-genai';
 import { CallHistoryEntity } from './entity/call-history.entity';
 import { ZoomModule } from './zoom/zoom.module';
-import { MessageModule } from './message/message.module';
 import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
+import { MessageModule } from './message/message.module';
+import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -55,7 +56,6 @@ import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
         JobApplicationEntity,
         JobSkillEntity,
         KeywordEntity,
-        MessageEntity,
         NotificationEntity,
         SavedJobEntity,
         SkillEntity,
@@ -93,11 +93,12 @@ import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
     UserModule,
     AuthModule,
     JobModule,
-    MessageModule,
     GenerateCvModule,
     CloudinaryCustomModule,
     ZoomModule,
     FirebaseModuleModule,
+    MessageModule,
+    ChatModule,
   ],
   providers: [
     {

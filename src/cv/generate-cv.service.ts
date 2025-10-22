@@ -5,7 +5,6 @@ import { UserEntity } from '../entity/user.entity';
 import { KeywordEntity } from '../entity/keyword.entity';
 import { CVKeywordEntity } from '../entity/cv-keyword.entity';
 import { Repository } from 'typeorm';
-import puppeteer from 'puppeteer';
 import { JobEntity } from '../entity/job.entity';
 import { CreateUserCvDto } from '../dto/create-cv.dto';
 import { GoogleGenAI } from '@google/genai';
@@ -26,19 +25,36 @@ export class GenerateCvService {
     @InjectRepository(JobEntity)
     private readonly jobRepository: Repository<JobEntity>,
   ) {
-    this.ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+    this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 
   async getCvHtml(prompt: string): Promise<string> {
+    // Thêm console.log để xem prompt gửi đi
+    console.log('[AI_DEBUG] Prompt gửi đi:', prompt);
+
     const response = await this.ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: { thinkingConfig: { thinkingBudget: 0 } },
     });
 
+    // --- PHẦN DEBUG QUAN TRỌNG NHẤT ---
+    // In toàn bộ nội dung response ra để kiểm tra
+    console.log(
+      '[AI_DEBUG] Response thô từ Google:',
+      JSON.stringify(response, null, 2), // Dùng JSON.stringify để xem cấu trúc
+    );
+
+    // Lấy text
     const html = response.text?.trim();
+
+    // In text đã được trim ra
+    console.log('[AI_DEBUG] Text đã trích xuất:', html);
+    // --- KẾT THÚC DEBUG ---
+
     if (!html || !html.startsWith('<!DOCTYPE html>')) {
-      throw new Error('AI không trả về HTML hợp lệ');
+      // Bạn có thể thêm nội dung lỗi vào đây để rõ hơn
+      throw new Error('AI không trả về HTML hợp lệ. Nội dung trả về: ' + html);
     }
     return html;
   }

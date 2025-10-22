@@ -83,40 +83,6 @@ export class JobService {
     }));
   }
 
-  // async searchJobs(dto: SearchJobDto) {
-  //   const { query, size } = dto;
-  //
-  //   const { hits } = await this.esClient.search({
-  //     index: 'jobs',
-  //     size,
-  //     query: {
-  //       multi_match: {
-  //         query,
-  //         fields: ['title', 'description', 'requirements', 'location'],
-  //         fuzziness: 'AUTO',
-  //       },
-  //     },
-  //     highlight: {
-  //       fields: {
-  //         title: {},
-  //         description: {},
-  //       },
-  //     },
-  //   });
-  //
-  //   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  //   return hits.hits.map((hit: any) => ({
-  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-  //     id: hit._id,
-  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-  //     score: hit._score,
-  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  //     ...hit._source,
-  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-  //     highlight: hit.highlight,
-  //   }));
-  // }
-
   async searchJobs(dto: SearchJobDto) {
     const { query, size } = dto;
 
@@ -284,5 +250,50 @@ export class JobService {
       user: { user_id: userId },
       job: { job_id: jobId },
     });
+  }
+
+  /*
+code hiển thị job cho homepage
+ */
+  async displayJob(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{
+    data: JobDto[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const [jobs, total] = await this.jobRepo
+      .createQueryBuilder('job')
+      .leftJoinAndSelect('job.company', 'company')
+      .leftJoinAndSelect('job.jobSkills', 'jobSkill')
+      .leftJoinAndSelect('jobSkill.skill', 'skill')
+      .orderBy('job.created_at', 'DESC') // sắp xếp mới nhất lên đầu
+      .skip((page - 1) * limit) // bỏ qua số lượng bản ghi tương ứng trang trước
+      .take(limit) // giới hạn số lượng bản ghi mỗi trang
+      .getManyAndCount();
+
+    // Chuyển đổi sang DTO để trả về frontend
+    const data = jobs.map((job) => ({
+      job_id: job.job_id,
+      title: job.title,
+      description: job.description,
+      requirements: job.requirements,
+      salary_min: job.salary_min,
+      salary_max: job.salary_max,
+      location: job.location,
+      job_type: job.job_type,
+      company_name: job.company?.name ?? null,
+      skills: job.jobSkills?.map((js) => js.skill.skill_name) ?? [],
+      created_at: job.created_at,
+    }));
+
+    return {
+      data,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }
