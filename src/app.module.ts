@@ -19,7 +19,6 @@ import { CVKeywordEntity } from './entity/cv-keyword.entity';
 import { JobApplicationEntity } from './entity/job-application.entity';
 import { JobSkillEntity } from './entity/job-skill.entity';
 import { KeywordEntity } from './entity/keyword.entity';
-import { MessageEntity } from './entity/messages.entity';
 import { NotificationEntity } from './entity/notification.entity';
 import { SavedJobEntity } from './entity/save_job.entity';
 import { SkillEntity } from './entity/skill.entity';
@@ -29,8 +28,8 @@ import { GenAIModule } from 'nestjs-genai';
 import { CallHistoryEntity } from './entity/call-history.entity';
 import { ZoomModule } from './zoom/zoom.module';
 import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
+import { MessageEntity } from './entity/messages.entity';
 import { MessageModule } from './message/message.module';
-import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -62,6 +61,7 @@ import { ChatModule } from './chat/chat.module';
         UserCVEntity,
         CallHistoryEntity,
         ConfigModule,
+        MessageEntity,
       ],
       autoLoadEntities: true,
       synchronize: true, // chỉ bật true khi dev
@@ -98,7 +98,6 @@ import { ChatModule } from './chat/chat.module';
     ZoomModule,
     FirebaseModuleModule,
     MessageModule,
-    ChatModule,
   ],
   providers: [
     {

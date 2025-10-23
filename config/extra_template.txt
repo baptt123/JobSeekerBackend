@@ -1,0 +1,3 @@
+<!--<p><strong>{{token}}</strong></p>-->
+<!--<p><a href='{{resetLink}}'>Đặt lại mật khẩu</a></p>-->
+<!--<p>Hoặc sao chép đoạn token bên dưới để nhập thủ công:</p>-->

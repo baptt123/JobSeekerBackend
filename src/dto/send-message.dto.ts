@@ -1,11 +1,17 @@
-// src/chat/dto/chat.dto.ts
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+// src/messages/dto/send-message.dto.ts
+import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
-// DTO để gửi tin nhắn qua WebSocket
 export class SendMessageDto {
-  @IsNumber()
-  @IsNotEmpty()
-  receiverId: number;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  sender_id: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  receiver_id: number;
 
   @IsString()
   @IsNotEmpty()
