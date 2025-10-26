@@ -8,7 +8,7 @@ import express from 'express';
 import {
   Body,
   Controller,
-  Get,
+  Get, HttpCode,
   HttpStatus,
   Post,
   Req,
@@ -33,6 +33,7 @@ export class GenerateCvController {
   // @Roles('ADMIN', 'RECRUITER', 'USER')
 
   @Post('gen-cv')
+  @HttpCode(200)
   public async generateCv(
     @Body(new ValidationPipe({ whitelist: true, transform: true }))
     dto: GenerateCvDto,

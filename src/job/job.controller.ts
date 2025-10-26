@@ -2,7 +2,7 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
+  Get, HttpCode,
   Param,
   Post,
   Query,
@@ -53,7 +53,8 @@ export class JobController {
   }
 
   @Get('detail/:title')
-  async getJobDetail(@Query('title') title: string) {
+  @HttpCode(200)
+  async getJobDetail(@Param('title') title: string) {
     return this.jobService.getJobDetail(title);
   }
 
