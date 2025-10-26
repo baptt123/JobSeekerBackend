@@ -9,7 +9,8 @@ import {
   ParseIntPipe,
   UsePipes,
   ValidationPipe,
-  NotFoundException, HttpCode,
+  NotFoundException,
+  HttpCode,
 } from '@nestjs/common';
 import { MessagesService } from './message.service';
 import { SendMessageDto } from '../dto/send-message.dto';
