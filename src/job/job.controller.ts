@@ -2,8 +2,11 @@ import {
   Body,
   Controller,
   Delete,
-  Get, HttpCode,
+  Get,
+  HttpCode,
+  HttpStatus,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   Req,
@@ -15,8 +18,8 @@ import { RolesGuard } from '../guard/role-auth.guard';
 import { SearchJobDto } from '../dto/search-job.dto';
 import { JwtAuthGuard } from '../guard/jwt-auth.guard';
 import { FilterJobDto } from '../dto/filter-job.dto';
-import { SavedJobDto } from '../dto/save-job.dto';
 import { JobDto } from '../dto/job.dto';
+import { SaveJobDto } from '../dto/save-job.dto';
 
 @Controller('job')
 export class JobController {
@@ -48,6 +51,7 @@ export class JobController {
   }
 
   @Get('filter')
+  @HttpCode(200)
   async filterJobs(@Query() dto: FilterJobDto) {
     return this.jobService.filterJobs(dto);
   }
@@ -57,24 +61,6 @@ export class JobController {
   async getJobDetail(@Param('title') title: string) {
     return this.jobService.getJobDetail(title);
   }
-
-  @Post('create-save-job')
-  async saveJob(@Body() createSavedJobDto: SavedJobDto) {
-    return await this.jobService.saveJob(createSavedJobDto);
-  }
-
-  @Get('get-saved-jobs')
-  async getSavedJobs(@Req() user: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
-    return await this.jobService.getSavedJobs(user.userId);
-  }
-
-  @Delete('remove-job/:jobId')
-  async removeSavedJob(@Req() user: any, @Param('jobId') jobId: number) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
-    return await this.jobService.removeSavedJob(user.userId, jobId);
-  }
-
   @Get('get-all-jobs')
   async getAllJobs(
     @Query('page') page: number = 1,
@@ -90,5 +76,24 @@ export class JobController {
     const pageLimit = Number(limit) > 0 ? Number(limit) : 10;
 
     return await this.jobService.displayJob(currentPage, pageLimit);
+  }
+  /*
+dùng cho save job
+ */
+  @Post('create-save-job')
+  @HttpCode(HttpStatus.CREATED)
+  saveJob(@Body() saveJobDto: SaveJobDto) {
+    return this.jobService.saveJob(1, saveJobDto.job_id);
+  }
+
+  @Get('get-my-saved-jobs')
+  getMySavedJobs() {
+    return this.jobService.getMySavedJobs(1);
+  }
+
+  @Delete('delete-job:job_id')
+  @HttpCode(HttpStatus.NO_CONTENT) // Trả về 204 No Content khi xóa thành công
+  unsaveJob(@Param('job_id', ParseIntPipe) jobId: number) {
+    return this.jobService.unsaveJob(1, jobId);
   }
 }

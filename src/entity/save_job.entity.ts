@@ -4,6 +4,7 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
+  DeleteDateColumn, // 1. Import thêm
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { JobEntity } from './job.entity';
@@ -19,7 +20,6 @@ export class SavedJobEntity {
   @CreateDateColumn()
   saved_at: Date;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   @ManyToOne(() => UserEntity, (user) => user.savedJobs, {
     onDelete: 'CASCADE',
   })
@@ -29,4 +29,7 @@ export class SavedJobEntity {
   @ManyToOne(() => JobEntity, (job) => job.savedJobs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
   job: JobEntity;
+
+  @DeleteDateColumn()
+  deleted_at: null; // ✅ SỬA LẠI
 }

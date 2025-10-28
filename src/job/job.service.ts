@@ -12,7 +12,6 @@ import { JobDto } from '../dto/job.dto';
 import { Client } from '@elastic/elasticsearch';
 import { SearchJobDto } from '../dto/search-job.dto';
 import { FilterJobDto } from '../dto/filter-job.dto';
-import { SavedJobDto } from '../dto/save-job.dto';
 import { SavedJobEntity } from '../entity/save_job.entity';
 
 @Injectable()
@@ -150,62 +149,91 @@ export class JobService {
   }
 
   async filterJobs(dto: FilterJobDto) {
-    const { location, salary_min, salary_max, job_type, size } = dto;
+    // Destructure với giá trị size mặc định
+    const { location, salary_min, salary_max, job_type, size = 20 } = dto;
 
     try {
-      const must: any[] = [];
+      const filter: any[] = [];
 
-      // Lọc theo địa điểm
+      // Lọc theo địa điểm (ĐÃ SỬA)
+      // Dùng "location.keyword" để so khớp chính xác (exact match)
+      // Điều này nhanh hơn và đáng tin cậy hơn "match_phrase" cho việc lọc.
       if (location) {
-        must.push({
-          match_phrase: { location },
+        filter.push({
+          term: { 'location.keyword': location },
         });
       }
 
-      // Lọc theo mức lương
-      if (salary_min || salary_max) {
-        const range: any = {};
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (salary_min) range.gte = salary_min;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (salary_max) range.lte = salary_max;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        must.push({ range: { salary_min: range } });
-      }
-
-      // Lọc theo loại hình công việc
+      // Lọc theo loại hình công việc (ĐÃ SỬA)
+      // Dùng "job_type.keyword" để so khớp chính xác.
+      // Dùng "term" trên trường "job_type" (text) sẽ thất bại.
       if (job_type) {
-        must.push({
-          term: { type: job_type },
+        filter.push({
+          term: { 'job_type.keyword': job_type },
         });
       }
+
+      // --- Logic Lọc Lương (Giữ nguyên, logic đã tốt) ---
+
+      // Khi user đặt LƯƠNG TỐI ĐA
+      // Tìm các job có salary_min <= mức user muốn
+      if (salary_max != null) {
+        filter.push({
+          range: { salary_min: { lte: salary_max } },
+        });
+      }
+
+      // Khi user đặt LƯƠNG TỐI THIỂU
+      // Tìm các job có (salary_max >= mức user muốn) HOẶC (salary_max = 0)
+      if (salary_min != null) {
+        filter.push({
+          bool: {
+            should: [
+              { range: { salary_max: { gte: salary_min } } },
+              { term: { salary_max: 0 } },
+            ],
+            minimum_should_match: 1, // Chỉ cần 1 trong 2 điều kiện đúng
+          },
+        });
+      }
+
+      // --- Kết thúc logic lương ---
 
       const result = await this.esClient.search({
         index: 'jobs',
-        size: size || 20,
-        query: { bool: { must } },
+        size: size, // Dùng 'size' đã destructure
+        query: {
+          bool: {
+            filter: filter, // Sử dụng 'filter' context
+          },
+        },
         sort: [{ salary_min: { order: 'desc' } }],
       });
 
       const hits = result.hits?.hits || [];
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return hits.map((hit: any) => ({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+      // Dọn dẹp lại phần map
+      // Code ĐÃ SỬA
+      return hits.map((hit) => ({
+        // <--- Xóa type ở 'hit'
         id: hit._id,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        ...hit._source,
+        ...(hit._source || {}),
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('🔴 Elasticsearch filter error:', error);
-      throw new Error(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
+
+      // Dọn dẹp lại logic báo lỗi
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const reason =
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         error.meta?.body?.error?.reason ||
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          error.meta?.body?.error?.caused_by?.reason ||
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          error.message,
-      );
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        error.meta?.body?.error?.caused_by?.reason ||
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        error.message ||
+        'Unknown filter error';
+
+      throw new Error(reason);
     }
   }
 
@@ -213,42 +241,6 @@ export class JobService {
     return await this.jobRepo.findOne({
       where: { title },
       relations: ['company', 'postedBy'], // nếu bạn có định nghĩa trong entity
-    });
-  }
-
-  async saveJob(createSavedJobDto: SavedJobDto): Promise<SavedJobEntity> {
-    const { user_id, job_id } = createSavedJobDto;
-
-    const user = await this.userRepo.findOne({ where: { user_id } });
-    const job = await this.jobRepo.findOne({ where: { job_id } });
-
-    if (!user || !job) {
-      throw new NotFoundException('User hoặc Job không tồn tại');
-    }
-
-    const existed = await this.savedJobRepo.findOne({
-      where: { user: { user_id }, job: { job_id } },
-    });
-    if (existed) {
-      throw new ConflictException('Công việc này đã được lưu trước đó');
-    }
-
-    const savedJob = this.savedJobRepo.create({ user, job });
-    return await this.savedJobRepo.save(savedJob);
-  }
-
-  async getSavedJobs(userId: number): Promise<SavedJobEntity[]> {
-    return await this.savedJobRepo.find({
-      where: { user: { user_id: userId } },
-      relations: ['job', 'job.company'],
-      order: { saved_at: 'DESC' },
-    });
-  }
-
-  async removeSavedJob(userId: number, jobId: number): Promise<void> {
-    await this.savedJobRepo.delete({
-      user: { user_id: userId },
-      job: { job_id: jobId },
     });
   }
 
@@ -295,5 +287,95 @@ code hiển thị job cho homepage
       page,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  /**
+   * Lưu hoặc khôi phục một job yêu thích
+   */
+  async saveJob(userId: number, jobId: number): Promise<SavedJobEntity> {
+    // 1. Kiểm tra xem job có tồn tại không
+    const job = await this.jobRepo.findOneBy({ job_id: jobId });
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    // 2. Thay đổi: Kiểm tra bản ghi (kể cả đã bị soft-delete)
+    const existing = await this.savedJobRepo.findOne({
+      where: {
+        user_id: userId,
+        job_id: jobId,
+      },
+      withDeleted: true, // Thêm tùy chọn này để tìm cả bản ghi đã soft-delete
+    });
+
+    if (existing) {
+      if (existing.deleted_at === null) {
+        // 2a. Đã lưu và chưa bị xóa -> Báo lỗi
+        throw new ConflictException('Job already saved');
+      } else {
+        // 2b. Đã lưu nhưng đã bị xóa -> Khôi phục lại
+        await this.savedJobRepo.restore({
+          user_id: userId,
+          job_id: jobId,
+        });
+        // Cập nhật lại ngày 'saved_at' nếu muốn, hoặc trả về bản ghi cũ
+        existing.deleted_at = null; // Cập nhật trạng thái
+        return existing;
+      }
+    }
+
+    // 3. Tạo và lưu bản ghi mới (nếu chưa từng tồn tại)
+    const newSavedJob = this.savedJobRepo.create({
+      user_id: userId,
+      job_id: jobId,
+    });
+
+    return this.savedJobRepo.save(newSavedJob);
+  }
+
+  /**
+   * Xóa mềm (soft-delete) một job khỏi danh sách yêu thích
+   */
+  async unsaveJob(userId: number, jobId: number): Promise<void> {
+    // 1. Thay đổi: Kiểm tra xem bản ghi có tồn tại (và chưa bị xóa) không
+    const record = await this.savedJobRepo.findOneBy({
+      user_id: userId,
+      job_id: jobId,
+      // Tự động lọc (deleted_at IS NULL)
+    });
+
+    // Nếu không tìm thấy (hoặc đã bị xóa rồi) -> Báo lỗi
+    if (!record) {
+      throw new NotFoundException('Saved job not found or already unsaved');
+    }
+
+    // 2. Thay đổi: Dùng softDelete thay vì delete
+    await this.savedJobRepo.softDelete({
+      user_id: userId,
+      job_id: jobId,
+    });
+  }
+
+  /**
+   * Lấy danh sách các JobEntity mà user đã lưu
+   */
+  async getMySavedJobs(userId: number): Promise<JobEntity[]> {
+    // === KHÔNG CẦN THAY ĐỔI ===
+    // TypeORM's find() sẽ tự động thêm `WHERE "deleted_at" IS NULL`
+    // vì chúng ta đã dùng @DeleteDateColumn() trong Entity.
+
+    const savedJobs = await this.savedJobRepo.find({
+      where: { user_id: userId },
+      relations: {
+        job: true,
+      },
+      order: {
+        saved_at: 'DESC',
+      },
+    });
+
+    return savedJobs
+      .map((savedJob) => savedJob.job)
+      .filter((job) => job != null);
   }
 }
