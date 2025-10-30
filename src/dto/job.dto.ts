@@ -51,4 +51,9 @@ export class JobDto {
   @IsDate()
   @Type(() => Date)
   created_at: Date;
+
+  // --- TRƯỜNG MỚI ---
+  @IsOptional() // Thêm trường mới cho logo
+  @IsString()
+  logo_url?: string | null;
 }

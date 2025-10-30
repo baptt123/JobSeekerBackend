@@ -16,7 +16,6 @@ export class NotificationEntity {
   @Column()
   user_id: number;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   @ManyToOne(() => UserEntity, (user) => user.notifications, {
     onDelete: 'CASCADE',
   })

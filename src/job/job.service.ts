@@ -279,6 +279,7 @@ code hiển thị job cho homepage
       company_name: job.company?.name ?? null,
       skills: job.jobSkills?.map((js) => js.skill.skill_name) ?? [],
       created_at: job.created_at,
+      logo_url: job.company?.logo_url ?? null,
     }));
 
     return {
