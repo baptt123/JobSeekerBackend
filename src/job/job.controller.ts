@@ -59,7 +59,7 @@ export class JobController {
   @Get('detail/:title')
   @HttpCode(200)
   async getJobDetail(@Param('title') title: string) {
-    return this.jobService.getJobDetail(title);
+    return this.jobService.findJobDetail(title, 1);
   }
   @Get('get-all-jobs')
   async getAllJobs(

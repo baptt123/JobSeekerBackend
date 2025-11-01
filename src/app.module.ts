@@ -29,8 +29,8 @@ import { CallHistoryEntity } from './entity/call-history.entity';
 import { ZoomModule } from './zoom/zoom.module';
 import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
 import { MessageEntity } from './entity/messages.entity';
-import { MessageModule } from './message/message.module';
 import { JobApplicationModule } from './job-application/job-application.module';
+import { MessageModule } from './message/message.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -98,8 +98,8 @@ import { JobApplicationModule } from './job-application/job-application.module';
     CloudinaryCustomModule,
     ZoomModule,
     FirebaseModuleModule,
-    MessageModule,
     JobApplicationModule,
+    MessageModule,
   ],
   providers: [
     {

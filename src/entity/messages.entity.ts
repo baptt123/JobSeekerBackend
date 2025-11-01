@@ -1,3 +1,4 @@
+// src/entity/messages.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -27,14 +28,14 @@ export class MessageEntity {
   @Column()
   receiver_id: number;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   @ManyToOne(() => UserEntity, (user) => user.receivedMessages, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'receiver_id' })
   receiver: UserEntity;
 
-  @Column('text')
+  // ✅ SỬA 1: Cho phép content là null (khi gửi ảnh)
+  @Column('text', { nullable: true })
   content: string;
 
   @Column('boolean', { default: false })
@@ -42,4 +43,16 @@ export class MessageEntity {
 
   @CreateDateColumn()
   sent_at: Date;
+
+  // ✅ THÊM 1: Thêm cột lưu URL ảnh (giống logo_url [cite: 5])
+  @Column({ length: 500, nullable: true })
+  image_url: string;
+
+  // ✅ THÊM 2: Thêm cột loại tin nhắn
+  @Column({
+    type: 'enum',
+    enum: ['text', 'image'],
+    default: 'text',
+  })
+  message_type: 'text' | 'image';
 }

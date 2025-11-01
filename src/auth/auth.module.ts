@@ -16,7 +16,7 @@ import { FirebaseAuthStrategy } from '../strategies/firebase-auth.strategy';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_ACCESS_TOKEN_SECRET || 'access-secret',
-      signOptions: { expiresIn: '15m' },
+      signOptions: { expiresIn: process.env.JWT_ACCESS_EXPIRATION || '15m' },
     }),
     FirebaseModuleModule,
   ],
@@ -27,6 +27,6 @@ import { FirebaseAuthStrategy } from '../strategies/firebase-auth.strategy';
     FirebaseAuthStrategy,
   ],
   controllers: [AuthController],
-  exports: [AuthService, PassportModule],
+  exports: [AuthService, PassportModule, JwtModule],
 })
 export class AuthModule {}

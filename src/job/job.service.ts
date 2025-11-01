@@ -13,6 +13,7 @@ import { Client } from '@elastic/elasticsearch';
 import { SearchJobDto } from '../dto/search-job.dto';
 import { FilterJobDto } from '../dto/filter-job.dto';
 import { SavedJobEntity } from '../entity/save_job.entity';
+import { JobApplicationEntity } from '../entity/job-application.entity';
 
 @Injectable()
 export class JobService {
@@ -24,6 +25,8 @@ export class JobService {
     @InjectRepository(SavedJobEntity)
     private savedJobRepo: Repository<SavedJobEntity>,
     @InjectRepository(UserCVEntity) private userRepo: Repository<UserCVEntity>,
+    @InjectRepository(JobApplicationEntity)
+    private jobAppRepo: Repository<JobApplicationEntity>,
   ) {
     this.esClient = new Client({ node: 'http://localhost:9200' });
   }
@@ -237,11 +240,37 @@ export class JobService {
     }
   }
 
-  async getJobDetail(title: string): Promise<JobEntity | null> {
-    return await this.jobRepo.findOne({
-      where: { title },
-      relations: ['company', 'postedBy'], // nếu bạn có định nghĩa trong entity
+  // ⭐️ SỬA: Hàm lấy chi tiết job của bạn cần nhận thêm userId
+  async findJobDetail(
+    jobTitle: string,
+    userId: number,
+  ): Promise<JobEntity & { isApplied: boolean }> {
+    // Trả về kiểu kết hợp
+
+    // 1. Tìm công việc (giống như bạn đang làm)
+    const job = await this.jobRepo.findOne({
+      where: { title: jobTitle },
+      relations: ['company'], // Đảm bảo có 'company' vì frontend đang dùng
     });
+
+    if (!job) {
+      throw new NotFoundException('Không tìm thấy công việc');
+    }
+
+    // 2. ⭐️ LOGIC MỚI: Kiểm tra xem user đã apply chưa
+    const application = await this.jobAppRepo.findOne({
+      where: {
+        job_id: job.job_id, // [cite: 26]
+        user_id: userId, // [cite: 27]
+      },
+    });
+
+    // 3. Trả về job và cờ 'isApplied'
+    // Dùng !!application để chuyển đổi (entity/null) thành (true/false)
+    return {
+      ...job,
+      isApplied: !!application,
+    };
   }
 
   /*
