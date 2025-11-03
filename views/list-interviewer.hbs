@@ -1,0 +1,340 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>RisApps - List Kandidat</title>
+    <script src='https://cdn.tailwindcss.com'></script>
+    <script src='https://unpkg.com/lucide-dev'></script>
+
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8fafc; /* Màu nền xám nhạt */
+      }
+    </style>
+  </head>
+  <body class='bg-gray-50'>
+
+    <div class='flex h-screen'>
+      <aside class='w-64 bg-white border-r flex flex-col'>
+        <div class='p-6'>
+          <h1 class='text-3xl font-bold text-blue-600'>RisApps</h1>
+        </div>
+
+        <nav class='flex-1 px-4 py-2 space-y-2'>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100'
+          >
+            <i data-lucide='layout-grid' class='w-5 h-5'></i>
+            <span>Dashboard</span>
+          </a>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100'
+          >
+            <i data-lucide='users' class='w-5 h-5'></i>
+            <span>Departemen</span>
+          </a>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-4 py-2 text-blue-600 bg-blue-50 font-semibold rounded-lg'
+          >
+            <i data-lucide='clipboard-list' class='w-5 h-5'></i>
+            <span>List Kandidat</span>
+          </a>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100'
+          >
+            <i data-lucide='calendar-days' class='w-5 h-5'></i>
+            <span>Penjadwalan</span>
+          </a>
+
+          <div>
+            <button
+              class='w-full flex justify-between items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100'
+            >
+              <div class='flex items-center space-x-3'>
+                <i data-lucide='message-square' class='w-5 h-5'></i>
+                <span>Pesan</span>
+              </div>
+              <i data-lucide='chevron-down' class='w-4 h-4'></i>
+            </button>
+          </div>
+        </nav>
+
+        <div class='p-4 border-t'>
+          <div
+            class='flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer'
+          >
+            <div class='relative'>
+              <img
+                src='https://placehold.co/40x40/d1d5db/374151?text=M'
+                alt='Maria'
+                class='w-10 h-10 rounded-full'
+              />
+              <span
+                class='absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full'
+              ></span>
+            </div>
+            <div>
+              <div class='font-semibold'>Maria</div>
+              <div class='text-sm text-gray-500'>Live Chat</div>
+            </div>
+          </div>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-3 py-3 text-gray-700 rounded-lg hover:bg-gray-100 mt-2'
+          >
+            <i data-lucide='log-out' class='w-5 h-5 text-red-500'></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </aside>
+
+      <main class='flex-1 overflow-y-auto'>
+
+        <header class='bg-white border-b sticky top-0 z-10'>
+          <div class='flex justify-between items-center px-8 py-5'>
+            <div>
+              <h2 class='text-2xl font-semibold'>Selamat Datang,
+                {{tenNguoiDung}}</h2>
+              <p class='text-gray-500'>Semoga harimu cerah</p>
+            </div>
+            <div class='flex items-center space-x-6'>
+              <button class='text-gray-500 hover:text-gray-700'>
+                <i data-lucide='search' class='w-6 h-6'></i>
+              </button>
+              <button class='text-gray-500 hover:text-gray-700 relative'>
+                <i data-lucide='bell' class='w-6 h-6'></i>
+              </button>
+              <button
+                class='flex items-center space-x-2 text-gray-700 hover:text-black'
+              >
+                <img
+                  src='https://placehold.co/40x40/3b82f6/ffffff?text=J'
+                  alt='Jhon'
+                  class='w-10 h-10 rounded-full'
+                />
+                <span class='font-semibold'>{{tenNguoiDung}}</span>
+                <i data-lucide='chevron-down' class='w-4 h-4'></i>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div class='p-8'>
+
+          <div class='mb-6'>
+            <h3 class='text-2xl font-semibold'>List Kandidat</h3>
+            <p class='text-sm text-gray-500'>RisApps / List Kandidat</p>
+          </div>
+
+          <div
+            class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'
+          >
+            <div class='bg-white p-5 rounded-lg shadow-sm border col-span-1'>
+              <div class='flex justify-between items-center'>
+                <div>
+                  <div class='text-3xl font-bold text-gray-800'>10.000
+                    <span class='text-lg font-normal'>Pelamar</span></div>
+                  <div class='text-gray-600 mt-1'>Dalam Review</div>
+                  <div class='text-sm text-gray-400'>Juni 2023</div>
+                </div>
+                <button
+                  class='bg-gray-100 p-2 rounded-lg text-gray-500 hover:bg-gray-200'
+                >
+                  <i data-lucide='file-text' class='w-5 h-5'></i>
+                </button>
+              </div>
+            </div>
+            <div class='bg-white p-5 rounded-lg shadow-sm border col-span-1'>
+              <div class='flex justify-between items-center'>
+                <div>
+                  <div class='text-3xl font-bold text-gray-800'>800
+                    <span class='text-lg font-normal'>Pelamar</span></div>
+                  <div class='text-gray-600 mt-1'>Tidak Cocok</div>
+                  <div class='text-sm text-gray-400'>Juni 2023</div>
+                </div>
+                <button
+                  class='bg-gray-100 p-2 rounded-lg text-gray-500 hover:bg-gray-200'
+                >
+                  <i data-lucide='file-text' class='w-5 h-5'></i>
+                </button>
+              </div>
+            </div>
+            <div class='bg-white p-5 rounded-lg shadow-sm border col-span-1'>
+              <div class='flex justify-between items-center'>
+                <div>
+                  <div class='text-3xl font-bold text-gray-800'>800
+                    <span class='text-lg font-normal'>Pelamar</span></div>
+                  <div class='text-gray-600 mt-1'>Interview</div>
+                  <div class='text-sm text-gray-400'>Juni 2023</div>
+                </div>
+                <button
+                  class='bg-gray-100 p-2 rounded-lg text-gray-500 hover:bg-gray-200'
+                >
+                  <i data-lucide='file-text' class='w-5 h-5'></i>
+                </button>
+              </div>
+            </div>
+            <div class='bg-white p-5 rounded-lg shadow-sm border col-span-1'>
+              <div class='flex justify-between items-center'>
+                <div>
+                  <div class='text-3xl font-bold text-gray-800'>3000
+                    <span class='text-lg font-normal'>Pelamar</span></div>
+                  <div class='text-gray-600 mt-1'>Tahap Tes</div>
+                  <div class='text-sm text-gray-400'>Juni 2023</div>
+                </div>
+                <button
+                  class='bg-gray-100 p-2 rounded-lg text-gray-500 hover:bg-gray-200'
+                >
+                  <i data-lucide='file-text' class='w-5 h-5'></i>
+                </button>
+              </div>
+            </div>
+            <div class='bg-white p-5 rounded-lg shadow-sm border col-span-1'>
+              <div class='flex justify-between items-center'>
+                <div>
+                  <div class='text-3xl font-bold text-gray-800'>100
+                    <span class='text-lg font-normal'>Pelamar</span></div>
+                  <div class='text-gray-600 mt-1'>Tahap Offering</div>
+                  <div class='text-sm text-gray-400'>Juni 2023</div>
+                </div>
+                <button
+                  class='bg-gray-100 p-2 rounded-lg text-gray-500 hover:bg-gray-200'
+                >
+                  <i data-lucide='file-text' class='w-5 h-5'></i>
+                </button>
+              </div>
+            </div>
+            <div class='bg-white p-5 rounded-lg shadow-sm border col-span-1'>
+              <div class='flex justify-between items-center'>
+                <div>
+                  <div class='text-3xl font-bold text-gray-800'>100
+                    <span class='text-lg font-normal'>Pelamar</span></div>
+                  <div class='text-gray-600 mt-1'>Diterima</div>
+                  <div class='text-sm text-gray-400'>Juni 2023</div>
+                </div>
+                <button
+                  class='bg-gray-100 p-2 rounded-lg text-gray-500 hover:bg-gray-200'
+                >
+                  <i data-lucide='file-text' class='w-5 h-5'></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class='bg-white rounded-lg shadow-sm border overflow-hidden'>
+            <div class='flex justify-between items-center p-5 border-b'>
+              <div>
+                <h4 class='text-lg font-semibold'>Review All Kandidat</h4>
+                <p class='text-sm text-gray-500'>List terbaru berdasarkan
+                  tanggal apply</p>
+              </div>
+              <button
+                class='border border-gray-300 rounded-lg px-4 py-2 flex items-center space-x-2 text-gray-600 hover:bg-gray-50'
+              >
+                <span>Pending Interview</span>
+                <i data-lucide='sliders-horizontal' class='w-5 h-5'></i>
+              </button>
+            </div>
+
+            <table class='w-full'>
+              <thead class='bg-gray-50'>
+                <tr>
+                  <th class='p-4 text-left text-sm font-semibold text-gray-600'>
+                    <input
+                      type='checkbox'
+                      class='rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                    />
+                  </th>
+                  <th
+                    class='p-4 text-left text-sm font-semibold text-gray-600'
+                  >Nama</th>
+                  <th
+                    class='p-4 text-left text-sm font-semibold text-gray-600'
+                  >Departemen</th>
+                  <th
+                    class='p-4 text-left text-sm font-semibold text-gray-600'
+                  >Posisi</th>
+                  <th
+                    class='p-4 text-left text-sm font-semibold text-gray-600'
+                  >Waktu</th>
+                  <th
+                    class='p-4 text-left text-sm font-semibold text-gray-600'
+                  >Status</th>
+                  <th
+                    class='p-4 text-left text-sm font-semibold text-gray-600'
+                  >Actions</th>
+                </tr>
+              </thead>
+              <tbody class='divide-y divide-gray-200'>
+
+                {{#each ungVienList}}
+                  <tr>
+                    <td class='p-4'>
+                      <input
+                        type='checkbox'
+                        class='rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                      />
+                    </td>
+                    <td class='p-4'>
+                      <div class='flex items-center space-x-3'>
+                        <img
+                          src='{{this.avatar}}'
+                          alt='{{this.nama}}'
+                          class='w-10 h-10 rounded-full'
+                        />
+                        <div>
+                          <div
+                            class='font-medium text-gray-800'
+                          >{{this.nama}}</div>
+                          <div
+                            class='text-sm text-gray-500'
+                          >{{this.email}}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td
+                      class='p-4 text-sm text-gray-600'
+                    >{{this.departemen}}</td>
+                    <td class='p-4 text-sm text-gray-600'>{{this.posisi}}</td>
+                    <td class='p-4 text-sm text-gray-600'>
+                      <div>{{this.waktuTanggal}}</div>
+                      <div class='text-xs text-gray-400'>{{this.waktuJam}}</div>
+                    </td>
+                    <td class='p-4'>
+                      <span
+                        class='inline-flex items-center bg-orange-100 text-orange-600 text-xs font-medium px-2.5 py-0.5 rounded-full'
+                      >
+                        <span
+                          class='w-2 h-2 mr-1 bg-orange-500 rounded-full'
+                        ></span>
+                        {{this.status}}
+                      </span>
+                    </td>
+                    <td class='p-4'>
+                      <button
+                        class='flex items-center space-x-1.5 text-sm text-gray-600 hover:text-blue-600'
+                      >
+                        <i data-lucide='eye' class='w-4 h-4'></i>
+                        <span>Lihat Portfolio</span>
+                      </button>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </main>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

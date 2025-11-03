@@ -7,10 +7,7 @@ import { CloudinaryCustomService } from '../cloudinary-custom/cloudinary-custom.
 import { CloudinaryCustomModule } from '../cloudinary-custom/cloudinary-custom.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserEntity]),
-    CloudinaryCustomModule,
-  ],
+  imports: [TypeOrmModule.forFeature([UserEntity]), CloudinaryCustomModule],
   controllers: [UserController],
   providers: [UserService, CloudinaryCustomService],
   exports: [UserService],

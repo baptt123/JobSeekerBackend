@@ -31,6 +31,8 @@ import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
 import { MessageEntity } from './entity/messages.entity';
 import { JobApplicationModule } from './job-application/job-application.module';
 import { MessageModule } from './message/message.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -101,12 +103,14 @@ import { MessageModule } from './message/message.module';
     JobApplicationModule,
     MessageModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
+    AppService,
   ],
-  exports: [],
+  exports: [AppService],
 })
 export class AppModule {}

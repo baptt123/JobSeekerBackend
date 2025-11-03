@@ -1,0 +1,329 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>{{pageTitle}} - RisApps</title>
+
+    <script src='https://cdn.tailwindcss.com'></script>
+
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+
+    <script
+      type='module'
+      src='https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js'
+    ></script>
+    <script
+      nomodule
+      src='https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js'
+    ></script>
+
+    <style>
+      /* Thêm font Inter giống trong ảnh */
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+    </style>
+  </head>
+  <body class='bg-gray-100'>
+
+    <div class='flex h-screen'>
+
+      <aside class='w-64 bg-white flex-shrink-0 border-r border-gray-200'>
+        <div class='p-6'>
+          <h1 class='text-2xl font-bold text-blue-600'>RisApps</h1>
+        </div>
+        <nav class='mt-6'>
+          <ul>
+            <li
+              class='px-6 py-3 bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+            >
+              <a href='#' class='flex items-center space-x-3'>
+                <ion-icon name='grid-outline' class='text-2xl'></ion-icon>
+                <span class='font-semibold'>Dashboard</span>
+              </a>
+            </li>
+            <li class='px-6 py-3 text-gray-600 hover:bg-gray-50'>
+              <a href='#' class='flex items-center space-x-3'>
+                <ion-icon name='briefcase-outline' class='text-2xl'></ion-icon>
+                <span>Departemen</span>
+              </a>
+            </li>
+            <li class='px-6 py-3 text-gray-600 hover:bg-gray-50'>
+              <a href='#' class='flex items-center space-x-3'>
+                <ion-icon name='people-outline' class='text-2xl'></ion-icon>
+                <span>List Kandidat</span>
+              </a>
+            </li>
+            <li class='px-6 py-3 text-gray-600 hover:bg-gray-50'>
+              <a href='#' class='flex items-center space-x-3'>
+                <ion-icon name='calendar-outline' class='text-2xl'></ion-icon>
+                <span>Penjadwalan</span>
+              </a>
+            </li>
+            <li class='px-6 py-3 text-gray-600 hover:bg-gray-50'>
+              <a href='#' class='flex items-center space-x-3'>
+                <ion-icon name='mail-outline' class='text-2xl'></ion-icon>
+                <span>Pesan</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class='absolute bottom-0 w-64 p-6'>
+          <a
+            href='#'
+            class='flex items-center space-x-3 text-gray-600 hover:text-red-500'
+          >
+            <ion-icon name='log-out-outline' class='text-2xl'></ion-icon>
+            <span>Logout</span>
+          </a>
+        </div>
+      </aside>
+      <div class='flex-1 flex flex-col overflow-hidden'>
+
+        <header class='bg-white shadow-sm border-b border-gray-200 p-4'>
+          <div class='flex items-center justify-between'>
+            <div>
+              <h2 class='text-xl font-semibold text-gray-800'>Selamat Datang,
+                {{username}}</h2>
+              <p class='text-sm text-gray-500'>Semoga harimu cerah</p>
+            </div>
+
+            <div class='flex items-center space-x-6'>
+              <button class='text-gray-500 hover:text-gray-700'>
+                <ion-icon name='search-outline' class='text-2xl'></ion-icon>
+              </button>
+              <button class='text-gray-500 hover:text-gray-700 relative'>
+                <ion-icon
+                  name='notifications-outline'
+                  class='text-2xl'
+                ></ion-icon>
+                <span
+                  class='absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full'
+                ></span>
+              </button>
+
+              <div
+                class='flex items-center space-x-2 border rounded-full p-1 pr-3 cursor-pointer hover:bg-gray-100'
+              >
+                <img
+                  class='h-8 w-8 rounded-full object-cover'
+                  src='https://i.pravatar.cc/150?img=3'
+                  alt='User avatar'
+                />
+                <span
+                  class='font-medium text-sm text-gray-700'
+                >{{username}}</span>
+                <ion-icon
+                  name='chevron-down-outline'
+                  class='text-xs text-gray-500'
+                ></ion-icon>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main class='flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6'>
+
+          <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+            <div
+              class='bg-white p-5 rounded-lg shadow-sm flex justify-between items-start'
+            >
+              <div>
+                <p class='text-sm text-gray-500'>Total pelamar</p>
+                <p class='text-3xl font-bold text-gray-800'>10.800</p>
+                <p class='text-xs text-green-500 mt-1'>+80.2
+                  <span class='text-gray-400'>+20% Tahun ini</span></p>
+              </div>
+              <div class='text-blue-500 bg-blue-100 p-2 rounded-lg'>
+                <ion-icon name='people-outline' class='text-2xl'></ion-icon>
+              </div>
+            </div>
+            <div
+              class='bg-white p-5 rounded-lg shadow-sm flex justify-between items-start'
+            >
+              <div>
+                <p class='text-sm text-gray-500'>Departement</p>
+                <p class='text-3xl font-bold text-gray-800'>8</p>
+                <p class='text-xs text-green-500 mt-1'>+10.2
+                  <span class='text-gray-400'>+1.01% Tahun ini</span></p>
+              </div>
+              <div class='text-green-500 bg-green-100 p-2 rounded-lg'>
+                <ion-icon name='briefcase-outline' class='text-2xl'></ion-icon>
+              </div>
+            </div>
+            <div
+              class='bg-white p-5 rounded-lg shadow-sm flex justify-between items-start'
+            >
+              <div>
+                <p class='text-sm text-gray-500'>Total perekrutan</p>
+                <p class='text-3xl font-bold text-gray-800'>1.000</p>
+                <p class='text-xs text-green-500 mt-1'>+100.2
+                  <span class='text-gray-400'>+1.00% Tahun ini</span></p>
+              </div>
+              <div class='text-purple-500 bg-purple-100 p-2 rounded-lg'>
+                <ion-icon
+                  name='trending-up-outline'
+                  class='text-2xl'
+                ></ion-icon>
+              </div>
+            </div>
+            <div
+              class='bg-white p-5 rounded-lg shadow-sm flex justify-between items-start'
+            >
+              <div>
+                <p class='text-sm text-gray-500'>Kandidat terpilih</p>
+                <p class='text-3xl font-bold text-gray-800'>800</p>
+                <p class='text-xs text-red-500 mt-1'>10.000
+                  <span class='text-gray-400'>-200 Tahun ini</span></p>
+              </div>
+              <div class='text-indigo-500 bg-indigo-100 p-2 rounded-lg'>
+                <ion-icon name='person-add-outline' class='text-2xl'></ion-icon>
+              </div>
+            </div>
+          </div>
+
+          <div class='grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6'>
+            <div class='lg:col-span-2 bg-white p-6 rounded-lg shadow-sm'>
+              <h3 class='text-lg font-semibold text-gray-800'>Statistik pelamar</h3>
+              <div class='flex justify-end space-x-4 text-sm'>
+                <div class='flex items-center space-x-1'>
+                  <span class='h-3 w-3 bg-blue-500 rounded-full'></span>
+                  <span>Terpilih</span>
+                </div>
+                <div class='flex items-center space-x-1'>
+                  <span class='h-3 w-3 bg-blue-200 rounded-full'></span>
+                  <span>Tidak sesuai</span>
+                </div>
+              </div>
+              <div class='mt-4 h-64'>
+                <canvas id='barChart'></canvas>
+              </div>
+            </div>
+            <div class='bg-white p-6 rounded-lg shadow-sm'>
+              <h3 class='text-lg font-semibold text-gray-800'>Aktivitas
+                Departement</h3>
+              <div class='mt-4 h-64 relative flex items-center justify-center'>
+                <canvas id='doughnutChart'></canvas>
+                <div class='absolute flex flex-col items-center justify-center'>
+                  <span class='text-gray-500 text-sm'>Total</span>
+                  <span class='text-3xl font-bold'>160</span>
+                  <span class='text-gray-500 text-sm'>Karyawan</span>
+                </div>
+              </div>
+              <div class='flex justify-center space-x-4 text-sm mt-4'>
+                <div class='flex items-center space-x-1'>
+                  <span class='h-3 w-3 bg-red-400 rounded-full'></span>
+                  <span>Belum terpenuhi</span>
+                </div>
+                <div class='flex items-center space-x-1'>
+                  <span class='h-3 w-3 bg-blue-500 rounded-full'></span>
+                  <span>Terpenuhi</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class='mt-6 bg-white p-6 rounded-lg shadow-sm'>
+            <div class='flex justify-between items-center mb-4'>
+              <h3 class='text-lg font-semibold text-gray-800'>Review</h3>
+              <div class='relative'>
+                <input
+                  type='text'
+                  placeholder='Cari'
+                  class='pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500'
+                />
+                <ion-icon
+                  name='search-outline'
+                  class='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400'
+                ></ion-icon>
+              </div>
+            </div>
+
+            <div class='overflow-x-auto'>
+              <table class='w-full text-left text-sm'>
+                <thead class='bg-gray-50 text-gray-500 uppercase'>
+                  <tr>
+                    <th class='p-3 font-medium'>Nama</th>
+                    <th class='p-3 font-medium'>Departemen</th>
+                    <th class='p-3 font-medium'>Posisi</th>
+                    <th class='p-3 font-medium'>Waktu</th>
+                    <th class='p-3 font-medium'>Status</th>
+                    <th class='p-3 font-medium'>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each applicants}}
+                    <tr class='border-b hover:bg-gray-50'>
+                      <td class='p-3 flex items-center space-x-3'>
+                        <img
+                          src='{{this.avatar}}'
+                          alt='Avatar'
+                          class='h-10 w-10 rounded-full object-cover'
+                        />
+                        <div>
+                          <p
+                            class='font-semibold text-gray-800'
+                          >{{this.name}}</p>
+                          <p class='text-xs text-gray-500'>{{this.email}}</p>
+                        </div>
+                      </td>
+                      <td class='p-3 text-gray-700'>{{this.department}}</td>
+                      <td class='p-3 text-gray-700'>{{this.position}}</td>
+                      <td class='p-3 text-gray-700'>
+                        <p>{{this.date}}</p>
+                        <p class='text-xs text-gray-500'>{{this.time}}</p>
+                      </td>
+                      <td class='p-3'>
+                        <span
+                          class='px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800'
+                        >
+                          {{this.status}}
+                        </span>
+                      </td>
+                      <td class='p-3'>
+                        <button
+                          class='px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 text-xs font-medium'
+                        >
+                          Lihat Portfolio
+                        </button>
+                      </td>
+                    </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // Đợi DOM load xong mới thực thi
+      document.addEventListener('DOMContentLoaded', () => { // --- BAR CHART
+      (Statistik pelamar) --- const barCtx =
+      document.getElementById('barChart'); if (barCtx) { new Chart(barCtx, {
+      type: 'bar', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+      datasets: [ { label: 'Terpilih', data: [62, 68, 40, 78, 70, 70], // Ước
+      lượng data từ ảnh backgroundColor: '#3B82F6', // blue-500 borderRadius: 6,
+      barPercentage: 0.5, }, { label: 'Tidak sesuai', data: [82, 52, 52, 85, 80,
+      48], // Ước lượng data từ ảnh backgroundColor: '#BFDBFE', // blue-200
+      borderRadius: 6, barPercentage: 0.5, } ] }, options: { responsive: true,
+      maintainAspectRatio: false, plugins: { legend: { display: false // Ẩn
+      legend mặc định (vì ta đã code custom legend bằng HTML) } }, scales: { y:
+      { beginAtZero: true, max: 100, ticks: { stepSize: 20, callback:
+      function(value) { return value + '%'; // Thêm % vào trục Y } }, grid: {
+      drawBorder: false, // Ẩn đường viền trục Y } }, x: { grid: { display:
+      false, // Ẩn lưới trục X } } } } }); } // --- DOUGHNUT CHART (Aktivitas
+      Departement) --- const doughnutCtx =
+      document.getElementById('doughnutChart'); if (doughnutCtx) { new
+      Chart(doughnutCtx, { type: 'doughnut', data: { labels: ['Terpenuhi',
+      'Belum terpenuhi'], datasets: [{ data: [112, 48], // (Ước lượng 70% của
+      160 là ~112, 30% là ~48) backgroundColor: [ '#3B82F6', // blue-500
+      '#F87171', // red-400 ], borderWidth: 0, borderRadius: 2, }] }, options: {
+      responsive: true, maintainAspectRatio: false, cutout: '80%', // Tạo lỗ
+      rỗng ở giữa to hơn plugins: { legend: { display: false // Ẩn legend mặc
+      định }, tooltip: { enabled: true } } } }); } });
+    </script>
+  </body>
+</html>
