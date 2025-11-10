@@ -1,27 +1,21 @@
 import { GenerateCvService } from './generate-cv.service';
-import { RolesGuard } from '../guard/role-auth.guard';
-import { Roles } from '../decorator/role.decorator';
-import { CreateUserCvDto } from '../dto/create-cv.dto';
-import { UserCVEntity } from '../entity/user-cv.entity';
-import { FileInterceptor } from '@nestjs/platform-express';
 import express from 'express';
 import {
+  BadRequestException,
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
-  Req,
   Res,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import { CloudinaryCustomService } from '../cloudinary-custom/cloudinary-custom.service';
 import { GenerateCvDto } from '../dto/generative-cv-prompt.dto';
 import puppeteer from 'puppeteer';
+import { CreateCvDto } from '../dto/create-cv.dto';
+import { Response } from 'express';
 
 @Controller('cv')
 export class GenerateCvController {
@@ -111,38 +105,68 @@ export class GenerateCvController {
     }
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('USER', 'ADMIN', 'RECRUITER')
-  @Get('save-cv')
-  public async saveCV(@Body() dto: CreateUserCvDto): Promise<UserCVEntity> {
-    return await this.generateCvService.createCVWithKeywords(dto);
+  /*
+   ================================================================
+   ✅ BẮT ĐẦU CHỨC NĂNG MỚI: TẠO CV TỪ TEMPLATE
+   ================================================================
+   */
+
+  /**
+   * Endpoint này nhận dữ liệu CV và ID của template,
+   * sau đó render template HBS tương ứng với dữ liệu đó.
+   * @param templateId 'template1' hoặc 'template2'
+   * @param cvData Dữ liệu CV người dùng nhập
+   * @param res
+   */
+  @Post('preview/:templateId')
+  async previewCvTemplate(
+    @Param('templateId') templateId: string,
+    @Body() cvData: CreateCvDto,
+    @Res() res: express.Response,
+  ): Promise<void> {
+    // <-- Thêm kiểu trả về Promise<void>
+    let viewName: string;
+    if (templateId === 'template1') {
+      viewName = 'cv_template_1';
+    } else if (templateId === 'template2') {
+      viewName = 'cv_template_2';
+    } else {
+      // Dùng cách của NestJS để ném lỗi
+      throw new BadRequestException('Invalid template ID');
+    }
+
+    // Render file HBS với dữ liệu từ body
+    // Dữ liệu truyền vào HBS phải là một object
+    res.render(viewName, { cv: cvData });
   }
 
-  @Post('upload')
-  @UseGuards(RolesGuard)
-  @Roles('USER', 'ADMIN', 'RECRUITER')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadCV(
-    @UploadedFile() file: Express.Multer.File,
-    @Body('title') title: string,
-    @Body('content') content: string,
-    @Body('keywords') keywords: string,
-    @Req() req: any,
-  ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-    const userId = req.user.userId;
+  /**
+   * Endpoint này dùng để tải về (hiện tại chỉ là render lại)
+   * Trong thực tế, đây là nơi gọi service để tạo PDF
+   */
+  @Post('download/:templateId')
+  @HttpCode(200)
+  async downloadCvTemplate(
+    @Param('templateId') templateId: string,
+    @Body() cvData: CreateCvDto,
+    @Res() res: express.Response,
+  ): Promise<void> {
+    // <-- Thêm kiểu trả về Promise<void>
+    // TODO: Triển khai logic tạo PDF (ví dụ: dùng Puppeteer)
 
-    // Upload lên Cloudinary
-    const uploadResult = await this.cloudinaryService.uploadFile(file);
-    return this.generateCvService.saveCVAfterUpload(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      userId,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      uploadResult.secure_url,
-      title,
-      content,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      JSON.parse(keywords),
-    );
+    let viewName: string;
+    if (templateId === 'template1') {
+      viewName = 'cv_template_1';
+    } else if (templateId === 'template2') {
+      viewName = 'cv_template_2';
+    } else {
+      // Dùng cách của NestJS để ném lỗi
+      throw new BadRequestException('Invalid template ID');
+    }
+
+    // Thiết lập header để gợi ý tải về (mặc dù nó là HTML)
+    // Cú pháp này vẫn đúng và không có gì thay đổi
+    res.setHeader('Content-Disposition', 'attachment; filename="my_cv.html"');
+    res.render(viewName, { cv: cvData });
   }
 }

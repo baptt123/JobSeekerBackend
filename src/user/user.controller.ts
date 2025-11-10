@@ -15,10 +15,14 @@ import { JwtAuthGuard } from '../guard/jwt-auth.guard';
 import { Roles } from '../decorator/role.decorator';
 import { RolesGuard } from '../guard/role-auth.guard';
 import { Not } from 'typeorm';
+import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly firebaseService: FirebaseModuleService,
+  ) {}
 
   @Put('update-user')
   @UseInterceptors(FileInterceptor('avatar'))

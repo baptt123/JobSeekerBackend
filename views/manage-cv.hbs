@@ -1,267 +1,363 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RisApps - Detail Kandidat</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide-dev"></script>
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>RisApps - Detail Kandidat</title>
+    <script src='https://cdn.tailwindcss.com'></script>
+    <script src='https://unpkg.com/lucide-dev'></script>
 
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #F8FAFC; /* Màu nền xám nhạt */
-    }
-    /* Tùy chỉnh nhỏ cho CV */
-    .cv-section {
-      border-bottom: 1px solid #E5E7EB; /* Phân tách các phần */
-      padding-bottom: 1rem;
-      margin-bottom: 1rem;
-    }
-    .cv-section:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-  </style>
-</head>
-<body class="bg-gray-50">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8fafc; /* Màu nền xám nhạt */
+      }
+      /* Tùy chỉnh nhỏ cho CV */
+      .cv-section {
+        border-bottom: 1px solid #e5e7eb; /* Phân tách các phần */
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+      }
+      .cv-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+    </style>
+  </head>
+  <body class='bg-gray-50'>
 
-<div class="flex h-screen">
-  <aside class="w-64 bg-white border-r flex flex-col">
-    <div class="p-6">
-      <h1 class="text-3xl font-bold text-blue-600">RisApps</h1>
-    </div>
-
-    <nav class="flex-1 px-4 py-2 space-y-2">
-      <a href="#" class="flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100">
-        <i data-lucide="layout-grid" class="w-5 h-5"></i>
-        <span>Dashboard</span>
-      </a>
-      <a href="#" class="flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100">
-        <i data-lucide="users" class="w-5 h-5"></i>
-        <span>Departemen</span>
-      </a>
-      <a href="#" class="flex items-center space-x-3 px-4 py-2 text-blue-600 bg-blue-50 font-semibold rounded-lg">
-        <i data-lucide="clipboard-list" class="w-5 h-5"></i>
-        <span>List Kandidat</span>
-      </a>
-      <a href="#" class="flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100">
-        <i data-lucide="calendar-days" class="w-5 h-5"></i>
-        <span>Penjadwalan</span>
-      </a>
-
-      <div>
-        <button class="w-full flex justify-between items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100">
-          <div class="flex items-center space-x-3">
-            <i data-lucide="message-square" class="w-5 h-5"></i>
-            <span>Pesan</span>
-          </div>
-          <i data-lucide="chevron-down" class="w-4 h-4"></i>
-        </button>
-      </div>
-    </nav>
-
-    <div class="p-4 border-t">
-      <div class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
-        <div class="relative">
-          <img src="https://placehold.co/40x40/d1d5db/374151?text=M" alt="Maria" class="w-10 h-10 rounded-full">
-          <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+    <div class='flex h-screen'>
+      <aside class='w-64 bg-white border-r flex flex-col'>
+        <div class='p-6'>
+          <h1 class='text-3xl font-bold text-blue-600'>RisApps</h1>
         </div>
-        <div>
-          <div class="font-semibold">Maria</div>
-          <div class="text-sm text-gray-500">Live Chat</div>
-        </div>
-      </div>
-      <a href="#" class="flex items-center space-x-3 px-3 py-3 text-gray-700 rounded-lg hover:bg-gray-100 mt-2">
-        <i data-lucide="log-out" class="w-5 h-5 text-red-500"></i>
-        <span>Logout</span>
-      </a>
-    </div>
-  </aside>
 
-  <main class="flex-1 overflow-y-auto">
+        <nav class='flex-1 px-4 py-2 space-y-2'>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100'
+          >
+            <i data-lucide='layout-grid' class='w-5 h-5'></i>
+            <span>Dashboard</span>
+          </a>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100'
+          >
+            <i data-lucide='users' class='w-5 h-5'></i>
+            <span>Departemen</span>
+          </a>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-4 py-2 text-blue-600 bg-blue-50 font-semibold rounded-lg'
+          >
+            <i data-lucide='clipboard-list' class='w-5 h-5'></i>
+            <span>List Kandidat</span>
+          </a>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100'
+          >
+            <i data-lucide='calendar-days' class='w-5 h-5'></i>
+            <span>Penjadwalan</span>
+          </a>
 
-    <header class="bg-white border-b sticky top-0 z-10">
-      <div class="flex justify-between items-center px-8 py-5">
-        <div>
-          <h2 class="text-2xl font-semibold">Selamat Datang, {{ tenNguoiDung }}</h2>
-          <p class="text-gray-500">Semoga harimu cerah</p>
-        </div>
-        <div class="flex items-center space-x-6">
-          <button class="text-gray-500 hover:text-gray-700">
-            <i data-lucide="search" class="w-6 h-6"></i>
-          </button>
-          <button class="text-gray-500 hover:text-gray-700 relative">
-            <i data-lucide="bell" class="w-6 h-6"></i>
-          </button>
-          <button class="flex items-center space-x-2 text-gray-700 hover:text-black">
-            <img src="https://placehold.co/40x40/3b82f6/ffffff?text=J" alt="Jhon" class="w-10 h-10 rounded-full">
-            <span class="font-semibold">{{ tenNguoiDung }}</span>
-            <i data-lucide="chevron-down" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <div class="p-8">
-
-      <div class="mb-6">
-        <h3 class="text-2xl font-semibold">List Kandidat</h3>
-        <p class="text-sm text-gray-500">HrisApps / Dhimas adit</p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        <div class="lg:col-span-2 bg-white p-8 rounded-lg shadow-sm border">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-3xl font-bold text-gray-800">QUALITY ASSURANCE GENIUS</h2>
-            <button class="bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Resume Genius</button>
-          </div>
-
-          <div class="flex justify-between items-center text-xs text-gray-600 mb-6">
-            <div class="flex items-center space-x-2">
-              <i data-lucide="phone" class="w-4 h-4"></i>
-              <span>(123) 123-4566</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <i data-lucide="mail" class="w-4 h-4"></i>
-              <span>hello@email.com</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <i data-lucide="map-pin" class="w-4 h-4"></i>
-              <span>12AB Webster Street...</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <i data-lucide="linkedin" class="w-4 h-4"></i>
-              <span>linkedin.com/in/johndoe</span>
-            </div>
-          </div>
-
-          <div class="cv-section">
-            <h4 class="font-bold text-sm uppercase text-gray-800 mb-2">Profile</h4>
-            <p class="text-sm text-gray-700 leading-relaxed">
-              Software quality assurance (QA) engineer with a Bachelor's degree in Computer Engineering and 8 years of experience in QA automation. Experienced in Agile development, test automation framework design, and execution. Proven ability to test complex software functionality and usability as a Software Quality Assurance and Testing Professional. Eager to contribute my skills.
-            </p>
-          </div>
-
-          <div class="cv-section">
-            <h4 class="font-bold text-sm uppercase text-gray-800 mb-4">Professional Experience</h4>
-            <div class="mb-4">
-              <div class="flex justify-between items-center">
-                <h5 class="font-bold text-gray-800">QUALITY ASSURANCE ENGINEER</h5>
-                <span class="text-sm font-medium text-gray-600">2020 - Present</span>
+          <div>
+            <button
+              class='w-full flex justify-between items-center space-x-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100'
+            >
+              <div class='flex items-center space-x-3'>
+                <i data-lucide='message-square' class='w-5 h-5'></i>
+                <span>Pesan</span>
               </div>
-              <div class="text-sm text-gray-600 mb-2">ABC | MNO - Mountain View, CA</div>
-              <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 leading-relaxed">
-                <li>Efficiently manage projects from proposal and evaluation to certification and review, contributing to continuous product and ticket sprint</li>
-                <li>Implement test automation at larger scales</li>
-                <li>Communicate effectively with clients and technical teams through written reports and oral presentations to identify and solve quality issues</li>
-              </ul>
+              <i data-lucide='chevron-down' class='w-4 h-4'></i>
+            </button>
+          </div>
+        </nav>
+
+        <div class='p-4 border-t'>
+          <div
+            class='flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer'
+          >
+            <div class='relative'>
+              <img
+                src='https://placehold.co/40x40/d1d5db/374151?text=M'
+                alt='Maria'
+                class='w-10 h-10 rounded-full'
+              />
+              <span
+                class='absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full'
+              ></span>
             </div>
             <div>
-              <div class="flex justify-between items-center">
-                <h5 class="font-bold text-gray-800">SOFTWARE QUALITY ENGINEER</h5>
-                <span class="text-sm font-medium text-gray-600">2018 - 2020</span>
-              </div>
-              <div class="text-sm text-gray-600 mb-2">XYZ - Mountain View, CA</div>
-              <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 leading-relaxed">
-                <li>Performed load, stress, stability, and reliability testing to improve software functionality and usability</li>
-                <li>Tested software for functionality, engines, and toolkits to monitor, identify, and evaluate software development performance</li>
-                <li>Worked closely with software quality engineers on software development lifecycle (SDLC) and debugging procedures with JIRA/TestRail/etc.</li>
-                <li>Created test documents for Avionics, Space, and Defense Organization traceable software</li>
-                <li>Regularly updated code in Github to preserve code, enact quality standards, and establish coordination for the entire program</li>
-              </ul>
+              <div class='font-semibold'>Maria</div>
+              <div class='text-sm text-gray-500'>Live Chat</div>
             </div>
           </div>
-
-          <div class="cv-section">
-            <h4 class="font-bold text-sm uppercase text-gray-800 mb-4">Education</h4>
-            <div class="flex justify-between items-center">
-              <h5 class="font-bold text-gray-800">Bachelor of Science, Computer Engineering</h5>
-              <span class="text-sm font-medium text-gray-600">(May 2018)</span>
-            </div>
-            <div class="text-sm text-gray-600">UNIVERSITY OF CALIFORNIA, BERKELEY</div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-8">
-            <div>
-              <h4 class="font-bold text-sm uppercase text-gray-800 mb-4">Additional Skills</h4>
-              <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
-                <li>Python</li>
-                <li>Java</li>
-                <li>C++</li>
-                <li>Tableau</li>
-                <li>TypeScript</li>
-                <li>Jest</li>
-                <li>BrowserStack</li>
-                <li>Agile Project Management</li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 class="font-bold text-sm uppercase text-gray-800 mb-4">Certifications</h4>
-              <div class="space-y-3">
-                <div>
-                  <h5 class="font-bold text-sm text-gray-800">CERTIFIED SOFTWARE QUALITY ANALYST (CSQA)</h5>
-                  <p class="text-sm text-gray-600">CSQA Institute<br>May 2022</p>
-                </div>
-                <div>
-                  <h5 class="font-bold text-sm text-gray-800">CERTIFIED TESTER FOUNDATION LEVEL (CTFL)</h5>
-                  <p class="text-sm text-gray-600">International Software Testing Qualifications Board (ISTQB)<br>May 2021</p>
-                </div>
-                <div>
-                  <h5 class="font-bold text-sm text-gray-800">CERTIFIED TESTER ADVANCED LEVEL: TEST ANALYST (CTAL-TA)</h5>
-                  <p class="text-sm text-gray-600">International Software Testing Qualifications Board (ISTQB)<br>May 2021</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <a
+            href='#'
+            class='flex items-center space-x-3 px-3 py-3 text-gray-700 rounded-lg hover:bg-gray-100 mt-2'
+          >
+            <i data-lucide='log-out' class='w-5 h-5 text-red-500'></i>
+            <span>Logout</span>
+          </a>
         </div>
+      </aside>
 
-        <div class="lg:col-span-1 space-y-6">
+      <main class='flex-1 overflow-y-auto'>
 
-          <button class="w-full flex items-center justify-center space-x-2 border border-gray-300 rounded-lg px-4 py-3 text-gray-700 font-medium hover:bg-gray-100">
-            <i data-lucide="download" class="w-5 h-5"></i>
-            <span>Download File Test</span>
-          </button>
-
-          <div class="bg-white p-6 rounded-lg shadow-sm border space-y-5">
+        <header class='bg-white border-b sticky top-0 z-10'>
+          <div class='flex justify-between items-center px-8 py-5'>
             <div>
-              <h5 class="text-sm font-medium text-gray-500">Hasil Test</h5>
-              <p class="text-gray-800 font-semibold">Technical test Task</p>
-              <p class="text-gray-800 font-bold text-lg mt-1">Baik</p>
+              <h2 class='text-2xl font-semibold'>Selamat Datang,
+                {{tenNguoiDung}}</h2>
+              <p class='text-gray-500'>Semoga harimu cerah</p>
             </div>
-            <hr>
-            <div>
-              <h5 class="text-sm font-medium text-gray-500">Link Hasil Test</h5>
-              <p class="text-gray-800 font-semibold">Psychology Kullsioner Score</p>
-              <a href="#" class="text-blue-600 text-sm break-words hover:underline">https://www.tlspersonalities.com/id/kepribadian-esfj</a>
-            </div>
-          </div>
-
-          <div class="bg-white p-6 rounded-lg shadow-sm border">
-            <h5 class="text-base font-semibold text-gray-800 mb-1">Action</h5>
-            <p class="text-sm text-gray-500 mb-4">Quality Assurance Dhimas adit</p>
-            <div class="flex space-x-3">
-              <button class="flex-1 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold">
-                Lolos ke wawancara
+            <div class='flex items-center space-x-6'>
+              <button class='text-gray-500 hover:text-gray-700'>
+                <i data-lucide='search' class='w-6 h-6'></i>
               </button>
-              <button class="flex-1 bg-gray-100 text-gray-700 border border-gray-300 px-5 py-2.5 rounded-lg hover:bg-gray-200 font-semibold">
-                Gagal
+              <button class='text-gray-500 hover:text-gray-700 relative'>
+                <i data-lucide='bell' class='w-6 h-6'></i>
+              </button>
+              <button
+                class='flex items-center space-x-2 text-gray-700 hover:text-black'
+              >
+                <img
+                  src='https://placehold.co/40x40/3b82f6/ffffff?text=J'
+                  alt='Jhon'
+                  class='w-10 h-10 rounded-full'
+                />
+                <span class='font-semibold'>{{tenNguoiDung}}</span>
+                <i data-lucide='chevron-down' class='w-4 h-4'></i>
               </button>
             </div>
           </div>
+        </header>
+
+        <div class='p-8'>
+
+          <div class='mb-6'>
+            <h3 class='text-2xl font-semibold'>List Kandidat</h3>
+            <p class='text-sm text-gray-500'>HrisApps / Dhimas adit</p>
+          </div>
+
+          <div class='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+
+            <div class='lg:col-span-2 bg-white p-8 rounded-lg shadow-sm border'>
+              <div class='flex justify-between items-center mb-6'>
+                <h2 class='text-3xl font-bold text-gray-800'>QUALITY ASSURANCE
+                  GENIUS</h2>
+                <button
+                  class='bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider'
+                >Resume Genius</button>
+              </div>
+
+              <div
+                class='flex justify-between items-center text-xs text-gray-600 mb-6'
+              >
+                <div class='flex items-center space-x-2'>
+                  <i data-lucide='phone' class='w-4 h-4'></i>
+                  <span>(123) 123-4566</span>
+                </div>
+                <div class='flex items-center space-x-2'>
+                  <i data-lucide='mail' class='w-4 h-4'></i>
+                  <span>hello@email.com</span>
+                </div>
+                <div class='flex items-center space-x-2'>
+                  <i data-lucide='map-pin' class='w-4 h-4'></i>
+                  <span>12AB Webster Street...</span>
+                </div>
+                <div class='flex items-center space-x-2'>
+                  <i data-lucide='linkedin' class='w-4 h-4'></i>
+                  <span>linkedin.com/in/johndoe</span>
+                </div>
+              </div>
+
+              <div class='cv-section'>
+                <h4
+                  class='font-bold text-sm uppercase text-gray-800 mb-2'
+                >Profile</h4>
+                <p class='text-sm text-gray-700 leading-relaxed'>
+                  Software quality assurance (QA) engineer with a Bachelor's
+                  degree in Computer Engineering and 8 years of experience in QA
+                  automation. Experienced in Agile development, test automation
+                  framework design, and execution. Proven ability to test
+                  complex software functionality and usability as a Software
+                  Quality Assurance and Testing Professional. Eager to
+                  contribute my skills.
+                </p>
+              </div>
+
+              <div class='cv-section'>
+                <h4
+                  class='font-bold text-sm uppercase text-gray-800 mb-4'
+                >Professional Experience</h4>
+                <div class='mb-4'>
+                  <div class='flex justify-between items-center'>
+                    <h5 class='font-bold text-gray-800'>QUALITY ASSURANCE
+                      ENGINEER</h5>
+                    <span class='text-sm font-medium text-gray-600'>2020 -
+                      Present</span>
+                  </div>
+                  <div class='text-sm text-gray-600 mb-2'>ABC | MNO - Mountain
+                    View, CA</div>
+                  <ul
+                    class='list-disc list-inside text-sm text-gray-700 space-y-1 leading-relaxed'
+                  >
+                    <li>Efficiently manage projects from proposal and evaluation
+                      to certification and review, contributing to continuous
+                      product and ticket sprint</li>
+                    <li>Implement test automation at larger scales</li>
+                    <li>Communicate effectively with clients and technical teams
+                      through written reports and oral presentations to identify
+                      and solve quality issues</li>
+                  </ul>
+                </div>
+                <div>
+                  <div class='flex justify-between items-center'>
+                    <h5 class='font-bold text-gray-800'>SOFTWARE QUALITY
+                      ENGINEER</h5>
+                    <span class='text-sm font-medium text-gray-600'>2018 - 2020</span>
+                  </div>
+                  <div class='text-sm text-gray-600 mb-2'>XYZ - Mountain View,
+                    CA</div>
+                  <ul
+                    class='list-disc list-inside text-sm text-gray-700 space-y-1 leading-relaxed'
+                  >
+                    <li>Performed load, stress, stability, and reliability
+                      testing to improve software functionality and usability</li>
+                    <li>Tested software for functionality, engines, and toolkits
+                      to monitor, identify, and evaluate software development
+                      performance</li>
+                    <li>Worked closely with software quality engineers on
+                      software development lifecycle (SDLC) and debugging
+                      procedures with JIRA/TestRail/etc.</li>
+                    <li>Created test documents for Avionics, Space, and Defense
+                      Organization traceable software</li>
+                    <li>Regularly updated code in Github to preserve code, enact
+                      quality standards, and establish coordination for the
+                      entire program</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class='cv-section'>
+                <h4
+                  class='font-bold text-sm uppercase text-gray-800 mb-4'
+                >Education</h4>
+                <div class='flex justify-between items-center'>
+                  <h5 class='font-bold text-gray-800'>Bachelor of Science,
+                    Computer Engineering</h5>
+                  <span class='text-sm font-medium text-gray-600'>(May 2018)</span>
+                </div>
+                <div class='text-sm text-gray-600'>UNIVERSITY OF CALIFORNIA,
+                  BERKELEY</div>
+              </div>
+
+              <div class='grid grid-cols-2 gap-8'>
+                <div>
+                  <h4
+                    class='font-bold text-sm uppercase text-gray-800 mb-4'
+                  >Additional Skills</h4>
+                  <ul
+                    class='list-disc list-inside text-sm text-gray-700 space-y-1'
+                  >
+                    <li>Python</li>
+                    <li>Java</li>
+                    <li>C++</li>
+                    <li>Tableau</li>
+                    <li>TypeScript</li>
+                    <li>Jest</li>
+                    <li>BrowserStack</li>
+                    <li>Agile Project Management</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4
+                    class='font-bold text-sm uppercase text-gray-800 mb-4'
+                  >Certifications</h4>
+                  <div class='space-y-3'>
+                    <div>
+                      <h5 class='font-bold text-sm text-gray-800'>CERTIFIED
+                        SOFTWARE QUALITY ANALYST (CSQA)</h5>
+                      <p class='text-sm text-gray-600'>CSQA Institute<br />May
+                        2022</p>
+                    </div>
+                    <div>
+                      <h5 class='font-bold text-sm text-gray-800'>CERTIFIED
+                        TESTER FOUNDATION LEVEL (CTFL)</h5>
+                      <p class='text-sm text-gray-600'>International Software
+                        Testing Qualifications Board (ISTQB)<br />May 2021</p>
+                    </div>
+                    <div>
+                      <h5 class='font-bold text-sm text-gray-800'>CERTIFIED
+                        TESTER ADVANCED LEVEL: TEST ANALYST (CTAL-TA)</h5>
+                      <p class='text-sm text-gray-600'>International Software
+                        Testing Qualifications Board (ISTQB)<br />May 2021</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class='lg:col-span-1 space-y-6'>
+
+              <button
+                class='w-full flex items-center justify-center space-x-2 border border-gray-300 rounded-lg px-4 py-3 text-gray-700 font-medium hover:bg-gray-100'
+              >
+                <i data-lucide='download' class='w-5 h-5'></i>
+                <span>Download File Test</span>
+              </button>
+
+              <div class='bg-white p-6 rounded-lg shadow-sm border space-y-5'>
+                <div>
+                  <h5 class='text-sm font-medium text-gray-500'>Hasil Test</h5>
+                  <p class='text-gray-800 font-semibold'>Technical test Task</p>
+                  <p class='text-gray-800 font-bold text-lg mt-1'>Baik</p>
+                </div>
+                <hr />
+                <div>
+                  <h5 class='text-sm font-medium text-gray-500'>Link Hasil Test</h5>
+                  <p class='text-gray-800 font-semibold'>Psychology Kullsioner
+                    Score</p>
+                  <a
+                    href='#'
+                    class='text-blue-600 text-sm break-words hover:underline'
+                  >https://www.tlspersonalities.com/id/kepribadian-esfj</a>
+                </div>
+              </div>
+
+              <div class='bg-white p-6 rounded-lg shadow-sm border'>
+                <h5
+                  class='text-base font-semibold text-gray-800 mb-1'
+                >Action</h5>
+                <p class='text-sm text-gray-500 mb-4'>Quality Assurance Dhimas
+                  adit</p>
+                <div class='flex space-x-3'>
+                  <button
+                    class='flex-1 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold'
+                  >
+                    Lolos ke wawancara
+                  </button>
+                  <button
+                    class='flex-1 bg-gray-100 text-gray-700 border border-gray-300 px-5 py-2.5 rounded-lg hover:bg-gray-200 font-semibold'
+                  >
+                    Gagal
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
 
         </div>
-      </div>
-
+      </main>
     </div>
-  </main>
-</div>
 
-<script>
-  lucide.createIcons();
-</script>
-</body>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
 </html>

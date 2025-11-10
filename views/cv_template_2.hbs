@@ -1,0 +1,129 @@
+<html>
+  <head>
+    <title>CV - {{cv.fullName}}</title>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <style>
+      body {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+      }
+      .container {
+        display: flex;
+        max-width: 900px;
+        margin: 20px auto;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        min-height: 1000px;
+      }
+      .sidebar {
+        width: 35%;
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        padding: 30px;
+      }
+      .main {
+        width: 65%;
+        padding: 30px;
+      }
+      .sidebar h1 {
+        font-size: 28px;
+        margin: 0 0 10px;
+      }
+      .sidebar h2 {
+        font-size: 18px;
+        margin: 0 0 20px;
+        font-weight: normal;
+        border-bottom: 1px solid #34495e;
+        padding-bottom: 10px;
+      }
+      .sidebar-section {
+        margin-bottom: 25px;
+      }
+      .sidebar-section h3 {
+        color: #1abc9c;
+        margin: 0 0 10px;
+      }
+      .sidebar-section p {
+        margin: 5px 0;
+        font-size: 14px;
+      }
+      .sidebar-section ul {
+        padding-left: 20px;
+        margin: 0;
+      }
+      .sidebar-section li {
+        margin-bottom: 8px;
+      }
+      .main h3 {
+        color: #2c3e50;
+        border-bottom: 2px solid #2c3e50;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+      }
+      .job {
+        margin-bottom: 20px;
+      }
+      .job h4 {
+        margin: 0;
+        color: #34495e;
+      }
+      .job p {
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='sidebar'>
+        <h1>{{cv.fullName}}</h1>
+        <h2>{{cv.jobTitle}}</h2>
+
+        <div class='sidebar-section'>
+          <h3>Liên hệ</h3>
+          <p>{{cv.email}}</p>
+          <p>{{cv.phone}}</p>
+          <p>{{cv.address}}</p>
+        </div>
+
+        <div class='sidebar-section'>
+          <h3>Kỹ năng</h3>
+          <ul>
+            {{#each cv.skills}}
+              <li>{{this.name}}</li>
+            {{/each}}
+          </ul>
+        </div>
+      </div>
+      <div class='main'>
+        <div class='section'>
+          <h3>Giới thiệu</h3>
+          <p>{{cv.summary}}</p>
+        </div>
+
+        <div class='section'>
+          <h3>Kinh nghiệm làm việc</h3>
+          {{#each cv.experiences}}
+            <div class='job'>
+              <h4>{{this.jobTitle}} tại {{this.company}}</h4>
+              <p><i>{{this.duration}}</i></p>
+              <p>{{this.description}}</p>
+            </div>
+          {{/each}}
+        </div>
+
+        <div class='section'>
+          <h3>Học vấn</h3>
+          {{#each cv.educations}}
+            <div class='job'>
+              <h4>{{this.school}}</h4>
+              <p><strong>{{this.degree}}</strong> (<i>{{this.duration}}</i>)</p>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
