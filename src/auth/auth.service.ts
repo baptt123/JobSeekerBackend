@@ -12,12 +12,18 @@ import { ChangePasswordDto } from '../dto/change-password.dto';
 import { LoginDto } from '../dto/login.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import * as argon2 from 'argon2';
+import { AuthResponseDto } from '../dto/auth-response.dto';
+import * as admin from 'firebase-admin';
+import { ConfigService } from '@nestjs/config';
+// [THÊM MỚI] Lấy kiểu dữ liệu từ Firebase Admin SDK
+type FirebaseUserPayload = admin.auth.DecodedIdToken;
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UserService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async createUser(dto: RegisterDto): Promise<UserEntity> {
@@ -34,6 +40,7 @@ export class AuthService {
   async forgotPassword(email: string): Promise<{ message: string }> {
     return this.usersService.forgotPassword(email);
   }
+
   async login(dto: LoginDto) {
     try {
       // Lấy user từ DB, kèm role
@@ -129,5 +136,107 @@ export class AuthService {
         'Refresh token hết hạn hoặc không hợp lệ',
       );
     }
+  }
+
+  async loginWithGoogle(
+    firebaseUser: FirebaseUserPayload,
+  ): Promise<AuthResponseDto> {
+    if (!firebaseUser.email) {
+      throw new UnauthorizedException('Token Firebase không có email');
+    }
+
+    try {
+      // 1️⃣ Tìm user bằng email
+      let user: UserEntity | null = await this.usersService.userRepo.findOne({
+        where: { email: firebaseUser.email },
+      });
+
+      // 2️⃣ Nếu user đã tồn tại (bất kể là có pass hay không)
+      if (user) {
+        // 👇 LOGIC CŨ BỊ XÓA:
+        // if (user.password_hash) { ... throw error ... }
+
+        // 👇 LOGIC MỚI:
+        // Cập nhật thông tin của họ từ Google (vì nó mới nhất)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user.full_name = firebaseUser.name || user.full_name; // Ưu tiên tên Google
+        if (firebaseUser.picture) {
+          user.avatar_url = firebaseUser.picture;
+        }
+        // Bạn có thể thêm một trường để đánh dấu họ đã link Google
+        // user.provider = 'google';
+
+        await this.usersService.userRepo.save(user);
+      } else {
+        // 3️⃣ Nếu user chưa tồn tại → tạo mới
+        user = new UserEntity();
+        user.email = firebaseUser.email;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user.full_name = firebaseUser.name || 'Người dùng Google';
+        if (firebaseUser.picture != null) {
+          user.avatar_url = firebaseUser.picture;
+        }
+
+        // 👇 Dùng Enum cho dễ đọc
+        user.role_id = 2; // Giả sử 2 là RECRUITER
+
+        await this.usersService.userRepo.save(user);
+      }
+
+      // 4️⃣ Trả về JWT hệ thống (cho cả 2 trường hợp)
+      return this._generateSystemJwt(user);
+    } catch (err) {
+      // Khối catch này đã tốt, giữ nguyên
+      if (err instanceof UnauthorizedException) throw err;
+      console.error('Lỗi nghiêm trọng khi đăng nhập Google:', err);
+      throw new InternalServerErrorException(
+        'Lỗi máy chủ khi xác thực: ' + (err as Error).message,
+      );
+    }
+  }
+
+  /**
+   * [THÊM MỚI]
+   * Tạo JWT của hệ thống từ thông tin UserEntity
+   */
+  // 👇 3. SỬA LẠI HOÀN TOÀN HÀM NÀY
+  private async _generateSystemJwt(user: UserEntity): Promise<AuthResponseDto> {
+    const payload = {
+      sub: user.user_id,
+      email: user.email,
+      role: user.role_id,
+    };
+
+    // Tạo cả 2 token
+    const [accessToken, refreshToken] = await Promise.all([
+      // Access Token (thời gian ngắn, ví dụ 15 phút)
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+        expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION'), // '15m'
+      }),
+      // Refresh Token (thời gian dài, ví dụ 7 ngày)
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'), // Nên là secret khác
+        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION'), // '7d'
+      }),
+    ]);
+
+    // Tạo object user payload KHỚP với Flutter
+    // Flutter chỉ cần: { user: { id: ... } }
+    // Chúng ta trả về thêm để sau này Flutter dễ dùng
+    const userPayload = {
+      id: user.user_id, // 👈 Ánh xạ user_id -> id
+      email: user.email,
+      full_name: user.full_name,
+      avatar_url: user.avatar_url,
+      role_id: user.role_id,
+    };
+
+    // Trả về DTO hoàn chỉnh
+    return {
+      accessToken: accessToken,
+      refreshToken: refreshToken, // 👈 Trả về refreshToken
+      user: userPayload, // 👈 Trả về user object đã map
+    };
   }
 }

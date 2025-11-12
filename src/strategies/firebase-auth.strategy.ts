@@ -2,31 +2,52 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
 import * as admin from 'firebase-admin';
+import { Request } from 'express';
 
 @Injectable()
 export class FirebaseAuthStrategy extends PassportStrategy(
   Strategy,
-  'firebase-auth',
+  'firebase-auth', // 👈 Tên của strategy
 ) {
   constructor() {
     super();
+    // Đảm bảo bạn đã khởi tạo Firebase Admin ở main.ts
+    // Ví dụ:
+    // if (!admin.apps.length) {
+    //   admin.initializeApp({
+    //     credential: admin.credential.cert(serviceAccount),
+    //   });
+    // }
   }
 
-  async validate(req: Request): Promise<any> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
+  async validate(req: Request): Promise<admin.auth.DecodedIdToken> {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
       throw new UnauthorizedException('Thiếu Authorization header');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
     const token = authHeader.split(' ')[1]; // "Bearer <token>"
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      return await admin.auth().verifyIdToken(token); // Trả về thông tin user
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
-      throw new UnauthorizedException('Token Firebase không hợp lệ');
+    if (!token) {
+      throw new UnauthorizedException('Token không đúng định dạng');
     }
+
+    try {
+      // Xác thực token và trả về payload
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      return decodedToken;
+    } catch (err) {
+      this.handleError(err);
+    }
+  }
+
+  private handleError(err: any) {
+    console.error('Firebase Auth Error:', err);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (err.code === 'auth/id-token-expired') {
+      throw new UnauthorizedException('Token Firebase đã hết hạn');
+    }
+    throw new UnauthorizedException('Token Firebase không hợp lệ');
   }
 }

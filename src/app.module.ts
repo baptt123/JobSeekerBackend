@@ -63,7 +63,6 @@ import { AppService } from './app.service';
         SkillEntity,
         UserCVEntity,
         CallHistoryEntity,
-        ConfigModule,
         MessageEntity,
       ],
       autoLoadEntities: true,

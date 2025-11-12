@@ -35,8 +35,8 @@ export class UserEntity {
   @Column({ length: 100, nullable: true })
   city: string;
 
-  @Column({ length: 500, nullable: true })
-  avatar_url: string;
+  @Column({ nullable: true }) // TypeORM sẽ tự hiểu 'string' tương ứng với 'varchar'
+  avatar_url: string ;
 
   @Column()
   role_id: number;

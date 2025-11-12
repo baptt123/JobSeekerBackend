@@ -7,12 +7,10 @@ import {
   ValidationPipe,
   Get,
   Param,
-  ParseIntPipe, UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FirebaseModuleService } from './firebase-module.service';
 import { SendNotificationDto } from '../dto/send-notification.dto';
-import { FirebaseAuthGuard } from '../guard/firebase-auth.guard';
-// import { JwtAuthGuard } from '../guard/jwt-auth.guard'; // <-- Ví dụ: bảo vệ API
 
 @Controller('firebase') // Route: /api/firebase
 export class FirebaseModuleController {
