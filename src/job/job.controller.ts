@@ -91,9 +91,9 @@ dùng cho save job
     return this.jobService.getMySavedJobs(1);
   }
 
-  @Delete('delete-job:job_id')
+  @Delete('delete-job/:jobId')
   @HttpCode(HttpStatus.NO_CONTENT) // Trả về 204 No Content khi xóa thành công
-  unsaveJob(@Param('job_id', ParseIntPipe) jobId: number) {
+  unsaveJob(@Param('jobId', ParseIntPipe) jobId: number) {
     return this.jobService.unsaveJob(1, jobId);
   }
 }

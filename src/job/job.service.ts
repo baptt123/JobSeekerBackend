@@ -244,32 +244,38 @@ export class JobService {
   async findJobDetail(
     jobTitle: string,
     userId: number,
-  ): Promise<JobEntity & { isApplied: boolean }> {
-    // Trả về kiểu kết hợp
+  ): Promise<JobEntity & { isApplied: boolean; isSaved: boolean }> {
+    // 1. Cập nhật kiểu trả về
 
-    // 1. Tìm công việc (giống như bạn đang làm)
+    // Tìm công việc
     const job = await this.jobRepo.findOne({
       where: { title: jobTitle },
-      relations: ['company'], // Đảm bảo có 'company' vì frontend đang dùng
+      relations: ['company'],
     });
 
     if (!job) {
       throw new NotFoundException('Không tìm thấy công việc');
     }
 
-    // 2. ⭐️ LOGIC MỚI: Kiểm tra xem user đã apply chưa
-    const application = await this.jobAppRepo.findOne({
-      where: {
-        job_id: job.job_id, // [cite: 26]
-        user_id: userId, // [cite: 27]
-      },
+    // 2. ⭐️ LOGIC MỚI: Kiểm tra 'isSaved'
+    // (Dùng findOneBy vì chỉ cần biết nó CÓ TỒN TẠI hay không)
+    // TypeORM sẽ tự động lọc (deleted_at IS NULL)
+    const savedJob = await this.savedJobRepo.findOneBy({
+      job_id: job.job_id,
+      user_id: userId,
     });
 
-    // 3. Trả về job và cờ 'isApplied'
-    // Dùng !!application để chuyển đổi (entity/null) thành (true/false)
+    // 3. LOGIC CŨ: Kiểm tra 'isApplied' (Giữ nguyên)
+    const application = await this.jobAppRepo.findOneBy({
+      job_id: job.job_id,
+      user_id: userId,
+    });
+
+    // 4. ⭐️ TRẢ VỀ: Thêm 'isSaved'
     return {
       ...job,
-      isApplied: !!application,
+      isApplied: !!application, // true nếu 'application' tồn tại, false nếu null
+      isSaved: !!savedJob, // true nếu 'savedJob' tồn tại, false nếu null
     };
   }
 

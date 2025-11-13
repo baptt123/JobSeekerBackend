@@ -12,6 +12,7 @@ import { JobSkillEntity } from './job-skill.entity';
 import { JobApplicationEntity } from './job-application.entity';
 import { SavedJobEntity } from './save_job.entity';
 import { CompanyEntity } from './company.entity';
+
 @Entity('jobs')
 export class JobEntity {
   @PrimaryGeneratedColumn()
@@ -22,6 +23,7 @@ export class JobEntity {
 
   @ManyToOne(() => CompanyEntity, (company) => company.jobs, {
     onDelete: 'CASCADE',
+    eager: true, // ⭐️ THÊM DÒNG NÀY
   })
   @JoinColumn({ name: 'company_id' })
   company: CompanyEntity;
