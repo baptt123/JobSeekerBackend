@@ -136,4 +136,18 @@ export class UserService {
     Object.assign(user, dto);
     return this.userRepo.save(user);
   }
+  /**
+   * Service MỚI để lấy thông tin profile
+   */
+  async getUserProfile(userId: number): Promise<UserEntity> {
+    const user = await this.userRepo.findOne({ where: { user_id: userId } });
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy user');
+    }
+    // Xóa password hash trước khi trả về
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    delete user.password_hash;
+    return user;
+  }
 }

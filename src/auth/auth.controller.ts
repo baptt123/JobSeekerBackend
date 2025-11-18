@@ -13,17 +13,13 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import { RolesGuard } from '../guard/role-auth.guard';
 import { LoginDto } from '../dto/login.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { Roles } from '../decorator/role.decorator';
-import { JwtAuthGuard } from '../guard/jwt-auth.guard';
-import { FirebaseAuthGuard } from '../guard/firebase-auth.guard';
-import { GetUser } from '../decorator/get-user.decorator';
-import * as auth from 'firebase-admin/auth';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import * as admin from 'firebase-admin';
-import { AuthResponseDto } from '../dto/auth-response.dto'; // 👈 Thêm admin
+import { AuthResponseDto } from '../dto/auth-response.dto';
+import { OrAuthGuard } from '../guard/or-auth.guard'; // 👈 Thêm admin
 // [THÊM MỚI] Định nghĩa kiểu cho `req.user` sau khi Guard chạy
 interface RequestWithFirebaseUser extends Request {
   user: admin.auth.DecodedIdToken;
@@ -41,7 +37,7 @@ export class AuthController {
   }
 
   @Put('update-password')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async updatePassword(
     @Req() req: any,
@@ -73,14 +69,16 @@ export class AuthController {
   }
 
   @Get('profile')
-  @UseGuards(FirebaseAuthGuard) // ✨ Bảo vệ route này
-  getProfile(@GetUser() user: auth.DecodedIdToken): any {
+  @UseGuards(OrAuthGuard) // ✨ Bảo vệ route này
+  getProfile(@Req() user: any): any {
     // Nhờ @GetUser, chúng ta có thể truy cập thẳng vào thông tin người dùng
     // đã được xác thực từ token.
     console.log(user);
     return {
       message: `Hello, this is a protected route!`,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
       userId: user.uid,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
       email: user.email,
     };
   }
@@ -90,7 +88,7 @@ export class AuthController {
   //  * Guard 'firebase-auth' sẽ chạy trước
   //  */
   @Post('firebase-login')
-  @UseGuards(FirebaseAuthGuard)
+  // @UseGuards(OrAuthGuard)
   async googleLogin(
     @Req() req: RequestWithFirebaseUser,
   ): Promise<AuthResponseDto> {

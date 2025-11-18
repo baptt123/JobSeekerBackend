@@ -73,4 +73,6 @@ export class JobEntity {
 
   @OneToMany(() => SavedJobEntity, (savedJob) => savedJob.job)
   savedJobs: SavedJobEntity[];
+  @Column({ type: 'timestamp', nullable: true })
+  deadline: Date;
 }

@@ -9,6 +9,8 @@ import {
   Param,
   Post,
   Res,
+  UploadedFile, UseGuards,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import { CloudinaryCustomService } from '../cloudinary-custom/cloudinary-custom.service';
@@ -16,6 +18,9 @@ import { GenerateCvDto } from '../dto/generative-cv-prompt.dto';
 import puppeteer from 'puppeteer';
 import { CreateCvDto } from '../dto/create-cv.dto';
 import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { OrAuthGuard } from '../guard/or-auth.guard';
+import { Roles } from '../decorator/role.decorator';
 
 @Controller('cv')
 export class GenerateCvController {
@@ -24,11 +29,11 @@ export class GenerateCvController {
     private readonly cloudinaryService: CloudinaryCustomService,
   ) {}
 
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles('ADMIN', 'RECRUITER', 'USER')
 
   @Post('gen-cv')
   @HttpCode(200)
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   public async generateCv(
     @Body(new ValidationPipe({ whitelist: true, transform: true }))
     dto: GenerateCvDto,
@@ -119,6 +124,9 @@ export class GenerateCvController {
    * @param res
    */
   @Post('preview/:templateId')
+  @HttpCode(200)
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async previewCvTemplate(
     @Param('templateId') templateId: string,
     @Body() cvData: CreateCvDto,
@@ -146,6 +154,8 @@ export class GenerateCvController {
    */
   @Post('download/:templateId')
   @HttpCode(200)
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async downloadCvTemplate(
     @Param('templateId') templateId: string,
     @Body() cvData: CreateCvDto,
@@ -168,5 +178,26 @@ export class GenerateCvController {
     // Cú pháp này vẫn đúng và không có gì thay đổi
     res.setHeader('Content-Disposition', 'attachment; filename="my_cv.html"');
     res.render(viewName, { cv: cvData });
+  }
+
+  /**
+   * ENDPOINT MỚI: Nhận file PDF, trích xuất text và trả về
+   * Đây là endpoint mà ScanPdfViewModel của Flutter sẽ gọi
+   */
+  @Post('scan-pdf')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
+  @UseInterceptors(FileInterceptor('file')) // 'file' là key mà Flutter/Postman gửi lên
+  async scanPdf(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Không có file nào được tải lên.');
+    }
+
+    console.log(
+      `[SCAN_PDF] Đã nhận file: ${file.originalname}, size: ${file.size} bytes`,
+    );
+
+    // Gọi service để xử lý file và trích xuất text
+    return this.generateCvService.processFullCV(file, 1); // Giả sử languageId = 1 (English)
   }
 }

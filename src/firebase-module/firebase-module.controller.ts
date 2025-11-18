@@ -8,9 +8,12 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { FirebaseModuleService } from './firebase-module.service';
 import { SendNotificationDto } from '../dto/send-notification.dto';
+import { OrAuthGuard } from '../guard/or-auth.guard';
+import { Roles } from '../decorator/role.decorator';
 
 @Controller('firebase') // Route: /api/firebase
 export class FirebaseModuleController {
@@ -21,6 +24,8 @@ export class FirebaseModuleController {
    */
   // @UseGuards(FirebaseAuthGuard)
   @Post('send-test')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   // @UseGuards(JwtAuthGuard) // Nên bảo vệ endpoint này
   async sendTestNotification(@Body(ValidationPipe) dto: SendNotificationDto) {
     try {
@@ -43,6 +48,8 @@ export class FirebaseModuleController {
    * Endpoint để lấy danh sách notifications của user
    */
   @Get('notifications/:userId')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   // @UseGuards(JwtAuthGuard) // Nên bảo vệ endpoint này
   async getNotificationsByUserId(
     @Param('userId', ParseIntPipe) userId: number,

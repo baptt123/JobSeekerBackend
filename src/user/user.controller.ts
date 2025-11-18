@@ -12,10 +12,10 @@ import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { JwtAuthGuard } from '../guard/jwt-auth.guard';
-import { Roles } from '../decorator/role.decorator';
-import { RolesGuard } from '../guard/role-auth.guard';
 import { Not } from 'typeorm';
 import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
+import { OrAuthGuard } from '../guard/or-auth.guard';
+import { Roles } from '../decorator/role.decorator';
 
 @Controller('user')
 export class UserController {
@@ -25,17 +25,20 @@ export class UserController {
   ) {}
 
   @Put('update-user')
-  @UseInterceptors(FileInterceptor('avatar'))
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
+  @UseInterceptors(FileInterceptor('avatar'))
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async updateUser(
     @Req() req: any,
     @Body() dto: UpdateUserDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     const updatedUser = await this.userService.updateUser(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
       req.user.userId,
+      // 1,
       dto,
       file,
     );
@@ -45,6 +48,8 @@ export class UserController {
   // ✅ API MỚI CHO DANH SÁCH HỘI THOẠI
   @UseGuards(JwtAuthGuard) // Yêu cầu phải đăng nhập
   @Get('conversations')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async getConversationList(@Req() req) {
     // req.user được gán từ JwtStrategy (payload)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
@@ -62,5 +67,18 @@ export class UserController {
         avatar_url: true,
       },
     });
+  }
+  @Get('profile')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
+  async getProfile(@Req() req: any) {
+    // Tạm thời hardcode user_id = 1 theo yêu cầu test
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    // const userId = 1;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const user = await this.userService.getUserProfile(userId);
+    return { message: 'Lấy thông tin user thành công', data: user };
   }
 }

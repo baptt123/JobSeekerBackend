@@ -240,14 +240,13 @@ export class JobService {
     }
   }
 
-  // ⭐️ SỬA: Hàm lấy chi tiết job của bạn cần nhận thêm userId
+  // ========================================================
+  // 1. SỬA HÀM CHI TIẾT JOB (findJobDetail)
+  // ========================================================
   async findJobDetail(
     jobTitle: string,
     userId: number,
   ): Promise<JobEntity & { isApplied: boolean; isSaved: boolean }> {
-    // 1. Cập nhật kiểu trả về
-
-    // Tìm công việc
     const job = await this.jobRepo.findOne({
       where: { title: jobTitle },
       relations: ['company'],
@@ -257,36 +256,40 @@ export class JobService {
       throw new NotFoundException('Không tìm thấy công việc');
     }
 
-    // 2. ⭐️ LOGIC MỚI: Kiểm tra 'isSaved'
-    // (Dùng findOneBy vì chỉ cần biết nó CÓ TỒN TẠI hay không)
-    // TypeORM sẽ tự động lọc (deleted_at IS NULL)
+    // ⭐️ LOGIC TÍNH DEADLINE: CreatedAt + 30 ngày
+    // Chúng ta ghi đè lên thuộc tính deadline của object job trước khi trả về
+    const createdDate = new Date(job.created_at);
+    const deadlineDate = new Date(createdDate);
+    deadlineDate.setDate(createdDate.getDate() + 30); // Cộng thêm 30 ngày
+
+    job.deadline = deadlineDate;
+
+    // --- Logic check Saved/Applied (Giữ nguyên) ---
     const savedJob = await this.savedJobRepo.findOneBy({
       job_id: job.job_id,
       user_id: userId,
     });
 
-    // 3. LOGIC CŨ: Kiểm tra 'isApplied' (Giữ nguyên)
     const application = await this.jobAppRepo.findOneBy({
       job_id: job.job_id,
       user_id: userId,
     });
 
-    // 4. ⭐️ TRẢ VỀ: Thêm 'isSaved'
     return {
       ...job,
-      isApplied: !!application, // true nếu 'application' tồn tại, false nếu null
-      isSaved: !!savedJob, // true nếu 'savedJob' tồn tại, false nếu null
+      isApplied: !!application,
+      isSaved: !!savedJob,
     };
   }
 
-  /*
-code hiển thị job cho homepage
- */
+  // ========================================================
+  // 2. SỬA HÀM HIỂN THỊ LIST JOB (displayJob)
+  // ========================================================
   async displayJob(
     page: number = 1,
     limit: number = 10,
   ): Promise<{
-    data: JobDto[];
+    data: JobDto[]; // Bạn có thể cần update JobDto thêm field deadline
     total: number;
     page: number;
     totalPages: number;
@@ -296,29 +299,39 @@ code hiển thị job cho homepage
       .leftJoinAndSelect('job.company', 'company')
       .leftJoinAndSelect('job.jobSkills', 'jobSkill')
       .leftJoinAndSelect('jobSkill.skill', 'skill')
-      .orderBy('job.created_at', 'DESC') // sắp xếp mới nhất lên đầu
-      .skip((page - 1) * limit) // bỏ qua số lượng bản ghi tương ứng trang trước
-      .take(limit) // giới hạn số lượng bản ghi mỗi trang
+      .orderBy('job.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
       .getManyAndCount();
 
     // Chuyển đổi sang DTO để trả về frontend
-    const data = jobs.map((job) => ({
-      job_id: job.job_id,
-      title: job.title,
-      description: job.description,
-      requirements: job.requirements,
-      salary_min: job.salary_min,
-      salary_max: job.salary_max,
-      location: job.location,
-      job_type: job.job_type,
-      company_name: job.company?.name ?? null,
-      skills: job.jobSkills?.map((js) => js.skill.skill_name) ?? [],
-      created_at: job.created_at,
-      logo_url: job.company?.logo_url ?? null,
-    }));
+    const data = jobs.map((job) => {
+      // ⭐️ LOGIC TÍNH DEADLINE CHO LIST: CreatedAt + 30 ngày
+      const createdDate = new Date(job.created_at);
+      const deadlineDate = new Date(createdDate);
+      deadlineDate.setDate(createdDate.getDate() + 30);
+
+      return {
+        job_id: job.job_id,
+        title: job.title,
+        description: job.description,
+        requirements: job.requirements,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        location: job.location,
+        job_type: job.job_type,
+        company_name: job.company?.name ?? null,
+        skills: job.jobSkills?.map((js) => js.skill.skill_name) ?? [],
+        created_at: job.created_at,
+        logo_url: job.company?.logo_url ?? null,
+
+        // ⭐️ THÊM FIELD DEADLINE VÀO DTO
+        deadline: deadlineDate,
+      };
+    });
 
     return {
-      data,
+      data, // data này giờ đã có deadline tính theo công thức 30 ngày
       total,
       page,
       totalPages: Math.ceil(total / limit),

@@ -6,9 +6,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CloudinaryCustomService } from './cloudinary-custom.service';
-import { RolesGuard } from '../guard/role-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from '../decorator/role.decorator';
+import { OrAuthGuard } from '../guard/or-auth.guard';
 
 @Controller('cloudinary-custom')
 export class CloudinaryCustomController {
@@ -16,7 +16,7 @@ export class CloudinaryCustomController {
     private readonly cloudinaryCustomService: CloudinaryCustomService,
   ) {}
   @Post('upload-file')
-  @UseGuards(RolesGuard)
+  @UseGuards(OrAuthGuard)
   @Roles('ADMIN', 'USER', 'RECRUITER')
   @UseInterceptors(FileInterceptor('file')) // 'file' là key form-data
   async uploadFile(@UploadedFile() file: Express.Multer.File) {

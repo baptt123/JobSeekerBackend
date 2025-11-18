@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../guard/jwt-auth.guard';
 import { FilterJobDto } from '../dto/filter-job.dto';
 import { JobDto } from '../dto/job.dto';
 import { SaveJobDto } from '../dto/save-job.dto';
+import { OrAuthGuard } from '../guard/or-auth.guard';
 
 @Controller('job')
 export class JobController {
@@ -82,16 +83,22 @@ dùng cho save job
  */
   @Post('create-save-job')
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   saveJob(@Body() saveJobDto: SaveJobDto) {
     return this.jobService.saveJob(1, saveJobDto.job_id);
   }
 
   @Get('get-my-saved-jobs')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   getMySavedJobs() {
     return this.jobService.getMySavedJobs(1);
   }
 
   @Delete('delete-job/:jobId')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   @HttpCode(HttpStatus.NO_CONTENT) // Trả về 204 No Content khi xóa thành công
   unsaveJob(@Param('jobId', ParseIntPipe) jobId: number) {
     return this.jobService.unsaveJob(1, jobId);
