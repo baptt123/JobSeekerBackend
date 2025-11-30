@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
 import { UserCVEntity } from './user-cv.entity';
 import { KeywordEntity } from './keyword.entity';
 
@@ -9,11 +10,13 @@ export class CVKeywordEntity {
 
   @ManyToOne(() => UserCVEntity, (cv) => cv.keywords, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'cv_id' })
+  @ApiProperty({ type: () => UserCVEntity }) // <--- THÊM
   cv: UserCVEntity;
 
   @ManyToOne(() => KeywordEntity, (keyword) => keyword.cvKeywords, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'keyword_id' })
+  @ApiProperty({ type: () => KeywordEntity }) // <--- THÊM
   keyword: KeywordEntity;
 }

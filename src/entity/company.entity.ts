@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   OneToMany,
 } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
 import { UserEntity } from './user.entity';
 import { JobEntity } from './job.entity';
 
@@ -14,26 +15,33 @@ export class CompanyEntity {
   company_id: number;
 
   @Column({ length: 255 })
+  @ApiProperty()
   name: string;
 
   @Column('text', { nullable: true })
+  @ApiProperty({ required: false })
   description: string;
 
   @Column({ length: 255, nullable: true })
+  @ApiProperty({ required: false })
   website: string;
 
   @Column({ length: 255, nullable: true })
+  @ApiProperty({ required: false })
   address: string;
 
   @Column({ length: 500, nullable: true })
+  @ApiProperty({ required: false })
   logo_url: string;
 
   @CreateDateColumn()
   created_at: Date;
 
   @OneToMany(() => UserEntity, (user) => user.company)
+  @ApiProperty({ type: () => UserEntity, isArray: true }) // <--- THÊM
   users: UserEntity[];
 
   @OneToMany(() => JobEntity, (job) => job.company)
+  @ApiProperty({ type: () => JobEntity, isArray: true }) // <--- THÊM
   jobs: JobEntity[];
 }

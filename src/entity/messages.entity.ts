@@ -1,4 +1,3 @@
-// src/entity/messages.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,6 +7,7 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
 import { UserEntity } from './user.entity';
 
 @Entity('messages')
@@ -23,6 +23,7 @@ export class MessageEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'sender_id' })
+  @ApiProperty({ type: () => UserEntity }) // <--- THÊM
   sender: UserEntity;
 
   @Column()
@@ -32,27 +33,29 @@ export class MessageEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'receiver_id' })
+  @ApiProperty({ type: () => UserEntity }) // <--- THÊM
   receiver: UserEntity;
 
-  // ✅ SỬA 1: Cho phép content là null (khi gửi ảnh)
   @Column('text', { nullable: true })
+  @ApiProperty({ required: false })
   content: string;
 
   @Column('boolean', { default: false })
+  @ApiProperty()
   is_read: boolean;
 
   @CreateDateColumn()
   sent_at: Date;
 
-  // ✅ THÊM 1: Thêm cột lưu URL ảnh (giống logo_url [cite: 5])
   @Column({ length: 500, nullable: true })
+  @ApiProperty({ required: false })
   image_url: string;
 
-  // ✅ THÊM 2: Thêm cột loại tin nhắn
   @Column({
     type: 'enum',
     enum: ['text', 'image'],
     default: 'text',
   })
+  @ApiProperty({ enum: ['text', 'image'] })
   message_type: 'text' | 'image';
 }

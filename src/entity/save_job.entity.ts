@@ -4,8 +4,9 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
-  DeleteDateColumn, // 1. Import thêm
+  DeleteDateColumn,
 } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
 import { UserEntity } from './user.entity';
 import { JobEntity } from './job.entity';
 
@@ -24,12 +25,15 @@ export class SavedJobEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
+  @ApiProperty({ type: () => UserEntity }) // <--- FIX CIRCULAR
   user: UserEntity;
 
   @ManyToOne(() => JobEntity, (job) => job.savedJobs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
+  @ApiProperty({ type: () => JobEntity }) // <--- FIX CIRCULAR
   job: JobEntity;
 
   @DeleteDateColumn()
-  deleted_at: null; // ✅ SỬA LẠI
+  @ApiProperty({ required: false })
+  deleted_at: Date | null;
 }
