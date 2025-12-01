@@ -15,7 +15,7 @@ import { JobEntity } from './job.entity';
 import { JobApplicationEntity } from './job-application.entity';
 import { SavedJobEntity } from './save_job.entity';
 import { MessageEntity } from './messages.entity';
-import { NotificationEntity } from './notification.entity';
+import NotificationEntity from './notification.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -94,4 +94,10 @@ export class UserEntity {
   @OneToMany(() => NotificationEntity, (notification) => notification.user)
   @ApiProperty({ type: () => NotificationEntity, isArray: true }) // <--- FIX CIRCULAR
   notifications: NotificationEntity[];
+  @Column({ type: 'text', nullable: true })
+  @ApiProperty({
+    required: false,
+    description: 'Firebase Cloud Messaging Token',
+  })
+  fcm_token: string;
 }

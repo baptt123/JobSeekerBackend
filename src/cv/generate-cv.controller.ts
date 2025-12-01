@@ -9,7 +9,8 @@ import {
   Param,
   Post,
   Res,
-  UploadedFile, UseGuards,
+  UploadedFile,
+  UseGuards,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
@@ -28,7 +29,6 @@ export class GenerateCvController {
     private readonly generateCvService: GenerateCvService,
     private readonly cloudinaryService: CloudinaryCustomService,
   ) {}
-
 
   @Post('gen-cv')
   @HttpCode(200)

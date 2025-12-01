@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotificationEntity } from '../entity/notification.entity';
+import NotificationEntity from '../entity/notification.entity';
 import { SendNotificationDto } from '../dto/send-notification.dto';
 import { UserService } from '../user/user.service';
 

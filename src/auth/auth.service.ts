@@ -41,165 +41,65 @@ export class AuthService {
     return this.usersService.forgotPassword(email);
   }
 
+  // 1. LOGIN
+  // 1. LOGIN (Email/Password)
   async login(dto: LoginDto) {
     try {
-      // Lấy user từ DB, kèm role
       const user = await this.usersService.userRepo.findOne({
         where: { email: dto.email },
         relations: ['role'],
       });
 
-      if (!user) throw new UnauthorizedException('Không tìm thấy người dùng');
+      if (!user)
+        throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+      if (!user.password_hash)
+        throw new UnauthorizedException('Tài khoản chưa thiết lập mật khẩu');
 
-      // Kiểm tra hash có tồn tại
-      if (!user.password_hash) {
-        console.error('Hash mật khẩu từ DB bị trống');
-        throw new UnauthorizedException('User chưa đặt mật khẩu');
-      }
-
-      console.log('Hash từ DB:', user.password_hash);
-      console.log('Password nhập:', dto.password);
-
-      // So sánh mật khẩu
       const match = await argon2.verify(user.password_hash, dto.password);
-      console.log('Kết quả verify:', match);
+      if (!match)
+        throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
 
-      if (!match) throw new UnauthorizedException('Mật khẩu không đúng');
-
-      // Tạo payload JWT
-      const payload = {
-        sub: user.user_id,
-        email: user.email,
-        role: user.role.role_name,
-      };
-
-      const accessToken = await this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_ACCESS_SECRET,
-        expiresIn: process.env.JWT_ACCESS_EXPIRATION,
-      });
-
-      const refreshToken = await this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_REFRESH_SECRET,
-        expiresIn: process.env.JWT_REFRESH_EXPIRATION,
-      });
-
-      return {
-        message: 'Đăng nhập thành công',
-        accessToken,
-        refreshToken,
-        user: {
-          id: user.user_id,
-          email: user.email,
-          fullName: user.full_name,
-          role: user.role_id,
-        },
-      };
+      // Tạo Tokens và trả về response chuẩn
+      return this._generateSystemJwt(user);
     } catch (error) {
-      console.error('Login ERROR:', error);
-      throw new InternalServerErrorException('Server bị lỗi');
+      if (error instanceof UnauthorizedException) throw error;
+      throw new InternalServerErrorException('Lỗi hệ thống khi đăng nhập');
     }
   }
 
-  async refreshToken(refreshTokenDTO: RefreshTokenDto) {
+  // 2. REFRESH TOKEN (Stateless)
+  async refreshToken(dto: RefreshTokenDto) {
     try {
+      // Verify Refresh Token
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const payload = this.jwtService.verify(refreshTokenDTO.refreshToken, {
-        ignoreExpiration: false,
-        secret: process.env.JWT_REFRESH_SECRET,
+      const payload = await this.jwtService.verifyAsync(dto.refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
 
+      // Kiểm tra user còn tồn tại trong DB không
       const user = await this.usersService.userRepo.findOne({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         where: { user_id: payload.sub },
         relations: ['role'],
       });
 
-      if (!user) {
-        throw new UnauthorizedException('Người dùng không tồn tại');
-      }
+      if (!user)
+        throw new UnauthorizedException('Người dùng không còn tồn tại');
 
-      const newPayload = {
-        sub: user.user_id,
-        email: user.email,
-        role: user.role.role_name,
-      };
-
-      const newAccessToken = await this.jwtService.signAsync(newPayload, {
-        secret: process.env.JWT_ACCESS_SECRET,
-        expiresIn: process.env.JWT_ACCESS_EXPIRATION || '30m',
-      });
-
-      return { accessToken: newAccessToken };
-    } catch (err) {
-      console.error('Refresh ERROR:', err);
-      throw new UnauthorizedException(
-        'Refresh token hết hạn hoặc không hợp lệ',
-      );
-    }
-  }
-
-  async loginWithGoogle(
-    firebaseUser: FirebaseUserPayload,
-  ): Promise<AuthResponseDto> {
-    if (!firebaseUser.email) {
-      throw new UnauthorizedException('Token Firebase không có email');
-    }
-
-    try {
-      // 1️⃣ Tìm user bằng email
-      let user: UserEntity | null = await this.usersService.userRepo.findOne({
-        where: { email: firebaseUser.email },
-      });
-
-      // 2️⃣ Nếu user đã tồn tại (bất kể là có pass hay không)
-      if (user) {
-        // 👇 LOGIC CŨ BỊ XÓA:
-        // if (user.password_hash) { ... throw error ... }
-
-        // 👇 LOGIC MỚI:
-        // Cập nhật thông tin của họ từ Google (vì nó mới nhất)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        user.full_name = firebaseUser.name || user.full_name; // Ưu tiên tên Google
-        if (firebaseUser.picture) {
-          user.avatar_url = firebaseUser.picture;
-        }
-        // Bạn có thể thêm một trường để đánh dấu họ đã link Google
-        // user.provider = 'google';
-
-        await this.usersService.userRepo.save(user);
-      } else {
-        // 3️⃣ Nếu user chưa tồn tại → tạo mới
-        user = new UserEntity();
-        user.email = firebaseUser.email;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        user.full_name = firebaseUser.name || 'Người dùng Google';
-        if (firebaseUser.picture != null) {
-          user.avatar_url = firebaseUser.picture;
-        }
-
-        // 👇 Dùng Enum cho dễ đọc
-        user.role_id = 2; // Giả sử 2 là RECRUITER
-
-        await this.usersService.userRepo.save(user);
-      }
-
-      // 4️⃣ Trả về JWT hệ thống (cho cả 2 trường hợp)
+      // ✅ QUAN TRỌNG: Trả về cấu trúc giống hệt Login (gồm cả User info + Tokens mới)
+      // Để Client dùng chung hàm parse JSON
       return this._generateSystemJwt(user);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      // Khối catch này đã tốt, giữ nguyên
-      if (err instanceof UnauthorizedException) throw err;
-      console.error('Lỗi nghiêm trọng khi đăng nhập Google:', err);
-      throw new InternalServerErrorException(
-        'Lỗi máy chủ khi xác thực: ' + (err as Error).message,
+      throw new UnauthorizedException(
+        'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại',
       );
     }
   }
 
-  /**
-   * [THÊM MỚI]
-   * Tạo JWT của hệ thống từ thông tin UserEntity
-   */
-  // 👇 3. SỬA LẠI HOÀN TOÀN HÀM NÀY
+  // ... (Giữ nguyên logic Google Login) ...
+
+  // Helper: Tạo Token và Format Response chuẩn
   private async _generateSystemJwt(user: UserEntity): Promise<AuthResponseDto> {
     const payload = {
       sub: user.user_id,
@@ -207,36 +107,82 @@ export class AuthService {
       role: user.role_id,
     };
 
-    // Tạo cả 2 token
     const [accessToken, refreshToken] = await Promise.all([
-      // Access Token (thời gian ngắn, ví dụ 15 phút)
       this.jwtService.signAsync(payload, {
         secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION'), // '15m'
+        expiresIn:
+          this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
       }),
-      // Refresh Token (thời gian dài, ví dụ 7 ngày)
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'), // Nên là secret khác
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION'), // '7d'
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        expiresIn:
+          this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
       }),
     ]);
 
-    // Tạo object user payload KHỚP với Flutter
-    // Flutter chỉ cần: { user: { id: ... } }
-    // Chúng ta trả về thêm để sau này Flutter dễ dùng
-    const userPayload = {
-      id: user.user_id, // 👈 Ánh xạ user_id -> id
-      email: user.email,
-      full_name: user.full_name,
-      avatar_url: user.avatar_url,
-      role_id: user.role_id,
-    };
-
-    // Trả về DTO hoàn chỉnh
+    // Format dữ liệu trả về client
     return {
       accessToken: accessToken,
-      refreshToken: refreshToken, // 👈 Trả về refreshToken
-      user: userPayload, // 👈 Trả về user object đã map
+      refreshToken: refreshToken,
+      user: {
+        id: user.user_id,
+        email: user.email,
+        full_name: user.full_name,
+        avatar_url: user.avatar_url,
+        role_id: user.role_id,
+      },
     };
+  }
+
+  async loginWithGoogle(
+    firebaseUser: FirebaseUserPayload,
+    deviceToken?: string, // [THÊM MỚI] Nhận thêm tham số
+  ): Promise<AuthResponseDto> {
+    if (!firebaseUser.email) {
+      throw new UnauthorizedException('Token Firebase không có email');
+    }
+
+    try {
+      let user: UserEntity | null = await this.usersService.userRepo.findOne({
+        where: { email: firebaseUser.email },
+      });
+
+      if (user) {
+        // Cập nhật thông tin
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user.full_name = firebaseUser.name || user.full_name;
+        if (firebaseUser.picture) {
+          user.avatar_url = firebaseUser.picture;
+        }
+        // [THÊM MỚI] Cập nhật Device Token nếu có
+        if (deviceToken) {
+          user.fcm_token = deviceToken;
+        }
+        await this.usersService.userRepo.save(user);
+      } else {
+        // Tạo mới
+        user = new UserEntity();
+        user.email = firebaseUser.email;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user.full_name = firebaseUser.name || 'Người dùng Google';
+        if (firebaseUser.picture != null) {
+          user.avatar_url = firebaseUser.picture;
+        }
+        user.role_id = 2; // Default role
+        // [THÊM MỚI] Lưu Device Token
+        if (deviceToken) {
+          user.fcm_token = deviceToken;
+        }
+        await this.usersService.userRepo.save(user);
+      }
+
+      return this._generateSystemJwt(user);
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
+      console.error('Lỗi login google:', err);
+      throw new InternalServerErrorException(
+        'Lỗi máy chủ: ' + (err as Error).message,
+      );
+    }
   }
 }

@@ -19,7 +19,8 @@ import { Roles } from '../decorator/role.decorator';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import * as admin from 'firebase-admin';
 import { AuthResponseDto } from '../dto/auth-response.dto';
-import { OrAuthGuard } from '../guard/or-auth.guard'; // 👈 Thêm admin
+import { OrAuthGuard } from '../guard/or-auth.guard';
+import { FirebaseLoginDto } from '../dto/firebase-login.dto'; // 👈 Thêm admin
 // [THÊM MỚI] Định nghĩa kiểu cho `req.user` sau khi Guard chạy
 interface RequestWithFirebaseUser extends Request {
   user: admin.auth.DecodedIdToken;
@@ -82,18 +83,19 @@ export class AuthController {
       email: user.email,
     };
   }
+
   /**
-   * [THÊM MỚI]
    * Endpoint cho Flutter gọi để đăng nhập bằng Google
-  //  * Guard 'firebase-auth' sẽ chạy trước
-  //  */
+   * Header: Authorization: Bearer <FirebaseIdToken>
+   * Body: { "deviceToken": "..." }
+   */
   @Post('firebase-login')
-  // @UseGuards(OrAuthGuard)
+  // @UseGuards(OrAuthGuard) // Guard này check Header để lấy req.user
   async googleLogin(
     @Req() req: RequestWithFirebaseUser,
+    @Body() body: FirebaseLoginDto, // [THÊM MỚI] Nhận body
   ): Promise<AuthResponseDto> {
-    // Khi đến được đây, `FirebaseAuthStrategy` đã chạy thành công
-    // và `req.user` chính là payload đã được giải mã.
-    return this.authService.loginWithGoogle(req.user);
+    // Truyền cả user payload và deviceToken vào service
+    return this.authService.loginWithGoogle(req.user, body.deviceToken);
   }
 }

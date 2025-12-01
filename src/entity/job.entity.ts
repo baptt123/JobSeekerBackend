@@ -69,7 +69,10 @@ export class JobEntity {
     enum: ['Full-time', 'Part-time', 'Internship', 'Contract', 'Freelance'],
     nullable: true,
   })
-  @ApiProperty({ enum: ['Full-time', 'Part-time', 'Internship', 'Contract', 'Freelance'], required: false })
+  @ApiProperty({
+    enum: ['Full-time', 'Part-time', 'Internship', 'Contract', 'Freelance'],
+    required: false,
+  })
   job_type: 'Full-time' | 'Part-time' | 'Internship' | 'Contract' | 'Freelance';
 
   @CreateDateColumn()
