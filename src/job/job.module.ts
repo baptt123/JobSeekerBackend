@@ -6,6 +6,7 @@ import { JobEntity } from '../entity/job.entity';
 import { UserCVEntity } from '../entity/user-cv.entity';
 import { SavedJobEntity } from '../entity/save_job.entity';
 import { JobApplicationEntity } from '../entity/job-application.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { JobApplicationEntity } from '../entity/job-application.entity';
       SavedJobEntity,
       JobApplicationEntity,
     ]),
+    JwtModule,
   ],
   controllers: [JobController],
   providers: [JobService],

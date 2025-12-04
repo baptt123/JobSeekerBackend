@@ -8,80 +8,74 @@ import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import NotificationEntity from '../entity/notification.entity';
+import NotificationEntity, {
+  NotificationType,
+} from '../entity/notification.entity';
 import { SendNotificationDto } from '../dto/send-notification.dto';
+import { ModuleRef } from '@nestjs/core';
 import { UserService } from '../user/user.service';
-
-// Interface cho payload (từ code của bạn)
-export interface NotificationPayload {
-  title: string;
-  body: string;
-  data?: { [key: string]: string };
-}
 
 @Injectable()
 export class FirebaseModuleService implements OnModuleInit {
   private readonly logger = new Logger(FirebaseModuleService.name);
 
+  // --- QUAN TRỌNG: Phải khai báo biến này để lưu instance sau khi lazy load ---
+  private userService: UserService;
+  // --------------------------------------------------------------------------
+
   constructor(
     private configService: ConfigService,
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
-    private readonly userService: UserService,
+    // Inject ModuleRef thay vì UserService trực tiếp để tránh Circular Dependency
+    private moduleRef: ModuleRef,
   ) {}
 
   /**
-   * Khởi tạo Firebase Admin khi module được load
+   * Khởi tạo Firebase Admin SDK
    */
   onModuleInit() {
-    // Lấy thông tin config từ biến môi trường
     const privateKey = this.configService.get<string>('FIREBASE_PRIVATE_KEY');
     const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
 
     if (!privateKey || !projectId || !clientEmail) {
-      throw new InternalServerErrorException(
-        'Firebase config (PRIVATE_KEY, PROJECT_ID, CLIENT_EMAIL) không được tìm thấy trong biến môi trường.',
+      this.logger.warn(
+        'Firebase config missing. Push notifications will not work.',
       );
+      return;
     }
 
-    // Thay thế ký tự '\n' (dạng chuỗi) bằng ký tự xuống dòng thật
     const firebaseConfig = {
       projectId: projectId,
       privateKey: privateKey.replace(/\\n/g, '\n').replace(/\r/g, ''),
       clientEmail: clientEmail,
     };
 
-    // Khởi tạo app
     if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert(firebaseConfig),
       });
-      this.logger.log("'Firebase Config:'", firebaseConfig);
-      this.logger.log('Firebase Admin đã được khởi tạo thành công.');
+      this.logger.log('Firebase Admin initialized successfully.');
     }
   }
 
   /**
-   * Lấy dịch vụ Authentication của Firebase
-   */
-  getAuth(): admin.auth.Auth {
-    return admin.auth();
-  }
-
-  /**
-   * Lấy dịch vụ Messaging của Firebase
+   * Helper lấy Messaging service
    */
   getMessaging(): admin.messaging.Messaging {
     return admin.messaging();
   }
 
   /**
-   * Gửi Push Notification đến một thiết bị cụ thể qua FCM token
+   * Gửi Push Notification (Core function)
    */
   async sendPushNotification(dto: SendNotificationDto): Promise<string> {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    const { token, title, body, userId, data } = dto;
+    const { token, title, body, userId, data, type } = dto;
+
+    const stringData = data
+      ? Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]))
+      : {};
 
     const message: admin.messaging.Message = {
       notification: {
@@ -89,10 +83,10 @@ export class FirebaseModuleService implements OnModuleInit {
         body,
       },
       token: token,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: {
-        ...data, // Gộp data tùy chỉnh nếu có
+        ...stringData,
         click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        type: type ? String(type) : String(NotificationType.SYSTEM),
       },
       android: {
         priority: 'high',
@@ -107,16 +101,14 @@ export class FirebaseModuleService implements OnModuleInit {
     };
 
     try {
-      // Sử dụng getMessaging() để gửi
       const response = await this.getMessaging().send(message);
-      this.logger.log(`Successfully sent message: ${response}`);
+      this.logger.log(`Successfully sent FCM message: ${response}`);
 
-      // (Tùy chọn) Lưu thông báo này vào CSDL
       if (userId) {
-        await this.saveNotificationToDb(userId, title, body);
+        await this.saveNotificationToDb(userId, title, body, type, data);
       }
 
-      return response; // Trả về Message ID
+      return response;
     } catch (error) {
       this.logger.error('Error sending FCM message:', error);
       throw new InternalServerErrorException(
@@ -126,47 +118,98 @@ export class FirebaseModuleService implements OnModuleInit {
   }
 
   /**
-   [cite_start]* [cite: 44]
-   * Lưu thông báo vào bảng NotificationEntity
+   * Hàm tiện ích: Gửi thông báo đến User ID
+   */
+  async sendNotificationToUser(
+    userId: number,
+    title: string,
+    body: string,
+    type: NotificationType = NotificationType.SYSTEM,
+    metadata?: Record<string, any>,
+  ): Promise<string | null> {
+    // Gọi hàm lazy load để lấy service
+    const userService = this.getUserService();
+
+    // Kiểm tra kỹ phòng trường hợp không lấy được service (dù hiếm)
+    if (!userService) {
+      this.logger.error('UserService not found via ModuleRef');
+      return null;
+    }
+
+    const user = await userService.userRepo.findOne({
+      where: { user_id: userId },
+      select: ['user_id', 'fcm_token'],
+    });
+
+    if (!user || !user.fcm_token) {
+      this.logger.warn(`User ${userId} has no FCM token. Saving to DB only.`);
+      await this.saveNotificationToDb(userId, title, body, type, metadata);
+      return null;
+    }
+
+    try {
+      return await this.sendPushNotification({
+        token: user.fcm_token,
+        title,
+        body,
+        userId,
+        type,
+        data: metadata,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send notification to user ${userId}`, error);
+      await this.saveNotificationToDb(userId, title, body, type, metadata);
+      return null;
+    }
+  }
+
+  /**
+   * Lưu thông báo vào Database
    */
   private async saveNotificationToDb(
     userId: number,
     title: string,
     message: string,
+    type: NotificationType = NotificationType.SYSTEM,
+    metadata?: Record<string, any>,
   ) {
     try {
       const newNotification = this.notificationRepository.create({
-        user_id: userId, // [cite: 45]
-        title: title, // [cite: 46]
-        message: message, // [cite: 46]
-        is_read: false, // [cite: 47]
+        user_id: userId,
+        title,
+        message,
+        is_read: false,
+        type,
+        metadata,
       });
       await this.notificationRepository.save(newNotification);
-      this.logger.log(`Notification saved to DB for user ${userId}`);
     } catch (error) {
       this.logger.error(
-        `Failed to save notification to DB for user ${userId}:`,
+        `Failed to save notification for user ${userId}`,
         error,
       );
     }
   }
+
   /**
-   * Lấy danh sách thông báo từ CSDL cho một user
+   * Lấy danh sách thông báo của User
    */
   async getNotifications(userId: number): Promise<NotificationEntity[]> {
-    try {
-      return await this.notificationRepository.find({
-        where: { user_id: userId },
-        order: { created_at: 'DESC' }, // Sắp xếp mới nhất lên đầu
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to fetch notifications for user ${userId}:`,
-        error,
-      );
-      throw new InternalServerErrorException(
-        'Could not retrieve notifications.',
-      );
+    return await this.notificationRepository.find({
+      where: { user_id: userId },
+      order: { created_at: 'DESC' },
+    });
+  }
+
+  /**
+   * Hàm này lấy UserService một lần khi cần dùng (Lazy Loading)
+   * Giúp tránh Circular Dependency tại thời điểm khởi tạo Constructor
+   */
+  private getUserService(): UserService {
+    if (!this.userService) {
+      // strict: false cho phép tìm kiếm provider trong context của module khác
+      this.userService = this.moduleRef.get(UserService, { strict: false });
     }
+    return this.userService;
   }
 }

@@ -9,11 +9,14 @@ import {
   Param,
   ParseIntPipe,
   UseGuards,
+  Req, // ✅ Thêm
 } from '@nestjs/common';
 import { FirebaseModuleService } from './firebase-module.service';
 import { SendNotificationDto } from '../dto/send-notification.dto';
 import { OrAuthGuard } from '../guard/or-auth.guard';
 import { Roles } from '../decorator/role.decorator';
+// Giả định bạn đã có decorator này để lấy user từ req
+import { GetUser } from '../decorator/get-user.decorator';
 
 @Controller('firebase') // Route: /api/firebase
 export class FirebaseModuleController {
@@ -22,11 +25,9 @@ export class FirebaseModuleController {
   /**
    * Endpoint để test gửi push notification
    */
-  // @UseGuards(FirebaseAuthGuard)
   @Post('send-test')
   @UseGuards(OrAuthGuard)
-  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  // @UseGuards(JwtAuthGuard) // Nên bảo vệ endpoint này
+  @Roles('ADMIN') // ✅ Chỉ nên cho ADMIN test API này
   async sendTestNotification(@Body(ValidationPipe) dto: SendNotificationDto) {
     try {
       const messageId = await this.firebaseService.sendPushNotification(dto);
@@ -47,16 +48,13 @@ export class FirebaseModuleController {
   /**
    * Endpoint để lấy danh sách notifications của user
    */
-  @Get('notifications/:userId')
+  @Get('notifications') // ✅ FIX BẢO MẬT: Bỏ :userId để tránh User A xem thông báo của User B
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  // @UseGuards(JwtAuthGuard) // Nên bảo vệ endpoint này
-  async getNotificationsByUserId(
-    @Param('userId', ParseIntPipe) userId: number,
+  async getNotifications(
+    @GetUser('userId') userId: number, // ✅ Lấy userId từ JWT Payload (an toàn)
   ) {
-    // Lưu ý: Trong thực tế, bạn nên lấy userId từ (req.user) đã được xác thực
-    // thay vì tin tưởng vào Param, để tránh user này xem thông báo của user khác.
-    // Tuy nhiên, để test thì cách này vẫn hoạt động.
+    // Lưu ý: Nếu không dùng @GetUser, bạn cần dùng @Req() req và lấy req.user.userId
     try {
       const notifications = await this.firebaseService.getNotifications(userId);
       return {

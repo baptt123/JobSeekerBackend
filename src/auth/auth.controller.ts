@@ -34,7 +34,7 @@ export class AuthController {
   async signup(@Body() dto: RegisterDto) {
     console.log('DTO:', dto);
     console.log('Body:', JSON.stringify(dto));
-    return await this.authService.createUser(dto);
+    return await this.authService.register(dto);
   }
 
   @Put('update-password')
@@ -90,7 +90,7 @@ export class AuthController {
    * Body: { "deviceToken": "..." }
    */
   @Post('firebase-login')
-  // @UseGuards(OrAuthGuard) // Guard này check Header để lấy req.user
+  @UseGuards(OrAuthGuard) // Guard này check Header để lấy req.user
   async googleLogin(
     @Req() req: RequestWithFirebaseUser,
     @Body() body: FirebaseLoginDto, // [THÊM MỚI] Nhận body

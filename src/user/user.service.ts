@@ -1,8 +1,11 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { UserEntity } from '../entity/user.entity';
 import {
   BadRequestException,
+  ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -16,6 +19,7 @@ import crypto from 'crypto';
 import * as argon2 from 'argon2';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { CloudinaryCustomService } from '../cloudinary-custom/cloudinary-custom.service';
+import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
 @Injectable()
 export class UserService {
   constructor(
@@ -23,50 +27,67 @@ export class UserService {
     public readonly userRepo: Repository<UserEntity>,
     private readonly mailerService: MailerService,
     private readonly cloudinaryService: CloudinaryCustomService,
+    @Inject(forwardRef(() => FirebaseModuleService))
+    private readonly firebaseService: FirebaseModuleService,
   ) {}
+  // 1. ĐĂNG KÝ
   async create(dto: RegisterDto): Promise<UserEntity> {
     const existingUser = await this.userRepo.findOne({
       where: { email: dto.email },
     });
     if (existingUser) {
-      throw new BadRequestException(`Email đã được ${dto.email} sử dụng`);
+      throw new BadRequestException(`Email ${dto.email} đã được sử dụng`);
     }
 
-    // ✅ Hash password bằng argon2
+    // Hash password bằng argon2
     const passwordHash = await argon2.hash(dto.password);
 
     const user = this.userRepo.create({
       email: dto.email,
       full_name: dto.full_name,
       password_hash: passwordHash,
-      role_id: 2, // mặc định role CANDIDATE
+      role_id: 2, // Mặc định role CANDIDATE
     });
 
+    // Save trả về entity đầy đủ
     return this.userRepo.save(user);
   }
 
+  // 2. ĐỔI MẬT KHẨU
   async updatePassword(userId: number, dto: ChangePasswordDto) {
-    // Lấy user từ DB
     const user = await this.userRepo.findOne({ where: { user_id: userId } });
     if (!user) throw new UnauthorizedException('User không tìm thấy');
 
-    console.log('--- DEBUG UPDATE PASSWORD ---');
-    console.log('userId:', userId);
-    console.log('oldPassword nhập:', dto.oldPassword);
-    console.log('hash DB:', user.password_hash);
+    // Nếu user đăng nhập bằng Google (không có pass) thì cần xử lý riêng (ở đây giả sử luôn có pass)
+    if (!user.password_hash) {
+      throw new BadRequestException(
+        'Tài khoản này chưa thiết lập mật khẩu (Đăng nhập Google)',
+      );
+    }
 
-    // So sánh mật khẩu cũ với hash trong DB
+    // So sánh mật khẩu cũ
     const validOld = await argon2.verify(
       user.password_hash,
       dto.oldPassword.trim(),
     );
-    console.log('Kết quả compare argon2:', validOld);
 
     if (!validOld) throw new BadRequestException('Mật khẩu cũ không đúng');
 
-    // Kiểm tra mật khẩu mới và xác nhận
-    if (dto.newPassword !== dto.confirmPassword)
+    // Kiểm tra confirm password (nên check cả ở DTO, nhưng check lại ở đây cho chắc)
+    if (dto.newPassword !== dto.confirmPassword) {
       throw new BadRequestException('Mật khẩu xác nhận không khớp');
+    }
+
+    // Kiểm tra mật khẩu mới không được trùng mật khẩu cũ
+    const isSameAsOld = await argon2.verify(
+      user.password_hash,
+      dto.newPassword.trim(),
+    );
+    if (isSameAsOld) {
+      throw new BadRequestException(
+        'Mật khẩu mới không được trùng với mật khẩu cũ',
+      );
+    }
 
     // Hash mật khẩu mới và lưu
     user.password_hash = await argon2.hash(dto.newPassword.trim());
@@ -74,79 +95,108 @@ export class UserService {
 
     return { message: 'Cập nhật mật khẩu thành công' };
   }
-  async forgotPassword(email: string) {
-    console.log('>>> forgotPassword:', email);
 
+  // 3. QUÊN MẬT KHẨU (Fix lỗi dùng sai thư viện hash)
+  async forgotPassword(email: string) {
     try {
       const user = await this.userRepo.findOne({ where: { email } });
-      if (!user) throw new BadRequestException('Email không tồn tại');
+      if (!user)
+        throw new BadRequestException('Email không tồn tại trong hệ thống');
 
-      const newPass = crypto.randomBytes(4).toString('hex');
-      user.password_hash = await bcrypt.hash(newPass, 10);
+      // Tạo mật khẩu ngẫu nhiên dài hơn (8 bytes = 16 ký tự hex) cho an toàn hơn
+      const newPass = crypto.randomBytes(4).toString('hex'); // Ví dụ: 'a1b2c3d4'
+
+      // ✅ SỬA LỖI: Dùng argon2 để hash thay vì bcrypt
+      user.password_hash = await argon2.hash(newPass);
+
       await this.userRepo.save(user);
 
-      console.log('>>> Sending mail to:', user.email);
-
+      // Gửi mail
       await this.mailerService.sendMail({
         to: user.email,
-        subject: 'Gửi mật khẩu mới',
-        template: 'reset-password', // Sử dụng template
+        subject: '[App Name] Cấp lại mật khẩu mới', // Nên đặt tên App rõ ràng
+        template: 'reset-password',
         context: {
-          // resetLink: `https://example.com/reset-password?token=${newPass}`, // khớp {{resetLink}}
           newPassword: newPass,
-          // token: newPass,
+          name: user.full_name,
         },
       });
 
       return {
         message:
-          'Mật khẩu mới đã được gửi đến email của bạn! Vui lòng kiểm tra trong email của bạn',
+          'Mật khẩu mới đã được gửi vào email. Vui lòng kiểm tra (cả mục spam).',
       };
     } catch (error) {
-      console.error(' forgotPassword ERROR:', error);
-      throw new InternalServerErrorException('Server bị lỗi');
+      console.error('Forgot Password Error:', error);
+      // Ném lỗi đúng để Controller bắt được
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException('Lỗi hệ thống gửi mail');
     }
   }
 
+  // 🔥 ĐIỀU CHỈNH LOGIC UPDATE USER 🔥
   async updateUser(
     userId: number,
     dto: UpdateUserDto,
     file?: Express.Multer.File,
   ): Promise<UserEntity> {
     const user = await this.userRepo.findOne({ where: { user_id: userId } });
-    if (!user) {
-      throw new NotFoundException('Không tìm thấy user');
-    }
+    if (!user) throw new NotFoundException('Không tìm thấy user');
 
-    if (file) {
-      try {
-        const result = await this.cloudinaryService.uploadFile(file);
-        if ('secure_url' in result) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          dto.avatar_url = result.secure_url;
-        } else {
-          throw new BadRequestException('Upload avatar thất bại');
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (err) {
-        throw new BadRequestException('Upload avatar thất bại');
+    // 1. Kiểm tra logic trùng Email (Thực tế rất quan trọng)
+    if (dto.email && dto.email !== user.email) {
+      const existingEmail = await this.userRepo.findOne({
+        where: {
+          email: dto.email,
+          user_id: Not(userId), // Tìm xem có ai KHÁC đang dùng email này không
+        },
+      });
+      if (existingEmail) {
+        throw new ConflictException(
+          'Email này đã được sử dụng bởi tài khoản khác',
+        );
       }
     }
 
-    Object.assign(user, dto);
-    return this.userRepo.save(user);
+    // 2. Xử lý Upload Avatar
+    if (file) {
+      try {
+        const result = await this.cloudinaryService.uploadFile(file);
+        // Kiểm tra kết quả trả về từ Cloudinary
+        if (result && 'secure_url' in result) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          user.avatar_url = result.secure_url;
+        }
+      } catch (err) {
+        throw new BadRequestException('Upload avatar lên Cloudinary thất bại');
+      }
+    } else if (dto.avatar_url) {
+      // Trường hợp user không upload ảnh mới, nhưng gửi link (có thể link cũ hoặc link ngoài)
+      user.avatar_url = dto.avatar_url;
+    }
+
+    // 3. Cập nhật các trường thông tin khác
+    if (dto.full_name) user.full_name = dto.full_name;
+    if (dto.phone) user.phone = dto.phone;
+    if (dto.city) user.city = dto.city;
+    if (dto.email) user.email = dto.email;
+
+    // 4. Lưu vào DB
+    const updatedUser = await this.userRepo.save(user);
+
+    // 5. Quan trọng: Xóa password hash trước khi trả về frontend
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    delete updatedUser.password_hash;
+
+    return updatedUser;
   }
-  /**
-   * Service MỚI để lấy thông tin profile
-   */
+
   async getUserProfile(userId: number): Promise<UserEntity> {
     const user = await this.userRepo.findOne({ where: { user_id: userId } });
-    if (!user) {
-      throw new NotFoundException('Không tìm thấy user');
-    }
-    // Xóa password hash trước khi trả về
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+    if (!user) throw new NotFoundException('Không tìm thấy user');
+    // @ts-ignore
     delete user.password_hash;
     return user;
   }

@@ -35,8 +35,7 @@ export class FirebaseAuthStrategy extends PassportStrategy(
 
     try {
       // Xác thực token và trả về payload
-      const decodedToken = await admin.auth().verifyIdToken(token);
-      return decodedToken;
+      return await admin.auth().verifyIdToken(token);
     } catch (err) {
       this.handleError(err);
     }

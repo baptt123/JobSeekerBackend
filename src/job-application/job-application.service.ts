@@ -1,18 +1,22 @@
 import {
-  Injectable,
-  NotFoundException,
   BadRequestException,
   ConflictException,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JobApplicationEntity } from '../entity/job-application.entity';
 import { JobEntity } from '../entity/job.entity';
-import { UserCVEntity } from 'src/entity/user-cv.entity';
+import { UserCVEntity } from '../entity/user-cv.entity';
+import { FirebaseModuleService } from '../firebase-module/firebase-module.service'; // Import Service Notification
+import { ApplyJobDto } from '../dto/apply-job.dto';
+import { UserEntity } from '../entity/user.entity';
+import { NotificationType } from '../entity/notification.entity';
 
 @Injectable()
 export class JobApplicationsService {
-  // Giả định thời hạn ứng tuyển là 30 ngày kể từ ngày đăng
   private readonly JOB_EXPIRATION_DAYS = 30;
 
   constructor(
@@ -22,64 +26,114 @@ export class JobApplicationsService {
     private readonly jobRepo: Repository<JobEntity>,
     @InjectRepository(UserCVEntity)
     private readonly cvRepo: Repository<UserCVEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
+    // Inject Notification Service
+    private readonly firebaseService: FirebaseModuleService,
   ) {}
 
   async applyForJob(
     userId: number,
-    jobId: number,
+    dto: ApplyJobDto,
   ): Promise<JobApplicationEntity> {
-    // --- Bước 1: Tìm công việc ---
-    const job = await this.jobRepo.findOneBy({ job_id: jobId });
+    const { jobId, cvId, coverLetter } = dto;
+
+    // --- 1. Lấy thông tin Job và Nhà tuyển dụng (để gửi thông báo sau này) ---
+    const job = await this.jobRepo.findOne({
+      where: { job_id: jobId },
+      relations: ['postedBy', 'company'], // Join để lấy thông tin người đăng (Recruiter)
+    });
+
     if (!job) {
       throw new NotFoundException('Không tìm thấy công việc này.');
     }
 
-    // --- Bước 2: Kiểm tra thời gian (Check 1) ---
-    // "kiểm tra thời gian hiện tại so với ngày được tạo"
-    const now = new Date();
-    const jobCreatedAt = job.created_at;
-    const expiryDate = new Date(jobCreatedAt);
-    expiryDate.setDate(expiryDate.getDate() + this.JOB_EXPIRATION_DAYS);
+    // --- 2. Validate Deadline (30 ngày) ---
+    const createdDate = new Date(job.created_at);
+    const deadlineDate = new Date(createdDate);
+    deadlineDate.setDate(createdDate.getDate() + this.JOB_EXPIRATION_DAYS);
 
-    if (now > expiryDate) {
+    if (new Date() > deadlineDate) {
       throw new BadRequestException('Công việc này đã hết hạn ứng tuyển.');
     }
 
-    // --- Bước 3: Kiểm tra đã ứng tuyển chưa (Check 2) ---
-    // "kiểm tra tiếp xem đã ứng tuyển chưa"
+    // --- 3. Validate đã ứng tuyển chưa ---
     const existingApplication = await this.appRepo.findOneBy({
       job_id: jobId,
       user_id: userId,
     });
 
     if (existingApplication) {
-      // "nếu rồi thì làm sao đó" -> Ném lỗi
       throw new ConflictException('Bạn đã ứng tuyển công việc này rồi.');
     }
 
-    // --- Bước 4: Tìm CV mặc định của người dùng ---
-    // (Logic thêm: Một đơn ứng tuyển cần có CV)
-    const defaultCv = await this.cvRepo.findOneBy({
-      user_id: userId,
-      is_default: true,
-    });
+    // --- 4. Xử lý CV (Quan trọng) ---
+    let selectedCv: UserCVEntity | null = null;
 
-    if (!defaultCv) {
-      throw new BadRequestException(
-        'Vui lòng tải lên CV và đặt làm mặc định trước khi ứng tuyển.',
-      );
+    if (cvId) {
+      // Nếu user chọn CV cụ thể -> Kiểm tra CV đó có phải của user không
+      selectedCv = await this.cvRepo.findOneBy({
+        cv_id: cvId,
+        user_id: userId,
+      });
+      if (!selectedCv) {
+        throw new ForbiddenException(
+          'CV không tồn tại hoặc không thuộc về bạn.',
+        );
+      }
+    } else {
+      // Nếu không chọn -> Lấy CV mặc định
+      selectedCv = await this.cvRepo.findOneBy({
+        user_id: userId,
+        is_default: true,
+      });
+      if (!selectedCv) {
+        throw new BadRequestException(
+          'Vui lòng chọn một CV hoặc đặt CV mặc định trước khi ứng tuyển.',
+        );
+      }
     }
 
-    // --- Bước 5: Tạo đơn ứng tuyển mới (nếu chưa) ---
-    // "nếu chưa thì xác nhận"
+    // --- 5. Tạo Application ---
     const newApplication = this.appRepo.create({
       job_id: jobId,
       user_id: userId,
-      cv_id: defaultCv.cv_id, // Gắn CV mặc định vào [cite: 28]
-      status: 'Applied', // Trạng thái ban đầu [cite: 30]
+      cv_id: selectedCv.cv_id,
+      cover_letter: coverLetter,
+      status: 'Applied',
       applied_at: new Date(),
     });
 
-    return this.appRepo.save(newApplication);
+    const savedApp = await this.appRepo.save(newApplication);
+
+    // --- 6. Gửi Notification cho Nhà tuyển dụng (Recruiter) ---
+    // Chỉ gửi nếu job có người đăng (postedBy tồn tại)
+    if (job.postedBy && job.postedBy.user_id) {
+      // Lấy tên ứng viên để thông báo đẹp hơn
+      const applicant = await this.userRepo.findOneBy({ user_id: userId });
+      const applicantName = applicant ? applicant.full_name : 'Một ứng viên';
+
+      // Nội dung thông báo
+      const notiTitle = 'Hồ sơ ứng tuyển mới 📄';
+      const notiBody = `${applicantName} vừa ứng tuyển vào vị trí ${job.title}`;
+
+      // Gọi service bắn thông báo (Hàm này đã có logic tự tìm token + lưu DB)
+      // Chúng ta không dùng await để tránh việc ứng viên phải chờ thông báo gửi xong mới nhận phản hồi
+      this.firebaseService
+        .sendNotificationToUser(
+          job.postedBy.user_id,
+          notiTitle,
+          notiBody,
+          NotificationType.APPLICATION_UPDATE, // Hoặc loại type phù hợp
+          {
+            click_action: 'RECRUITER_VIEW_APPLICATION', // Để Flutter điều hướng
+            job_id: job.job_id,
+            application_id: savedApp.application_id,
+          },
+        )
+        .catch((err) => console.error('Lỗi gửi thông báo tuyển dụng:', err));
+    }
+
+    return savedApp;
   }
 }

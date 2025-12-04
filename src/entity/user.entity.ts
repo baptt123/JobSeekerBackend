@@ -26,8 +26,9 @@ export class UserEntity {
   @ApiProperty({ example: 'user@example.com' })
   email: string;
 
-  @Column()
-  @ApiProperty() // Thường password nên thêm { writeOnly: true } để ẩn khi trả về, nhưng để hiện tại cứ để default
+  // Trong user.entity.ts
+  @Column({ select: false }) // 👈 Thêm dòng này
+  @ApiProperty({ writeOnly: true }) // Swagger chỉ hiện khi gửi lên, không hiện khi trả về
   password_hash: string;
 
   @Column({ length: 200 })

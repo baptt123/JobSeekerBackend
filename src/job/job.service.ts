@@ -1,11 +1,10 @@
-// job.service.ts
 import {
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm'; // Thêm In
 import { JobEntity } from '../entity/job.entity';
 import { UserCVEntity } from '../entity/user-cv.entity';
 import { JobDto } from '../dto/job.dto';
@@ -31,28 +30,20 @@ export class JobService {
     this.esClient = new Client({ node: 'http://localhost:9200' });
   }
 
+  // ... (Giữ nguyên findJobsByUserCV, searchJobs, suggestJobs, filterJobs) ...
   async findJobsByUserCV(userId: number): Promise<JobDto[]> {
-    // 🔹 Lấy CV mặc định của user (chấp nhận is_default = true hoặc 1)
     const cv = await this.cvRepo.findOne({
       where: [{ user_id: userId, is_default: true }],
       relations: ['keywords', 'keywords.keyword'],
     });
 
-    if (!cv) {
-      console.log('>>> Không tìm thấy CV mặc định cho user:', userId);
-      return [];
-    }
+    if (!cv) return [];
 
-    // 🔹 Lấy danh sách keyword name từ CV
     const keywordNames =
       cv.keywords?.map((ck) => ck.keyword?.keyword_name).filter(Boolean) || [];
 
-    if (keywordNames.length === 0) {
-      console.log('>>> CV không có keyword nào');
-      return [];
-    }
+    if (keywordNames.length === 0) return [];
 
-    // 🔹 Truy vấn các job có skill_name trùng với keyword_name
     const jobs = await this.jobRepo
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.company', 'company')
@@ -61,15 +52,6 @@ export class JobService {
       .where('skill.skill_name IN (:...keywords)', { keywords: keywordNames })
       .getMany();
 
-    // 🔹 Debug log
-    console.log('>>> CV keywords:', keywordNames);
-    console.log('>>> Found jobs count:', jobs.length);
-    console.log(
-      '>>> Found job titles:',
-      jobs.map((j) => j.title),
-    );
-
-    // 🔹 Trả về dữ liệu dạng DTO
     return jobs.map((job) => ({
       job_id: job.job_id,
       title: job.title,
@@ -87,7 +69,6 @@ export class JobService {
 
   async searchJobs(dto: SearchJobDto) {
     const { query, size } = dto;
-
     try {
       const result = await this.esClient.search({
         index: 'jobs',
@@ -100,40 +81,24 @@ export class JobService {
           },
         },
         highlight: {
-          fields: {
-            title: {},
-            description: {},
-          },
+          fields: { title: {}, description: {} },
         },
       });
-
       const hits = result.hits?.hits || [];
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return hits.map((hit: any) => ({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         id: hit._id,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         score: hit._score,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         ...hit._source,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         highlight: hit.highlight,
       }));
     } catch (error) {
-      console.error('🔴 Elasticsearch error:', error); // log chi tiết lỗi ở đây
-      throw new Error(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
-        error.meta?.body?.error?.reason ||
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          error.meta?.body?.error?.caused_by?.reason ||
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          error.message,
-      );
+      console.error('🔴 Elasticsearch error:', error);
+      throw new Error(error.message);
     }
   }
 
   async suggestJobs(query: string) {
+    // ... (Giữ nguyên logic cũ)
     const { hits } = await this.esClient.search({
       index: 'jobs',
       size: 20,
@@ -146,48 +111,30 @@ export class JobService {
       },
       _source: ['title'],
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access
     return hits.hits.map((hit: any) => hit._source.title);
   }
 
   async filterJobs(dto: FilterJobDto) {
-    // Destructure với giá trị size mặc định
+    // ... (Giữ nguyên logic cũ)
     const { location, salary_min, salary_max, job_type, size = 20 } = dto;
 
     try {
       const filter: any[] = [];
-
-      // Lọc theo địa điểm (ĐÃ SỬA)
-      // Dùng "location.keyword" để so khớp chính xác (exact match)
-      // Điều này nhanh hơn và đáng tin cậy hơn "match_phrase" cho việc lọc.
       if (location) {
         filter.push({
           term: { 'location.keyword': location },
         });
       }
-
-      // Lọc theo loại hình công việc (ĐÃ SỬA)
-      // Dùng "job_type.keyword" để so khớp chính xác.
-      // Dùng "term" trên trường "job_type" (text) sẽ thất bại.
       if (job_type) {
         filter.push({
           term: { 'job_type.keyword': job_type },
         });
       }
-
-      // --- Logic Lọc Lương (Giữ nguyên, logic đã tốt) ---
-
-      // Khi user đặt LƯƠNG TỐI ĐA
-      // Tìm các job có salary_min <= mức user muốn
       if (salary_max != null) {
         filter.push({
           range: { salary_min: { lte: salary_max } },
         });
       }
-
-      // Khi user đặt LƯƠNG TỐI THIỂU
-      // Tìm các job có (salary_max >= mức user muốn) HOẶC (salary_max = 0)
       if (salary_min != null) {
         filter.push({
           bool: {
@@ -195,57 +142,39 @@ export class JobService {
               { range: { salary_max: { gte: salary_min } } },
               { term: { salary_max: 0 } },
             ],
-            minimum_should_match: 1, // Chỉ cần 1 trong 2 điều kiện đúng
+            minimum_should_match: 1,
           },
         });
       }
 
-      // --- Kết thúc logic lương ---
-
       const result = await this.esClient.search({
         index: 'jobs',
-        size: size, // Dùng 'size' đã destructure
+        size: size,
         query: {
           bool: {
-            filter: filter, // Sử dụng 'filter' context
+            filter: filter,
           },
         },
         sort: [{ salary_min: { order: 'desc' } }],
       });
 
       const hits = result.hits?.hits || [];
-
-      // Dọn dẹp lại phần map
-      // Code ĐÃ SỬA
       return hits.map((hit) => ({
-        // <--- Xóa type ở 'hit'
         id: hit._id,
         ...(hit._source || {}),
       }));
     } catch (error: any) {
       console.error('🔴 Elasticsearch filter error:', error);
-
-      // Dọn dẹp lại logic báo lỗi
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const reason =
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        error.meta?.body?.error?.reason ||
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        error.meta?.body?.error?.caused_by?.reason ||
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        error.message ||
-        'Unknown filter error';
-
-      throw new Error(reason);
+      throw new Error(error.message);
     }
   }
 
   // ========================================================
-  // 1. SỬA HÀM CHI TIẾT JOB (findJobDetail)
+  // 1. SỬA HÀM CHI TIẾT JOB (Hỗ trợ Guest & User)
   // ========================================================
   async findJobDetail(
     jobTitle: string,
-    userId: number,
+    userId: number | null, // ✅ Cho phép null
   ): Promise<JobEntity & { isApplied: boolean; isSaved: boolean }> {
     const job = await this.jobRepo.findOne({
       where: { title: jobTitle },
@@ -256,19 +185,26 @@ export class JobService {
       throw new NotFoundException('Không tìm thấy công việc');
     }
 
-    // ⭐️ LOGIC TÍNH DEADLINE: CreatedAt + 30 ngày
-    // Chúng ta ghi đè lên thuộc tính deadline của object job trước khi trả về
+    // Logic Deadline
     const createdDate = new Date(job.created_at);
     const deadlineDate = new Date(createdDate);
-    deadlineDate.setDate(createdDate.getDate() + 30); // Cộng thêm 30 ngày
-
+    deadlineDate.setDate(createdDate.getDate() + 30);
     job.deadline = deadlineDate;
 
-    // --- Logic check Saved/Applied (Giữ nguyên) ---
-    const savedJob = await this.savedJobRepo.findOneBy({
-      job_id: job.job_id,
-      user_id: userId,
+    // ✅ Nếu là khách (userId = null) -> Mặc định chưa lưu, chưa apply
+    if (!userId) {
+      return { ...job, isApplied: false, isSaved: false };
+    }
+
+    // ✅ Nếu có user -> Check DB
+    const savedJob = await this.savedJobRepo.findOne({
+      where: { job_id: job.job_id, user_id: userId },
+      withDeleted: true, // Check cả bản ghi đã xóa mềm để chắc chắn logic
     });
+    // Chỉ coi là saved nếu tồn tại VÀ chưa bị xóa (deleted_at is null)
+    // Nhưng vì findOne mặc định lọc deleted_at null nếu không dùng withDeleted,
+    // ở đây ta check kỹ hơn:
+    const isSavedActual = savedJob ? savedJob.deleted_at === null : false;
 
     const application = await this.jobAppRepo.findOneBy({
       job_id: job.job_id,
@@ -278,22 +214,18 @@ export class JobService {
     return {
       ...job,
       isApplied: !!application,
-      isSaved: !!savedJob,
+      isSaved: isSavedActual,
     };
   }
 
   // ========================================================
-  // 2. SỬA HÀM HIỂN THỊ LIST JOB (displayJob)
+  // 2. SỬA HÀM HIỂN THỊ LIST JOB (Tối ưu Query isSaved)
   // ========================================================
   async displayJob(
     page: number = 1,
     limit: number = 10,
-  ): Promise<{
-    data: JobDto[]; // Bạn có thể cần update JobDto thêm field deadline
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
+    userId: number | null = null, // ✅ Thêm tham số userId
+  ) {
     const [jobs, total] = await this.jobRepo
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.company', 'company')
@@ -304,9 +236,21 @@ export class JobService {
       .take(limit)
       .getManyAndCount();
 
-    // Chuyển đổi sang DTO để trả về frontend
+    // ✅ TỐI ƯU: Lấy danh sách Job đã lưu của user trong 1 query (bulk check)
+    let savedJobIds: number[] = [];
+    if (userId && jobs.length > 0) {
+      const jobIds = jobs.map((j) => j.job_id);
+      const savedJobs = await this.savedJobRepo.find({
+        where: {
+          user_id: userId,
+          job_id: In(jobIds), // Chỉ check trong list job đang hiển thị
+        },
+        select: ['job_id'],
+      });
+      savedJobIds = savedJobs.map((s) => s.job_id);
+    }
+
     const data = jobs.map((job) => {
-      // ⭐️ LOGIC TÍNH DEADLINE CHO LIST: CreatedAt + 30 ngày
       const createdDate = new Date(job.created_at);
       const deadlineDate = new Date(createdDate);
       deadlineDate.setDate(createdDate.getDate() + 30);
@@ -324,105 +268,67 @@ export class JobService {
         skills: job.jobSkills?.map((js) => js.skill.skill_name) ?? [],
         created_at: job.created_at,
         logo_url: job.company?.logo_url ?? null,
-
-        // ⭐️ THÊM FIELD DEADLINE VÀO DTO
         deadline: deadlineDate,
+
+        // ✅ Trả về trạng thái Saved chuẩn xác
+        isSaved: savedJobIds.includes(job.job_id),
       };
     });
 
     return {
-      data, // data này giờ đã có deadline tính theo công thức 30 ngày
+      data,
       total,
       page,
       totalPages: Math.ceil(total / limit),
     };
   }
 
-  /**
-   * Lưu hoặc khôi phục một job yêu thích
-   */
-  async saveJob(userId: number, jobId: number): Promise<SavedJobEntity> {
-    // 1. Kiểm tra xem job có tồn tại không
-    const job = await this.jobRepo.findOneBy({ job_id: jobId });
-    if (!job) {
-      throw new NotFoundException('Job not found');
-    }
+  // ... (Giữ nguyên saveJob, unsaveJob, getMySavedJobs)
 
-    // 2. Thay đổi: Kiểm tra bản ghi (kể cả đã bị soft-delete)
+  async saveJob(userId: number, jobId: number): Promise<SavedJobEntity> {
+    const job = await this.jobRepo.findOneBy({ job_id: jobId });
+    if (!job) throw new NotFoundException('Job not found');
+
     const existing = await this.savedJobRepo.findOne({
-      where: {
-        user_id: userId,
-        job_id: jobId,
-      },
-      withDeleted: true, // Thêm tùy chọn này để tìm cả bản ghi đã soft-delete
+      where: { user_id: userId, job_id: jobId },
+      withDeleted: true,
     });
 
     if (existing) {
       if (existing.deleted_at === null) {
-        // 2a. Đã lưu và chưa bị xóa -> Báo lỗi
         throw new ConflictException('Job already saved');
       } else {
-        // 2b. Đã lưu nhưng đã bị xóa -> Khôi phục lại
-        await this.savedJobRepo.restore({
-          user_id: userId,
-          job_id: jobId,
-        });
-        // Cập nhật lại ngày 'saved_at' nếu muốn, hoặc trả về bản ghi cũ
-        existing.deleted_at = null; // Cập nhật trạng thái
+        await this.savedJobRepo.restore({ user_id: userId, job_id: jobId });
+        existing.deleted_at = null;
         return existing;
       }
     }
 
-    // 3. Tạo và lưu bản ghi mới (nếu chưa từng tồn tại)
     const newSavedJob = this.savedJobRepo.create({
       user_id: userId,
       job_id: jobId,
     });
-
     return this.savedJobRepo.save(newSavedJob);
   }
 
-  /**
-   * Xóa mềm (soft-delete) một job khỏi danh sách yêu thích
-   */
   async unsaveJob(userId: number, jobId: number): Promise<void> {
-    // 1. Thay đổi: Kiểm tra xem bản ghi có tồn tại (và chưa bị xóa) không
     const record = await this.savedJobRepo.findOneBy({
       user_id: userId,
       job_id: jobId,
-      // Tự động lọc (deleted_at IS NULL)
     });
 
-    // Nếu không tìm thấy (hoặc đã bị xóa rồi) -> Báo lỗi
     if (!record) {
       throw new NotFoundException('Saved job not found or already unsaved');
     }
-
-    // 2. Thay đổi: Dùng softDelete thay vì delete
-    await this.savedJobRepo.softDelete({
-      user_id: userId,
-      job_id: jobId,
-    });
+    await this.savedJobRepo.softDelete({ user_id: userId, job_id: jobId });
   }
 
-  /**
-   * Lấy danh sách các JobEntity mà user đã lưu
-   */
   async getMySavedJobs(userId: number): Promise<JobEntity[]> {
-    // === KHÔNG CẦN THAY ĐỔI ===
-    // TypeORM's find() sẽ tự động thêm `WHERE "deleted_at" IS NULL`
-    // vì chúng ta đã dùng @DeleteDateColumn() trong Entity.
-
     const savedJobs = await this.savedJobRepo.find({
       where: { user_id: userId },
-      relations: {
-        job: true,
-      },
-      order: {
-        saved_at: 'DESC',
-      },
+      relations: { job: true }, // Nên load thêm relations job.company để hiển thị đẹp hơn
+      order: { saved_at: 'DESC' },
     });
-
     return savedJobs
       .map((savedJob) => savedJob.job)
       .filter((job) => job != null);

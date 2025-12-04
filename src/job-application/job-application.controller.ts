@@ -1,17 +1,30 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../guard/jwt-auth.guard';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApplyJobDto } from '../dto/apply-job.dto';
 import { JobApplicationsService } from './job-application.service';
+import { OrAuthGuard } from '../guard/or-auth.guard';
+import { Roles } from '../decorator/role.decorator';
 
 @Controller('job-application')
 export class JobApplicationController {
   constructor(private readonly jobApplicationService: JobApplicationsService) {}
 
-  // @UseGuards(JwtAuthGuard)
   @Post('apply')
-  async applyForJob(@Body() applyJobDto: ApplyJobDto) {
-    // req.user.userId được lấy từ JWT payload sau khi qua JwtAuthGuard
-    // const userId = req.user.userId;
-    return this.jobApplicationService.applyForJob(1, applyJobDto.jobId);
+  @UseGuards(OrAuthGuard) // 1. Bật Guard bảo vệ
+  @Roles('CANDIDATE') // 2. Chỉ Ứng viên mới được apply
+  @HttpCode(HttpStatus.CREATED)
+  async applyForJob(@Req() req: any, @Body() applyJobDto: ApplyJobDto) {
+    // 3. Lấy userId thật từ Token
+    const userId = req.user.userId;
+
+    // 4. Gọi service
+    return this.jobApplicationService.applyForJob(userId, applyJobDto);
   }
 }

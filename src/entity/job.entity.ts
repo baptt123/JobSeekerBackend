@@ -36,10 +36,6 @@ export class JobEntity {
   @ManyToOne(() => UserEntity, (user) => user.postedJobs, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'posted_by' })
-  @ApiProperty({ type: () => UserEntity }) // <--- THÊM
-  postedBy: UserEntity;
-
   @Column({ length: 255 })
   @ApiProperty()
   title: string;
@@ -93,4 +89,8 @@ export class JobEntity {
   @Column({ type: 'timestamp', nullable: true })
   @ApiProperty({ required: false })
   deadline: Date;
+  // Trong class JobEntity
+  @ManyToOne(() => UserEntity, (user) => user.postedJobs)
+  @JoinColumn({ name: 'posted_by' }) // Hoặc tên cột foreign key trong DB của bạn
+  postedBy: UserEntity;
 }

@@ -11,6 +11,7 @@ import {
   Query,
   Req,
   UseGuards,
+  Headers,
 } from '@nestjs/common';
 import { JobService } from './job.service';
 import { Roles } from '../decorator/role.decorator';
@@ -21,32 +22,46 @@ import { FilterJobDto } from '../dto/filter-job.dto';
 import { JobDto } from '../dto/job.dto';
 import { SaveJobDto } from '../dto/save-job.dto';
 import { OrAuthGuard } from '../guard/or-auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller('job')
 export class JobController {
-  constructor(private readonly jobService: JobService) {}
+  constructor(
+    private readonly jobService: JobService,
+    private readonly jwtService: JwtService, // Inject JwtService để giải mã token thủ công cho các route public
+  ) {}
+
+  // --- HELPER: Lấy userId từ header (nếu có) cho các route Public ---
+  private getUserIdFromHeader(authHeader?: string): number | null {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const token = authHeader.split(' ')[1];
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const decoded = this.jwtService.decode(token);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access
+      return decoded?.sub || decoded?.user_id || null;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      return null;
+    }
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   @Get('recommended')
-  async getRecommendedJobs(@Req() req) {
+  async getRecommendedJobs(@Req() req: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-    const userId = req.user.userId; // từ request.user (JWT payload)
+    const userId = req.user.userId;
     console.log('>>> userId:', userId);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.jobService.findJobsByUserCV(userId);
   }
 
   @Get('search-jobs')
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async searchJobs(@Query() dto: SearchJobDto) {
     return this.jobService.searchJobs(dto);
   }
 
   @Get('suggest')
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async suggestJobs(@Query('q') q: string) {
     return this.jobService.suggestJobs(q);
   }
@@ -57,50 +72,68 @@ export class JobController {
     return this.jobService.filterJobs(dto);
   }
 
+  /**
+   * Xem chi tiết Job
+   * - Thực tế: User chưa đăng nhập vẫn xem được.
+   * - Nếu đã đăng nhập: Cần biết đã Save/Apply chưa.
+   */
   @Get('detail/:title')
   @HttpCode(200)
-  async getJobDetail(@Param('title') title: string) {
-    return this.jobService.findJobDetail(title, 1);
+  async getJobDetail(
+    @Param('title') title: string,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    const userId = this.getUserIdFromHeader(authHeader);
+    // userId có thể là number hoặc null
+    return this.jobService.findJobDetail(title, userId);
   }
+
+  /**
+   * Lấy danh sách Job trang chủ
+   * - Thực tế: Cần trả về `isSaved` để hiển thị nút trái tim ngay trên list.
+   */
   @Get('get-all-jobs')
   async getAllJobs(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
-  ): Promise<{
-    data: JobDto[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
-    // Ép kiểu đảm bảo giá trị hợp lệ
+    @Headers('authorization') authHeader?: string,
+  ) {
+    const userId = this.getUserIdFromHeader(authHeader);
     const currentPage = Number(page) > 0 ? Number(page) : 1;
     const pageLimit = Number(limit) > 0 ? Number(limit) : 10;
 
-    return await this.jobService.displayJob(currentPage, pageLimit);
+    return await this.jobService.displayJob(currentPage, pageLimit, userId);
   }
+
   /*
-dùng cho save job
- */
+   * Lưu Job yêu thích
+   * - Yêu cầu bắt buộc phải đăng nhập
+   */
   @Post('create-save-job')
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(OrAuthGuard)
+  @UseGuards(OrAuthGuard) // Guard xác thực
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  saveJob(@Body() saveJobDto: SaveJobDto) {
-    return this.jobService.saveJob(1, saveJobDto.job_id);
+  saveJob(@Req() req: any, @Body() saveJobDto: SaveJobDto) {
+    // ✅ Lấy userId từ token thật
+    return this.jobService.saveJob(req.user.userId, saveJobDto.job_id);
   }
 
   @Get('get-my-saved-jobs')
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  getMySavedJobs() {
-    return this.jobService.getMySavedJobs(1);
+  getMySavedJobs(@Req() req: any) {
+    // ✅ Lấy userId từ token thật
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
+    return this.jobService.getMySavedJobs(req.user.userId);
   }
 
   @Delete('delete-job/:jobId')
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  @HttpCode(HttpStatus.NO_CONTENT) // Trả về 204 No Content khi xóa thành công
-  unsaveJob(@Param('jobId', ParseIntPipe) jobId: number) {
-    return this.jobService.unsaveJob(1, jobId);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  unsaveJob(@Req() req: any, @Param('jobId', ParseIntPipe) jobId: number) {
+    // ✅ Lấy userId từ token thật
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+    return this.jobService.unsaveJob(req.user.userId, jobId);
   }
 }

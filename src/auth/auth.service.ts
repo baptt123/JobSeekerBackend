@@ -26,7 +26,7 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async createUser(dto: RegisterDto): Promise<UserEntity> {
+  async register(dto: RegisterDto): Promise<UserEntity> {
     return this.usersService.create(dto);
   }
 
@@ -41,25 +41,46 @@ export class AuthService {
     return this.usersService.forgotPassword(email);
   }
 
-  // 1. LOGIN
-  // 1. LOGIN (Email/Password)
+  // Trong auth.service.ts -> login()
   async login(dto: LoginDto) {
     try {
       const user = await this.usersService.userRepo.findOne({
         where: { email: dto.email },
         relations: ['role'],
+        // 👇 Cần thêm dòng này để lấy password_hash ra so sánh
+        select: [
+          'user_id',
+          'email',
+          'password_hash',
+          'full_name',
+          'avatar_url',
+          'role_id',
+          'role',
+        ],
       });
+
+      // Hoặc cách viết ngắn gọn hơn nếu không liệt kê hết fields:
+      /*
+            const user = await this.usersService.userRepo.createQueryBuilder('user')
+              .addSelect('user.password_hash')
+              .leftJoinAndSelect('user.role', 'role')
+              .where('user.email = :email', { email: dto.email })
+              .getOne();
+            */
 
       if (!user)
         throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+
+      // Logic google login (nếu user chỉ có email google mà không có pass hash)
       if (!user.password_hash)
-        throw new UnauthorizedException('Tài khoản chưa thiết lập mật khẩu');
+        throw new UnauthorizedException(
+          'Tài khoản này đăng nhập bằng Google/Facebook',
+        );
 
       const match = await argon2.verify(user.password_hash, dto.password);
       if (!match)
         throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
 
-      // Tạo Tokens và trả về response chuẩn
       return this._generateSystemJwt(user);
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
