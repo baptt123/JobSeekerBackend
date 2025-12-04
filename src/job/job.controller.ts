@@ -19,7 +19,6 @@ import { RolesGuard } from '../guard/role-auth.guard';
 import { SearchJobDto } from '../dto/search-job.dto';
 import { JwtAuthGuard } from '../guard/jwt-auth.guard';
 import { FilterJobDto } from '../dto/filter-job.dto';
-import { JobDto } from '../dto/job.dto';
 import { SaveJobDto } from '../dto/save-job.dto';
 import { OrAuthGuard } from '../guard/or-auth.guard';
 import { JwtService } from '@nestjs/jwt';
@@ -115,6 +114,7 @@ export class JobController {
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   saveJob(@Req() req: any, @Body() saveJobDto: SaveJobDto) {
     // ✅ Lấy userId từ token thật
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return this.jobService.saveJob(req.user.userId, saveJobDto.job_id);
   }
 
