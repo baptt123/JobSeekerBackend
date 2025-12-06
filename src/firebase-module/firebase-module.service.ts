@@ -197,7 +197,7 @@ export class FirebaseModuleService implements OnModuleInit {
   async getNotifications(userId: number): Promise<NotificationEntity[]> {
     return await this.notificationRepository.find({
       where: { user_id: userId },
-      order: { created_at: 'DESC' },
+      order: { created_at: 'DESC' }, // [QUAN TRỌNG] Mới nhất lên đầu
     });
   }
 

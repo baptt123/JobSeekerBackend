@@ -85,14 +85,20 @@ export class JobService {
         },
       });
       const hits = result.hits?.hits || [];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return hits.map((hit: any) => ({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         id: hit._id,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         score: hit._score,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         ...hit._source,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         highlight: hit.highlight,
       }));
     } catch (error) {
       console.error('🔴 Elasticsearch error:', error);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
       throw new Error(error.message);
     }
   }
@@ -111,6 +117,7 @@ export class JobService {
       },
       _source: ['title'],
     });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access
     return hits.hits.map((hit: any) => hit._source.title);
   }
 
@@ -165,6 +172,7 @@ export class JobService {
       }));
     } catch (error: any) {
       console.error('🔴 Elasticsearch filter error:', error);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       throw new Error(error.message);
     }
   }
@@ -172,13 +180,13 @@ export class JobService {
   // ========================================================
   // 1. SỬA HÀM CHI TIẾT JOB (Hỗ trợ Guest & User)
   // ========================================================
-  async findJobDetail(
-    jobTitle: string,
-    userId: number | null, // ✅ Cho phép null
-  ): Promise<JobEntity & { isApplied: boolean; isSaved: boolean }> {
+  // ========================================================
+  // [UPDATE] SỬA HÀM CHI TIẾT JOB ĐỂ LẤY RECRUITER INFO
+  // ========================================================
+  async findJobDetail(jobTitle: string, userId: number | null): Promise<any> {
     const job = await this.jobRepo.findOne({
       where: { title: jobTitle },
-      relations: ['company'],
+      relations: ['company', 'postedBy'], // [QUAN TRỌNG] Lấy thêm thông tin người đăng
     });
 
     if (!job) {
@@ -191,19 +199,30 @@ export class JobService {
     deadlineDate.setDate(createdDate.getDate() + 30);
     job.deadline = deadlineDate;
 
-    // ✅ Nếu là khách (userId = null) -> Mặc định chưa lưu, chưa apply
+    // Chuẩn bị thông tin Recruiter để trả về
+    const recruiterInfo = job.postedBy
+      ? {
+          id: job.postedBy.user_id,
+          full_name: job.postedBy.full_name,
+          avatar_url: job.postedBy.avatar_url,
+          email: job.postedBy.email,
+        }
+      : null;
+
     if (!userId) {
-      return { ...job, isApplied: false, isSaved: false };
+      return {
+        ...job,
+        postedBy: recruiterInfo,
+        isApplied: false,
+        isSaved: false,
+      };
     }
 
-    // ✅ Nếu có user -> Check DB
     const savedJob = await this.savedJobRepo.findOne({
       where: { job_id: job.job_id, user_id: userId },
-      withDeleted: true, // Check cả bản ghi đã xóa mềm để chắc chắn logic
+      withDeleted: true,
     });
-    // Chỉ coi là saved nếu tồn tại VÀ chưa bị xóa (deleted_at is null)
-    // Nhưng vì findOne mặc định lọc deleted_at null nếu không dùng withDeleted,
-    // ở đây ta check kỹ hơn:
+
     const isSavedActual = savedJob ? savedJob.deleted_at === null : false;
 
     const application = await this.jobAppRepo.findOneBy({
@@ -213,6 +232,7 @@ export class JobService {
 
     return {
       ...job,
+      postedBy: recruiterInfo, // [UPDATE] Trả về object recruiter
       isApplied: !!application,
       isSaved: isSavedActual,
     };

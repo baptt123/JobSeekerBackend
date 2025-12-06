@@ -22,9 +22,11 @@ export class JobApplicationController {
   @HttpCode(HttpStatus.CREATED)
   async applyForJob(@Req() req: any, @Body() applyJobDto: ApplyJobDto) {
     // 3. Lấy userId thật từ Token
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId;
 
     // 4. Gọi service
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.jobApplicationService.applyForJob(userId, applyJobDto);
   }
 }

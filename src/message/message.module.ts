@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { MessageGateway } from './message.gateway';
-import { AuthService } from '../auth/auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MessageEntity } from '../entity/messages.entity';
 import { UserEntity } from '../entity/user.entity';
 import { AuthModule } from '../auth/auth.module';
+import { MessageController } from './message.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([MessageEntity, UserEntity]), // ✅ Đăng ký MessageEntity
     AuthModule, // ✅ Import AuthModule để dùng JwtService
   ],
+  controllers: [MessageController],
   providers: [MessageGateway, MessageService],
   exports: [MessageService],
 })

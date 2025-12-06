@@ -5,7 +5,6 @@ import {
   IsString,
   IsOptional,
   IsEnum,
-  IsUrl,
 } from 'class-validator';
 
 export class CreateMessageDto {
@@ -13,15 +12,15 @@ export class CreateMessageDto {
   @IsNotEmpty()
   receiver_id: number;
 
-  @IsEnum(['text', 'image'])
+  @IsEnum(['text', 'image', 'file', 'sticker']) // ✅ Cập nhật enum
   @IsNotEmpty()
-  message_type: 'text' | 'image';
+  message_type: 'text' | 'image' | 'file' | 'sticker';
 
   @IsString()
-  @IsOptional() // ✅ Cho phép content null (khi gửi ảnh)
-  content?: string;
+  @IsOptional()
+  content?: string; // Nếu là file, content sẽ là Tên file
 
-  @IsUrl()
-  @IsOptional() // ✅ Cho phép image_url null (khi gửi text)
-  image_url?: string;
+  @IsString()
+  @IsOptional()
+  image_url?: string; // URL của ảnh/file/sticker
 }

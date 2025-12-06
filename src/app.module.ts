@@ -26,7 +26,6 @@ import { UserCVEntity } from './entity/user-cv.entity';
 import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { GenAIModule } from 'nestjs-genai';
 import { CallHistoryEntity } from './entity/call-history.entity';
-import { ZoomModule } from './zoom/zoom.module';
 import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
 import { MessageEntity } from './entity/messages.entity';
 import { JobApplicationModule } from './job-application/job-application.module';
@@ -97,7 +96,6 @@ import { AppService } from './app.service';
     JobModule,
     GenerateCvModule,
     CloudinaryCustomModule,
-    ZoomModule,
     FirebaseModuleModule,
     JobApplicationModule,
     MessageModule,

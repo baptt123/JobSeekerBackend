@@ -1,3 +1,4 @@
+// src/entity/messages.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,7 +8,7 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
+import { ApiProperty } from '@nestjs/swagger';
 import { UserEntity } from './user.entity';
 
 @Entity('messages')
@@ -23,7 +24,6 @@ export class MessageEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'sender_id' })
-  @ApiProperty({ type: () => UserEntity }) // <--- THÊM
   sender: UserEntity;
 
   @Column()
@@ -33,7 +33,6 @@ export class MessageEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'receiver_id' })
-  @ApiProperty({ type: () => UserEntity }) // <--- THÊM
   receiver: UserEntity;
 
   @Column('text', { nullable: true })
@@ -47,15 +46,16 @@ export class MessageEntity {
   @CreateDateColumn()
   sent_at: Date;
 
+  // Dùng chung trường này cho URL ảnh, URL file, hoặc URL sticker
   @Column({ length: 500, nullable: true })
   @ApiProperty({ required: false })
   image_url: string;
 
   @Column({
     type: 'enum',
-    enum: ['text', 'image'],
+    enum: ['text', 'image', 'file', 'sticker'], // ✅ THÊM file, sticker
     default: 'text',
   })
-  @ApiProperty({ enum: ['text', 'image'] })
-  message_type: 'text' | 'image';
+  @ApiProperty({ enum: ['text', 'image', 'file', 'sticker'] })
+  message_type: 'text' | 'image' | 'file' | 'sticker';
 }

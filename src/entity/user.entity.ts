@@ -26,9 +26,9 @@ export class UserEntity {
   @ApiProperty({ example: 'user@example.com' })
   email: string;
 
-  // Trong user.entity.ts
-  @Column({ select: false }) // 👈 Thêm dòng này
-  @ApiProperty({ writeOnly: true }) // Swagger chỉ hiện khi gửi lên, không hiện khi trả về
+  // ✅ SỬA LẠI: Thêm nullable: true để cho phép login Google không cần pass
+  @Column({ select: false, nullable: true })
+  @ApiProperty({ writeOnly: true })
   password_hash: string;
 
   @Column({ length: 200 })
