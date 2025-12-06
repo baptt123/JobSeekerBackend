@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -89,6 +90,7 @@ export class GenerateCvService {
         headless: true,
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
       const page = await browser.newPage();
 
       // Thêm style mặc định để đảm bảo hiển thị đẹp
@@ -97,8 +99,10 @@ export class GenerateCvService {
         ${htmlContent}
       `;
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
       await page.setContent(finalHtml, { waitUntil: 'networkidle0' });
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true, // In cả màu nền
@@ -110,6 +114,7 @@ export class GenerateCvService {
       this.logger.error('Error rendering PDF:', error);
       throw new InternalServerErrorException('Lỗi khi tạo file PDF.');
     } finally {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
       if (browser) await browser.close();
     }
   }
@@ -156,6 +161,7 @@ export class GenerateCvService {
 
       const cleanText = result.text?.replace(/```json|```/g, '').trim() || '[]';
       return JSON.parse(cleanText) as string[];
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       this.logger.warn('Keyword extraction failed, returning empty list.');
       return [];
@@ -178,6 +184,7 @@ export class GenerateCvService {
     const newCV = this.cvRepository.create({
       user_id: userId,
       title: file.originalname, // Tên file gốc
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       file_url: fileUrl,
       content: extractedText,
       is_default: false, // Mặc định chưa set làm CV chính
@@ -208,9 +215,84 @@ export class GenerateCvService {
     return {
       message: 'CV uploaded and processed successfully',
       cv_id: savedCV.cv_id,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       file_url: fileUrl,
       extracted_text: extractedText,
       keywords: keywords,
     };
+  }
+  // =================================================================
+  // 6. [NEW] LẤY DANH SÁCH CV CỦA USER
+  // =================================================================
+  async getMyCvs(userId: number): Promise<UserCVEntity[]> {
+    return await this.cvRepository.find({
+      where: { user_id: userId },
+      order: { created_at: 'DESC' }, // CV mới nhất lên đầu
+    });
+  }
+
+  // =================================================================
+  // 7. [NEW] ĐẶT CV LÀM MẶC ĐỊNH
+  // =================================================================
+  async setDefaultCv(userId: number, cvId: number): Promise<void> {
+    const cv = await this.cvRepository.findOneBy({
+      cv_id: cvId,
+      user_id: userId,
+    });
+    if (!cv)
+      throw new NotFoundException('CV không tồn tại hoặc không thuộc về bạn');
+
+    // B1: Reset tất cả CV của user này về false
+    await this.cvRepository.update({ user_id: userId }, { is_default: false });
+
+    // B2: Set CV được chọn thành true
+    await this.cvRepository.update({ cv_id: cvId }, { is_default: true });
+  }
+
+  // =================================================================
+  // 8. [NEW] XÓA CV
+  // =================================================================
+  async deleteCv(userId: number, cvId: number): Promise<void> {
+    const cv = await this.cvRepository.findOneBy({
+      cv_id: cvId,
+      user_id: userId,
+    });
+    if (!cv) throw new NotFoundException('CV không tồn tại');
+
+    // Nếu xóa CV mặc định, hệ thống nên cảnh báo hoặc tự handle (tùy logic business)
+    // Ở đây ta cứ xóa bình thường
+    await this.cvRepository.delete({ cv_id: cvId });
+  }
+
+  // =================================================================
+  // 9. [NEW] UPLOAD CV NHANH (Không cần extract keywords tốn thời gian)
+  // =================================================================
+  async uploadCvSimple(
+    file: Express.Multer.File,
+    userId: number,
+    title?: string,
+  ) {
+    // 1. Upload Cloudinary
+    const uploadResult = await this.cloudinaryService.uploadFile(file);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const fileUrl = uploadResult.secure_url || uploadResult.url;
+
+    // 2. Lưu DB
+    const newCV = this.cvRepository.create({
+      user_id: userId,
+      title: title || file.originalname,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      file_url: fileUrl,
+      content: '', // Có thể để trống hoặc chạy extract ngầm
+      is_default: false,
+    });
+
+    // Nếu user chưa có CV nào, set cái đầu tiên là default luôn
+    const count = await this.cvRepository.count({ where: { user_id: userId } });
+    if (count === 0) {
+      newCV.is_default = true;
+    }
+
+    return await this.cvRepository.save(newCV);
   }
 }

@@ -4,9 +4,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   Res,
@@ -67,7 +70,7 @@ export class GenerateCvController {
   @Post('preview/:templateId')
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  async previewCvTemplate(
+  previewCvTemplate(
     @Param('templateId') templateId: string,
     @Body() cvData: CreateCvDto,
     @Res() res: express.Response,
@@ -110,6 +113,7 @@ export class GenerateCvController {
         'Content-Length': pdfBuffer.length,
       });
       res.send(pdfBuffer);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       throw new BadRequestException('Lỗi tạo file PDF từ template');
     }
@@ -132,6 +136,7 @@ export class GenerateCvController {
     }
 
     // ✅ Lấy userId thật từ Token (đã qua Guard)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId;
 
     console.log(
@@ -149,6 +154,70 @@ export class GenerateCvController {
       template2: 'cv_template_2',
     };
     if (!map[id]) throw new BadRequestException('Template không tồn tại');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return map[id];
+  }
+  /**
+   * 5. [NEW] Lấy danh sách CV của tôi
+   */
+  @Get('my-cvs')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN')
+  async getMyCvs(@Req() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    const cvs = await this.generateCvService.getMyCvs(userId);
+    return { data: cvs };
+  }
+
+  /**
+   * 6. [NEW] Upload CV mới (Dạng quản lý file)
+   */
+  @Post('upload')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadCv(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
+    @Body('title') title?: string,
+  ) {
+    if (!file) throw new BadRequestException('Vui lòng chọn file PDF');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+
+    // Dùng hàm upload đơn giản hoặc hàm scan cũ tùy bạn (ở đây dùng hàm simple mới tạo)
+    const result = await this.generateCvService.uploadCvSimple(
+      file,
+      userId,
+      title,
+    );
+    return { message: 'Upload CV thành công', data: result };
+  }
+
+  /**
+   * 7. [NEW] Đặt CV mặc định
+   */
+  @Patch(':id/set-default')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN')
+  async setDefaultCv(@Param('id') id: string, @Req() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    await this.generateCvService.setDefaultCv(userId, +id);
+    return { message: 'Đã đặt CV làm mặc định' };
+  }
+
+  /**
+   * 8. [NEW] Xóa CV
+   */
+  @Delete(':id')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN')
+  async deleteCv(@Param('id') id: string, @Req() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    await this.generateCvService.deleteCv(userId, +id);
+    return { message: 'Đã xóa CV' };
   }
 }
