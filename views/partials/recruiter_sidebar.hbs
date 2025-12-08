@@ -1,0 +1,29 @@
+<aside class="flex flex-col w-64 bg-white dark:bg-background-dark/50 p-4 border-r border-gray-200 dark:border-white/10">
+  <div class="flex items-center gap-4 text-primary p-3 mb-4">
+    <span class="material-symbols-outlined text-4xl">rocket_launch</span>
+    <h2 class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Recruiter</h2>
+  </div>
+
+  <div class="flex flex-col justify-between flex-1">
+    <div class="flex flex-col gap-2">
+      <a href="/recruiter/dashboard"
+         class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'dashboard')}}bg-primary/20 text-primary{{else}}text-gray-700 hover:bg-primary/10{{/if}}">
+        <span class="material-symbols-outlined {{#if (eq activePage 'dashboard')}}fill{{/if}}">dashboard</span>
+        <p class="text-sm font-medium leading-normal">Dashboard</p>
+      </a>
+
+      <a href="/recruiter/my-jobs"
+         class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'jobs')}}bg-primary/20 text-primary{{else}}text-gray-700 hover:bg-primary/10{{/if}}">
+        <span class="material-symbols-outlined">business_center</span>
+        <p class="text-sm font-medium leading-normal">My Jobs</p>
+      </a>
+    </div>
+
+    <div class="flex flex-col gap-1 mt-auto">
+      <a href="/auth/logout" class="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg cursor-pointer">
+        <span class="material-symbols-outlined">logout</span>
+        <p class="text-sm font-medium leading-normal">Logout</p>
+      </a>
+    </div>
+  </div>
+</aside>

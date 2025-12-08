@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'; // ⚡ thêm dòng này
+import hbs from 'hbs';
 config();
 
 async function bootstrap() {
@@ -15,6 +16,15 @@ async function bootstrap() {
   app.setBaseViewsDir(join(__dirname, '..', 'views')); // thư mục chứa HTML template
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.use(cookieParser());
+  // Đăng ký thư mục partials để dùng {{> sidebar}}
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  hbs.registerPartials(join(__dirname, '..', 'views', 'partials'));
+
+  // Helper so sánh bằng để highlight menu active
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  hbs.registerHelper('eq', function (a, b) {
+    return a === b;
+  });
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.setViewEngine('hbs');
   app.useStaticAssets(join(__dirname, '..', 'public')); // nơi chứa CSS, ảnh, JS tĩnh

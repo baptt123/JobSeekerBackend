@@ -32,6 +32,8 @@ import { JobApplicationModule } from './job-application/job-application.module';
 import { MessageModule } from './message/message.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AdminModule } from './admin/admin.module';
+import { RecruiterModule } from './recruiter/recruiter.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -99,6 +101,8 @@ import { AppService } from './app.service';
     FirebaseModuleModule,
     JobApplicationModule,
     MessageModule,
+    AdminModule,
+    RecruiterModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat với Ứng viên | TechConnect</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    body { background-color: #f0f2f5; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .chat-layout { display: flex; height: 90vh; margin: 20px auto; max-width: 1200px; background: #fff; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar { width: 350px; background: #fff; border-right: 1px solid #edf2f7; display: flex; flex-direction: column; }
+    .sidebar-header { padding: 20px; background: #6C63FF; color: white; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-header h5 { margin: 0; font-weight: 600; font-size: 18px; }
+    .user-list { flex: 1; overflow-y: auto; }
+
+    .contact-item { display: flex; align-items: center; padding: 15px 20px; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid #f8f9fa; }
+    .contact-item:hover { background-color: #f9fafb; }
+    .contact-item.active { background-color: #eef2ff; border-left: 4px solid #6C63FF; }
+
+    .avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .contact-info { margin-left: 15px; flex: 1; }
+    .contact-name { font-weight: 600; font-size: 15px; color: #2d3748; margin-bottom: 2px; }
+    .contact-status { font-size: 12px; color: #718096; display: flex; align-items: center; }
+    .status-dot { width: 8px; height: 8px; background-color: #48bb78; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+    /* Chat Window */
+    .chat-window { flex: 1; display: flex; flex-direction: column; background: #fff; }
+
+    /* Chat Header */
+    .chat-header { padding: 15px 25px; border-bottom: 1px solid #edf2f7; display: flex; align-items: center; background: #fff; }
+    .chat-header h6 { margin: 0; font-size: 16px; font-weight: 700; color: #2d3748; }
+
+    /* Messages Area */
+    .messages-area { flex: 1; padding: 20px 25px; overflow-y: auto; background-color: #f7fafc; display: flex; flex-direction: column; gap: 10px; }
+
+    .message { max-width: 70%; display: flex; flex-direction: column; }
+    .message.sent { align-self: flex-end; align-items: flex-end; }
+    .message.received { align-self: flex-start; align-items: flex-start; }
+
+    .bubble { padding: 10px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .message.sent .bubble { background-color: #6C63FF; color: white; border-bottom-right-radius: 2px; }
+    .message.received .bubble { background-color: #fff; color: #2d3748; border-bottom-left-radius: 2px; border: 1px solid #edf2f7; }
+
+    .msg-time { font-size: 11px; color: #a0aec0; margin-top: 4px; }
+
+    /* Input Area */
+    .input-area { padding: 20px; background: #fff; border-top: 1px solid #edf2f7; display: flex; align-items: center; gap: 10px; }
+    .chat-input { flex: 1; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 24px; padding: 12px 20px; outline: none; transition: 0.2s; }
+    .chat-input:focus { border-color: #6C63FF; background: #fff; }
+    .btn-send { width: 45px; height: 45px; border-radius: 50%; background: #6C63FF; color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+    .btn-send:hover { background: #5a52d5; transform: scale(1.05); }
+
+    /* Empty State */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #a0aec0; text-align: center; }
+    .empty-icon { font-size: 60px; margin-bottom: 15px; color: #cbd5e0; }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid p-0">
+  <div class="chat-layout">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h5><i class="fas fa-comments me-2"></i>Tin nhắn</h5>
+        <button class="btn btn-sm btn-light text-primary rounded-circle"><i class="fas fa-cog"></i></button>
+      </div>
+      <div class="user-list" id="userList">
+        <div class="text-center p-4 text-muted">Đang tải danh sách...</div>
+      </div>
+    </div>
+
+    <div class="chat-window">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon"><i class="far fa-paper-plane"></i></div>
+        <h4>Chọn một cuộc trò chuyện</h4>
+        <p>Hãy chọn ứng viên từ danh sách để bắt đầu nhắn tin.</p>
+      </div>
+
+      <div id="activeChat" class="d-none flex-column h-100">
+        <div class="chat-header">
+          <img id="chatAvatar" src="" class="avatar me-3">
+          <div>
+            <h6 id="chatName">Tên ứng viên</h6>
+            <small class="text-success"><i class="fas fa-circle" style="font-size: 8px;"></i> Đang hoạt động</small>
+          </div>
+        </div>
+
+        <div class="messages-area" id="messagesList">
+        </div>
+
+        <div class="input-area">
+          <button class="btn btn-light rounded-circle text-muted"><i class="fas fa-paperclip"></i></button>
+          <input type="text" id="msgInput" class="chat-input" placeholder="Nhập tin nhắn..." autocomplete="off">
+          <button class="btn-send" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+  // --- CẤU HÌNH ---
+  const API_URL = 'http://localhost:3000'; // Đổi IP nếu cần
+
+  // Giả sử Token được lưu trong LocalStorage khi login Web
+  // Nếu hệ thống dùng Cookie, bạn có thể bỏ dòng này và Header
+  const token = localStorage.getItem('accessToken');
+
+  if (!token) {
+    alert("Vui lòng đăng nhập lại!");
+    // window.location.href = '/login'; // Uncomment khi chạy thật
+  }
+
+  let socket;
+  let currentReceiverId = null;
+  let myUserId = null;
+
+  // --- 1. KẾT NỐI SOCKET ---
+  function initSocket() {
+    socket = io(API_URL, {
+      transports: ['websocket'],
+      extraHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    socket.on('connect', () => console.log('✅ Connected to WebSocket'));
+
+    socket.on('connected', (data) => {
+      myUserId = data.userId;
+      console.log('👤 My User ID:', myUserId);
+      loadConversations(); // Load list sau khi biết mình là ai
+    });
+
+    socket.on('receiveMessage', (msg) => {
+      // Nếu đang chat với người này -> Hiển thị tin nhắn ngay
+      if (currentReceiverId === msg.sender_id) {
+        renderSingleMessage(msg);
+        scrollToBottom();
+        socket.emit('markAsRead', { senderId: msg.sender_id });
+      } else {
+        // Nếu không -> Highlight người dùng trong sidebar (TODO)
+        console.log(`Tin nhắn mới từ ${msg.sender_id}`);
+      }
+    });
+
+    socket.on('messageSent', (msg) => {
+      // Xác nhận tin nhắn đã gửi thành công -> Hiển thị lên UI
+      if (msg.receiver_id === currentReceiverId) {
+        renderSingleMessage(msg); // true = là tin mình gửi (xử lý trong hàm render)
+        scrollToBottom();
+      }
+    });
+
+    socket.on('conversationLoaded', (history) => {
+      // Render lịch sử chat
+      const list = document.getElementById('messagesList');
+      list.innerHTML = '';
+      history.forEach(msg => renderSingleMessage(msg));
+      scrollToBottom();
+    });
+  }
+
+  // --- 2. LOGIC UI ---
+
+  // Tải danh sách người đã từng chat
+  async function loadConversations() {
+    try {
+      const res = await axios.get(`${API_URL}/user/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      renderUserList(res.data);
+    } catch (e) {
+      console.error(e);
+      document.getElementById('userList').innerHTML = '<div class="text-center p-3 text-danger">Lỗi tải danh sách</div>';
+    }
+  }
+
+  function renderUserList(users) {
+    const container = document.getElementById('userList');
+    container.innerHTML = '';
+
+    if(users.length === 0) {
+      container.innerHTML = '<div class="text-center p-3 text-muted">Chưa có tin nhắn nào</div>';
+      return;
+    }
+
+    users.forEach(u => {
+      const avatar = u.avatar_url || `https://ui-avatars.com/api/?name=${u.full_name}&background=random`;
+      const html = `
+                <div class="contact-item" onclick="openChat(${u.user_id}, '${u.full_name}', '${avatar}', this)">
+                    <img src="${avatar}" class="avatar">
+                    <div class="contact-info">
+                        <div class="contact-name">${u.full_name}</div>
+                        <div class="contact-status">
+                            <span class="status-dot"></span> Ứng viên tiềm năng
+                        </div>
+                    </div>
+                </div>
+            `;
+      container.insertAdjacentHTML('beforeend', html);
+    });
+  }
+
+  function openChat(userId, name, avatar, element) {
+    // UI Active State
+    document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
+    if(element) element.classList.add('active');
+
+    // Setup Chat Window
+    currentReceiverId = userId;
+    document.getElementById('emptyState').classList.add('d-none');
+    document.getElementById('activeChat').classList.remove('d-none');
+    document.getElementById('activeChat').classList.add('d-flex');
+
+    document.getElementById('chatName').innerText = name;
+    document.getElementById('chatAvatar').src = avatar;
+
+    // Load Messages
+    document.getElementById('messagesList').innerHTML = '<div class="text-center mt-5"><div class="spinner-border text-primary" role="status"></div></div>';
+    socket.emit('loadConversation', { otherUserId: userId });
+  }
+
+  function renderSingleMessage(msg) {
+    const isMe = msg.sender_id === myUserId;
+    const list = document.getElementById('messagesList');
+
+    // Format Time
+    const date = new Date(msg.sent_at);
+    const time = `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+    // Xử lý nội dung (Text hoặc Ảnh)
+    let content = msg.content;
+    if (msg.message_type === 'image') {
+      content = `<img src="${msg.image_url}" style="max-width: 200px; border-radius: 8px;">`;
+    }
+
+    const html = `
+            <div class="message ${isMe ? 'sent' : 'received'}">
+                <div class="bubble">
+                    ${content}
+                </div>
+                <div class="msg-time">${time}</div>
+            </div>
+        `;
+    list.insertAdjacentHTML('beforeend', html);
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if(!text || !currentReceiverId) return;
+
+    socket.emit('sendMessage', {
+      receiver_id: currentReceiverId,
+      content: text,
+      message_type: 'text'
+    });
+
+    input.value = '';
+  }
+
+  // Sự kiện phím Enter
+  document.getElementById('msgInput').addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') sendMessage();
+  });
+
+  function scrollToBottom() {
+    const area = document.getElementById('messagesList');
+    area.scrollTop = area.scrollHeight;
+  }
+
+  // Start
+  initSocket();
+</script>
+
+</body>
+</html>

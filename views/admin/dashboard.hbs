@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: { "primary": "#6b26d9", "background-light": "#f7f6f8", "background-dark": "#171220" },
+          fontFamily: { "display": ["Inter"] }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden">
+  <div class="flex min-h-screen">
+
+    {{> admin_sidebar activePage='dashboard'}}
+
+    <main class="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900/50">
+      <header class="flex items-center justify-between border-b border-slate-200 px-10 py-3 bg-background-light sticky top-0 z-10">
+        <h1 class="text-xl font-bold text-primary">Overview</h1>
+      </header>
+
+      <div class="p-6 md:p-10 flex-1">
+        <div class="flex flex-wrap justify-between gap-3 mb-8">
+          <p class="text-slate-900 text-4xl font-black">Dashboard Statistics</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+          <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 bg-white shadow-sm border border-slate-200">
+            <p class="text-slate-600 text-base font-medium">Total Users</p>
+            <p class="text-primary text-3xl font-bold">{{stats.totalUsers}}</p>
+          </div>
+
+          <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 bg-white shadow-sm border border-slate-200">
+            <p class="text-slate-600 text-base font-medium">Total Jobs</p>
+            <p class="text-primary text-3xl font-bold">{{stats.totalJobs}}</p>
+          </div>
+
+          <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 bg-white shadow-sm border border-slate-200">
+            <p class="text-slate-600 text-base font-medium">Total Companies</p>
+            <p class="text-primary text-3xl font-bold">{{stats.totalCompanies}}</p>
+          </div>
+
+          <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 bg-white shadow-sm border border-slate-200">
+            <p class="text-slate-600 text-base font-medium">Total Applications</p>
+            <p class="text-primary text-3xl font-bold">{{stats.totalApplications}}</p>
+          </div>
+
+        </div>
+
+        <div class="mt-8">
+          <p class="text-sm text-gray-500 italic mt-4">* Charts are visualized with static data for design demonstration.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>
