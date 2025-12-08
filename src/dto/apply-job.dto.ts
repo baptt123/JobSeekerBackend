@@ -7,9 +7,9 @@ export class ApplyJobDto {
 
   @IsInt()
   @IsOptional()
-  cvId?: number; // [THÊM] Cho phép chọn CV cụ thể (nếu null sẽ lấy mặc định)
+  cvId?: number; // Cho phép chọn CV
 
   @IsString()
   @IsOptional()
-  coverLetter?: string; // [THÊM] Thư giới thiệu
+  coverLetter?: string; // Thư giới thiệu
 }

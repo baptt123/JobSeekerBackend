@@ -1,8 +1,16 @@
+// src/cloudinary-custom/cloudinary-custom.service.ts
+
 import { Injectable } from '@nestjs/common';
 import { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 import { v2 as cloudinary } from 'cloudinary';
+
 @Injectable()
 export class CloudinaryCustomService {
+  // [MỚI] Public biến cloudinary để service khác dùng được
+  get cloudinary() {
+    return cloudinary;
+  }
+
   async uploadFile(
     file: Express.Multer.File,
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {

@@ -1,13 +1,10 @@
-import { GenerateCvService } from './generate-cv.service';
-import express from 'express';
+// src/cv/generate-cv.controller.ts
 import {
   BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   Patch,
   Post,
@@ -18,21 +15,20 @@ import {
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import express from 'express';
+import { GenerateCvService } from './generate-cv.service';
 import { OrAuthGuard } from '../guard/or-auth.guard';
 import { Roles } from '../decorator/role.decorator';
 import { GenerateCvDto } from '../dto/generative-cv-prompt.dto';
 import { CreateCvDto } from '../dto/create-cv.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('cv')
 export class GenerateCvController {
   constructor(private readonly generateCvService: GenerateCvService) {}
 
-  /**
-   * 1. AI Generate CV -> Trả về file PDF để download/view ngay
-   */
+  // 1. CHỨC NĂNG TẠO CV BẰNG GEMINI (Không lưu DB)
   @Post('gen-cv')
-  @HttpCode(200)
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   public async generateCv(
@@ -41,128 +37,81 @@ export class GenerateCvController {
     @Res() res: express.Response,
   ) {
     try {
-      // B1: Lấy HTML từ AI
+      // B1: AI tạo nội dung HTML
       const html = await this.generateCvService.getCvHtml(dto.prompt);
 
-      // B2: Convert HTML sang PDF Buffer (Logic đã chuyển vào Service)
+      // B2: Puppeteer tạo PDF Buffer (Chỉ tạo file trong RAM, không lưu DB)
       const pdfBuffer = await this.generateCvService.generatePdfFromHtml(html);
 
-      // B3: Trả về file PDF stream
+      // B3: Trả về file trực tiếp cho Client
       res.set({
         'Content-Type': 'application/pdf',
-        'Content-Disposition': 'inline; filename=ai-generated-cv.pdf',
+        'Content-Disposition': 'attachment; filename=cv-gemini.pdf',
         'Content-Length': pdfBuffer.length,
       });
 
       res.send(pdfBuffer);
     } catch (error) {
-      console.error('Lỗi Gen CV:', error);
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        message: 'Không thể tạo CV lúc này. Vui lòng thử lại.',
-      });
+      console.error(error);
+      res.status(500).json({ message: 'Lỗi khi tạo CV với Gemini.' });
     }
   }
-
-  /**
-   * 2. Preview Template (Render HTML)
-   * Dùng để xem trước trên Web/App trước khi tải
-   */
-  @Post('preview/:templateId')
-  @UseGuards(OrAuthGuard)
-  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  previewCvTemplate(
-    @Param('templateId') templateId: string,
-    @Body() cvData: CreateCvDto,
-    @Res() res: express.Response,
-  ) {
-    const viewName = this._getTemplateViewName(templateId);
-    // Render HBS ra HTML và trả về client
-    res.render(viewName, { cv: cvData });
-  }
-
-  /**
-   * 3. Download Template (Render PDF)
-   * Thực tế: Client gửi Data -> Server điền vào Template -> Server tạo PDF -> Trả về file
-   */
+  // 2. CHỨC NĂNG TẠO CV TỪ TEMPLATE (Không lưu DB)
+  // Endpoint này dùng để Client tải về bản PDF cuối cùng
   @Post('download/:templateId')
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async downloadCvTemplate(
     @Param('templateId') templateId: string,
-    @Body() cvData: CreateCvDto,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    cvData: CreateCvDto,
     @Res() res: express.Response,
   ) {
-    // Lưu ý: Để render HBS thành HTML string trong Controller hơi phức tạp ở NestJS
-    // Cách đơn giản nhất cho Demo: Frontend render HTML rồi gửi HTML string lên để convert PDF.
-    // Cách "Chuẩn" Backend: Dùng engine handlebars để compile string thủ công.
-
-    // Ở đây mình giả định bạn đã có HTML string (hoặc dùng AI generate service để convert)
-    // Để code chạy được ngay, mình sẽ dùng render của AI Service như một ví dụ
-    // Thực tế bạn cần: const html = compileHbs(templateId, cvData);
-
     try {
-      // Code giả lập việc compile template thành HTML String
-      const htmlMock = `<html><body><h1>CV của ${cvData.fullName || 'Bạn'}</h1><p>Generated from ${templateId}</p></body></html>`;
+      // B1: Compile HTML từ dữ liệu người dùng nhập
+      const html = await this.generateCvService.compileTemplate(
+        templateId,
+        cvData,
+      );
 
-      const pdfBuffer =
-        await this.generateCvService.generatePdfFromHtml(htmlMock);
+      // B2: Puppeteer tạo PDF Buffer (Chỉ tạo file, không lưu DB)
+      const pdfBuffer = await this.generateCvService.generatePdfFromHtml(html);
 
+      // B3: Trả về file trực tiếp
       res.set({
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="cv_${templateId}.pdf"`,
+        'Content-Disposition': `attachment; filename="CV_${cvData.fullName}.pdf"`,
         'Content-Length': pdfBuffer.length,
       });
       res.send(pdfBuffer);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
-      throw new BadRequestException('Lỗi tạo file PDF từ template');
+      throw new BadRequestException('Lỗi tải xuống CV từ Template');
     }
   }
 
-  /**
-   * 4. Scan PDF (Tính năng Upload & Parse CV)
-   * Thực tế: User upload file -> Server lưu -> Trả về Text để User check lại
-   */
   @Post('scan-pdf')
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   @UseInterceptors(FileInterceptor('file'))
-  async scanPdf(
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: any, // ✅ Lấy Request để truy cập user
-  ) {
+  async scanPdf(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
     if (!file) {
       throw new BadRequestException('Vui lòng chọn file PDF.');
     }
-
-    // ✅ Lấy userId thật từ Token (đã qua Guard)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId;
 
-    console.log(
-      `[SCAN_PDF] User ${userId} đang upload file: ${file.originalname}`,
-    );
-
-    // Gọi Service xử lý toàn bộ
+    // Gọi hàm xử lý toàn diện
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.generateCvService.processScanCV(file, userId);
   }
 
-  // Helper
-  private _getTemplateViewName(id: string): string {
-    const map = {
-      template1: 'cv_template_1',
-      template2: 'cv_template_2',
-    };
-    if (!map[id]) throw new BadRequestException('Template không tồn tại');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return map[id];
-  }
   /**
-   * 5. [NEW] Lấy danh sách CV của tôi
+   * 5. Lấy danh sách CV của tôi
    */
   @Get('my-cvs')
   @UseGuards(OrAuthGuard)
-  @Roles('CANDIDATE', 'ADMIN')
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   async getMyCvs(@Req() req: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId;
@@ -171,11 +120,11 @@ export class GenerateCvController {
   }
 
   /**
-   * 6. [NEW] Upload CV mới (Dạng quản lý file)
+   * 6. Upload CV mới (Dạng quản lý file)
    */
   @Post('upload')
   @UseGuards(OrAuthGuard)
-  @Roles('CANDIDATE', 'ADMIN')
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   @UseInterceptors(FileInterceptor('file'))
   async uploadCv(
     @UploadedFile() file: Express.Multer.File,
@@ -186,9 +135,9 @@ export class GenerateCvController {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId;
 
-    // Dùng hàm upload đơn giản hoặc hàm scan cũ tùy bạn (ở đây dùng hàm simple mới tạo)
     const result = await this.generateCvService.uploadCvSimple(
       file,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       userId,
       title,
     );
@@ -196,7 +145,7 @@ export class GenerateCvController {
   }
 
   /**
-   * 7. [NEW] Đặt CV mặc định
+   * 7. Đặt CV mặc định
    */
   @Patch(':id/set-default')
   @UseGuards(OrAuthGuard)
@@ -209,7 +158,7 @@ export class GenerateCvController {
   }
 
   /**
-   * 8. [NEW] Xóa CV
+   * 8. Xóa CV
    */
   @Delete(':id')
   @UseGuards(OrAuthGuard)
@@ -219,5 +168,45 @@ export class GenerateCvController {
     const userId = req.user.userId;
     await this.generateCvService.deleteCv(userId, +id);
     return { message: 'Đã xóa CV' };
+  }
+  // API 1: Xem trước (Preview)
+  @Post('preview/:templateId')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
+  async previewCv(
+    @Param('templateId') templateId: string,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: CreateCvDto,
+    @Res() res: express.Response,
+  ) {
+    const html = await this.generateCvService.compileTemplate(templateId, dto);
+    const pdfBuffer = await this.generateCvService.generatePdfFromHtml(html);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename=preview.pdf',
+      'Content-Length': pdfBuffer.length,
+    });
+    res.send(pdfBuffer);
+  }
+
+  // API 2: Lưu CV
+  @Post('save-generated/:templateId')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
+  async saveGeneratedCv(
+    @Param('templateId') templateId: string,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: CreateCvDto,
+    @Req() req: any,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    const result = await this.generateCvService.generateAndSaveCvFromTemplate(
+      userId,
+      templateId,
+      dto,
+    );
+    return { message: 'Lưu CV thành công', data: result };
   }
 }

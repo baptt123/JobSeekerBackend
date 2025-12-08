@@ -5,6 +5,9 @@ import {
   ValidationPipe,
   Get,
   UseGuards,
+  Patch,
+  Param,
+  Req,
 } from '@nestjs/common';
 import { FirebaseModuleService } from './firebase-module.service';
 import { SendNotificationDto } from '../dto/send-notification.dto';
@@ -24,39 +27,68 @@ export class FirebaseModuleController {
       const messageId = await this.firebaseService.sendPushNotification(dto);
       return {
         success: true,
-        message: 'Test notification sent successfully.',
+        message: 'Gửi thông báo thành công.',
         messageId: messageId,
       };
     } catch (error) {
       return {
         success: false,
-        message: error.message || 'Failed to send test notification.',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+        message: error.message || 'Thất bại trong việc gửi thông báo.',
       };
     }
   }
 
-  // [UPDATE] API Lấy danh sách thông báo theo User đăng nhập
   @Get('notifications')
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  async getNotifications(
-    @GetUser('userId') userId: number, // Lấy ID từ Token
-  ) {
+  async getNotifications(@Req() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    // 🔥 DEBUG: Xem Backend đang nhận ID là bao nhiêu
+    console.log(
+      '>>> API getNotifications CALLED by User ID:',
+      userId,
+      typeof userId,
+    );
+
     try {
-      const notifications = await this.firebaseService.getNotifications(userId);
-      // Đếm số lượng chưa đọc để hiển thị badge
+      const notifications = await this.firebaseService.getNotifications(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        userId,
+      );
+      console.log(
+        `>>> Found ${notifications.length} notifications for User ${userId}`,
+      );
+
       const unreadCount = notifications.filter((n) => !n.is_read).length;
 
       return {
         success: true,
         data: notifications,
-        unreadCount: unreadCount, // Trả thêm số lượng chưa đọc
+        unreadCount: unreadCount,
       };
     } catch (error) {
-      return {
-        success: false,
-        message: error.message || 'Failed to retrieve notifications.',
-      };
+      console.error(error);
+      return { success: false, message: 'Lỗi lấy thông báo' };
     }
+  }
+
+  // [NEW] API Đánh dấu 1 thông báo đã đọc
+  @Patch('notifications/:id/read')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
+  async markAsRead(@Param('id') id: string, @GetUser('userId') userId: number) {
+    await this.firebaseService.markAsRead(+id, userId);
+    return { success: true, message: 'Đã đánh dấu đã đọc' };
+  }
+
+  // [NEW] API Đánh dấu tất cả đã đọc
+  @Patch('notifications/read-all')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
+  async markAllAsRead(@GetUser('userId') userId: number) {
+    await this.firebaseService.markAllAsRead(userId);
+    return { success: true, message: 'Đã đánh dấu tất cả là đã đọc' };
   }
 }

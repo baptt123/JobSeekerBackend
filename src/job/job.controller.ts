@@ -84,6 +84,7 @@ export class JobController {
   ) {
     const userId = this.getUserIdFromHeader(authHeader);
     // userId có thể là number hoặc null
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.jobService.findJobDetail(title, userId);
   }
 
@@ -135,5 +136,18 @@ export class JobController {
     // ✅ Lấy userId từ token thật
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
     return this.jobService.unsaveJob(req.user.userId, jobId);
+  }
+  // [THÊM MỚI] API lấy chi tiết công ty và jobs
+  @Get('company/:id/jobs')
+  @HttpCode(200)
+  async getCompanyJobs(@Param('id', ParseIntPipe) id: number) {
+    const result = await this.jobService.getCompanyWithJobs(id);
+    if (!result) {
+      return {
+        message: 'Không tìm thấy dữ liệu công ty hoặc công ty chưa có job nào.',
+        data: null,
+      };
+    }
+    return { data: result };
   }
 }

@@ -17,7 +17,7 @@ import { NotificationType } from '../entity/notification.entity';
 
 @Injectable()
 export class JobApplicationsService {
-  private readonly JOB_EXPIRATION_DAYS = 30;
+  private readonly JOB_EXPIRATION_DAYS = 120;
 
   constructor(
     @InjectRepository(JobApplicationEntity)

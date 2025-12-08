@@ -195,9 +195,10 @@ export class FirebaseModuleService implements OnModuleInit {
    * Lấy danh sách thông báo của User
    */
   async getNotifications(userId: number): Promise<NotificationEntity[]> {
+    // Query where user_id = userId
     return await this.notificationRepository.find({
-      where: { user_id: userId },
-      order: { created_at: 'DESC' }, // [QUAN TRỌNG] Mới nhất lên đầu
+      where: { user_id: userId }, // TypeORM sẽ so sánh cột user_id
+      order: { created_at: 'DESC' },
     });
   }
 
@@ -211,5 +212,28 @@ export class FirebaseModuleService implements OnModuleInit {
       this.userService = this.moduleRef.get(UserService, { strict: false });
     }
     return this.userService;
+  }
+  /**
+   * Đánh dấu thông báo là đã đọc
+   */
+  async markAsRead(notificationId: number, userId: number): Promise<void> {
+    const notification = await this.notificationRepository.findOne({
+      where: { notification_id: notificationId, user_id: userId },
+    });
+
+    if (notification) {
+      notification.is_read = true;
+      await this.notificationRepository.save(notification);
+    }
+  }
+
+  /**
+   * Đánh dấu tất cả là đã đọc
+   */
+  async markAllAsRead(userId: number): Promise<void> {
+    await this.notificationRepository.update(
+      { user_id: userId, is_read: false },
+      { is_read: true },
+    );
   }
 }

@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { RegisterDto } from '../dto/register.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
 import crypto from 'crypto';
 import * as argon2 from 'argon2';
@@ -55,10 +54,16 @@ export class UserService {
 
   // 2. ĐỔI MẬT KHẨU
   async updatePassword(userId: number, dto: ChangePasswordDto) {
-    const user = await this.userRepo.findOne({ where: { user_id: userId } });
+    // 🔥 SỬA: Thêm addSelect để lấy password_hash bị ẩn
+    const user = await this.userRepo
+      .createQueryBuilder('user')
+      .addSelect('user.password_hash')
+      .where('user.user_id = :userId', { userId })
+      .getOne();
+
     if (!user) throw new UnauthorizedException('User không tìm thấy');
 
-    // Nếu user đăng nhập bằng Google (không có pass) thì cần xử lý riêng (ở đây giả sử luôn có pass)
+    // ... (Giữ nguyên logic bên dưới)
     if (!user.password_hash) {
       throw new BadRequestException(
         'Tài khoản này chưa thiết lập mật khẩu (Đăng nhập Google)',
@@ -97,24 +102,31 @@ export class UserService {
   }
 
   // 3. QUÊN MẬT KHẨU (Fix lỗi dùng sai thư viện hash)
+  // 3. QUÊN MẬT KHẨU
   async forgotPassword(email: string) {
     try {
+      // 🔥 BƯỚC 1: Kiểm tra email có trong DB không
       const user = await this.userRepo.findOne({ where: { email } });
-      if (!user)
-        throw new BadRequestException('Email không tồn tại trong hệ thống');
 
-      // Tạo mật khẩu ngẫu nhiên dài hơn (8 bytes = 16 ký tự hex) cho an toàn hơn
-      const newPass = crypto.randomBytes(4).toString('hex'); // Ví dụ: 'a1b2c3d4'
+      if (!user) {
+        // ❌ Nếu không có: Báo lỗi ngay lập tức
+        throw new BadRequestException(
+          'Email này chưa được đăng ký trong hệ thống.',
+        );
+      }
 
-      // ✅ SỬA LỖI: Dùng argon2 để hash thay vì bcrypt
+      // 🔥 BƯỚC 2: Nếu có user -> Xử lý tạo mật khẩu mới
+      // Tạo mật khẩu ngẫu nhiên (8 bytes = 16 ký tự hex)
+      const newPass = crypto.randomBytes(4).toString('hex');
+
+      // Hash mật khẩu mới
       user.password_hash = await argon2.hash(newPass);
-
       await this.userRepo.save(user);
 
       // Gửi mail
       await this.mailerService.sendMail({
         to: user.email,
-        subject: '[App Name] Cấp lại mật khẩu mới', // Nên đặt tên App rõ ràng
+        subject: '[TechConnect] Cấp lại mật khẩu mới',
         template: 'reset-password',
         context: {
           newPassword: newPass,
@@ -122,15 +134,16 @@ export class UserService {
         },
       });
 
+      // ✅ Trả về thông báo thành công
       return {
-        message:
-          'Mật khẩu mới đã được gửi vào email. Vui lòng kiểm tra (cả mục spam).',
+        message: 'Thành công! Mật khẩu mới đã được gửi vào email của bạn.',
       };
     } catch (error) {
-      console.error('Forgot Password Error:', error);
-      // Ném lỗi đúng để Controller bắt được
+      // Nếu là lỗi BadRequest (do mình throw ở trên) thì ném tiếp ra ngoài cho Controller
       if (error instanceof BadRequestException) throw error;
-      throw new InternalServerErrorException('Lỗi hệ thống gửi mail');
+
+      console.error('Forgot Password Error:', error);
+      throw new InternalServerErrorException('Lỗi hệ thống khi gửi mail.');
     }
   }
 
@@ -166,8 +179,10 @@ export class UserService {
         if (result && 'secure_url' in result) {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           user.avatar_url = result.secure_url;
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         throw new BadRequestException('Upload avatar lên Cloudinary thất bại');
       }
@@ -196,7 +211,8 @@ export class UserService {
   async getUserProfile(userId: number): Promise<UserEntity> {
     const user = await this.userRepo.findOne({ where: { user_id: userId } });
     if (!user) throw new NotFoundException('Không tìm thấy user');
-    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     delete user.password_hash;
     return user;
   }

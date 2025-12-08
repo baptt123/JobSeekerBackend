@@ -1,6 +1,4 @@
-//
-// 📄 [SỬA ĐỔI] baptt123/jobseekerbackend/JobSeekerBackend-develop/src/dto/create-cv.dto.ts
-//
+// src/dto/create-cv.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -9,64 +7,70 @@ import {
   IsNotEmpty,
   IsString,
   ValidateNested,
+  IsOptional,
 } from 'class-validator';
 
-// Các lớp DTO lồng nhau cho kinh nghiệm, học vấn, kỹ năng
 export class ExperienceDto {
   @ApiProperty()
+  @IsNotEmpty({ message: 'Chức danh không được để trống' })
   @IsString()
   jobTitle: string;
 
   @ApiProperty()
+  @IsNotEmpty({ message: 'Tên công ty không được để trống' })
   @IsString()
   company: string;
 
   @ApiProperty()
   @IsString()
-  duration: string; // Ví dụ: "2020 - 2022"
+  duration: string;
 
   @ApiProperty()
+  @IsOptional()
   @IsString()
   description: string;
 }
 
 export class EducationDto {
   @ApiProperty()
+  @IsNotEmpty({ message: 'Tên trường không được để trống' })
   @IsString()
   school: string;
 
   @ApiProperty()
+  @IsNotEmpty({ message: 'Bằng cấp không được để trống' })
   @IsString()
-  degree: string; // Ví dụ: "Kỹ sư phần mềm"
+  degree: string;
 
   @ApiProperty()
   @IsString()
-  duration: string; // Ví dụ: "2018 - 2022"
+  duration: string;
 }
 
 export class SkillDto {
   @ApiProperty()
+  @IsNotEmpty({ message: 'Kỹ năng không được để trống' })
   @IsString()
   name: string;
 }
 
 export class CreateCvDto {
-  // Thông tin cá nhân
   @ApiProperty()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Họ tên không được để trống' })
   @IsString()
   fullName: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Vị trí công việc không được để trống' })
   @IsString()
-  jobTitle: string; // Vị trí mong muốn
+  jobTitle: string;
 
   @ApiProperty()
-  @IsEmail()
+  @IsEmail({}, { message: 'Email không đúng định dạng' })
   email: string;
 
   @ApiProperty()
+  @IsNotEmpty({ message: 'Số điện thoại không được để trống' })
   @IsString()
   phone: string;
 
@@ -75,10 +79,10 @@ export class CreateCvDto {
   address: string;
 
   @ApiProperty()
+  @IsOptional()
   @IsString()
-  summary: string; // Mục tiêu nghề nghiệp/Giới thiệu
+  summary: string;
 
-  // Thông tin chi tiết
   @ApiProperty({ type: [ExperienceDto] })
   @IsArray()
   @ValidateNested({ each: true })

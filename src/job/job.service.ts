@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm'; // Thêm In
 import { JobEntity } from '../entity/job.entity';
 import { UserCVEntity } from '../entity/user-cv.entity';
-import { JobDto } from '../dto/job.dto';
 import { Client } from '@elastic/elasticsearch';
 import { SearchJobDto } from '../dto/search-job.dto';
 import { FilterJobDto } from '../dto/filter-job.dto';
@@ -30,41 +29,77 @@ export class JobService {
     this.esClient = new Client({ node: 'http://localhost:9200' });
   }
 
-  // ... (Giữ nguyên findJobsByUserCV, searchJobs, suggestJobs, filterJobs) ...
-  async findJobsByUserCV(userId: number): Promise<JobDto[]> {
+  async findJobsByUserCV(userId: number): Promise<JobEntity[]> {
+    // B1: Lấy CV mặc định của User kèm theo danh sách từ khóa
     const cv = await this.cvRepo.findOne({
-      where: [{ user_id: userId, is_default: true }],
-      relations: ['keywords', 'keywords.keyword'],
+      where: { user_id: userId, is_default: true },
+      relations: ['keywords', 'keywords.keyword'], // Join bảng cv_keywords và keywords
     });
 
-    if (!cv) return [];
+    // Nếu không có CV hoặc CV không có từ khóa -> Trả về danh sách rỗng (hoặc job mới nhất tùy logic)
+    if (!cv || !cv.keywords || cv.keywords.length === 0) {
+      console.log('User chưa có CV mặc định hoặc CV chưa có từ khóa.');
+      return [];
+    }
 
-    const keywordNames =
-      cv.keywords?.map((ck) => ck.keyword?.keyword_name).filter(Boolean) || [];
+    // B2: Trích xuất mảng tên các từ khóa (Ví dụ: ['Java', 'Spring Boot', 'SQL'])
+    const keywordNames = cv.keywords
+      .map((ck) => ck.keyword?.keyword_name)
+      .filter((name) => name !== undefined && name !== null);
 
     if (keywordNames.length === 0) return [];
 
-    const jobs = await this.jobRepo
-      .createQueryBuilder('job')
-      .leftJoinAndSelect('job.company', 'company')
-      .leftJoinAndSelect('job.jobSkills', 'jobSkill')
-      .leftJoinAndSelect('jobSkill.skill', 'skill')
-      .where('skill.skill_name IN (:...keywords)', { keywords: keywordNames })
-      .getMany();
+    console.log(`🔎 Tìm việc cho User ${userId} với keywords:`, keywordNames);
 
-    return jobs.map((job) => ({
-      job_id: job.job_id,
-      title: job.title,
-      description: job.description,
-      requirements: job.requirements,
-      salary_min: job.salary_min,
-      salary_max: job.salary_max,
-      location: job.location,
-      job_type: job.job_type,
-      company_name: job.company?.name ?? null,
-      skills: job.jobSkills?.map((js) => js.skill.skill_name) ?? [],
-      created_at: job.created_at,
-    }));
+    try {
+      // B3: Query Elasticsearch sử dụng "should" (OR logic nhưng có tính điểm relevance)
+      const result = await this.esClient.search({
+        index: 'jobs', // Tên index trong ES
+        size: 20, // Giới hạn số lượng gợi ý
+        body: {
+          query: {
+            bool: {
+              should: keywordNames.map((key) => ({
+                multi_match: {
+                  query: key,
+                  // Tìm trong title (ưu tiên cao nhất ^3), requirements, và description
+                  fields: ['title^3', 'requirements^2', 'description'],
+                  fuzziness: 'AUTO', // Chấp nhận sai chính tả nhẹ
+                },
+              })),
+              minimum_should_match: 1, // Ít nhất phải khớp 1 từ khóa
+            },
+          },
+        },
+      });
+
+      const hits = result.hits.hits;
+      if (hits.length === 0) return [];
+
+      // B4: Lấy danh sách ID của Job từ ES
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const jobIds = hits.map((hit: any) => parseInt(hit._id));
+
+      // B5: Query ngược lại SQL DB để lấy đầy đủ thông tin (Company, Relations...) để hiển thị đẹp
+      // ES thường chỉ chứa text searchable, còn SQL chứa Relation chuẩn.
+      const jobs = await this.jobRepo.find({
+        where: { job_id: In(jobIds) },
+        relations: ['company', 'jobSkills', 'jobSkills.skill'],
+        order: { created_at: 'DESC' }, // Hoặc có thể sort theo thứ tự hits của ES nếu muốn chính xác độ khớp
+      });
+
+      // (Tùy chọn) Sắp xếp lại jobs theo thứ tự ID trả về từ ES để giữ độ Relevance
+      // Vì SQL `IN` không bảo đảm thứ tự.
+      const sortedJobs = jobIds
+        .map((id) => jobs.find((j) => j.job_id === id))
+        .filter((j) => j !== undefined);
+
+      return sortedJobs;
+    } catch (error) {
+      console.error('🔴 Elasticsearch Error in Recommendation:', error);
+      // Fallback: Nếu ES lỗi, trả về danh sách rỗng hoặc job mới nhất từ SQL
+      return [];
+    }
   }
 
   async searchJobs(dto: SearchJobDto) {
@@ -196,7 +231,7 @@ export class JobService {
     // Logic Deadline
     const createdDate = new Date(job.created_at);
     const deadlineDate = new Date(createdDate);
-    deadlineDate.setDate(createdDate.getDate() + 30);
+    deadlineDate.setDate(createdDate.getDate() + 120);
     job.deadline = deadlineDate;
 
     // Chuẩn bị thông tin Recruiter để trả về
@@ -352,5 +387,38 @@ export class JobService {
     return savedJobs
       .map((savedJob) => savedJob.job)
       .filter((job) => job != null);
+  }
+  // [THÊM MỚI] Lấy thông tin công ty và danh sách job của công ty đó
+  async getCompanyWithJobs(companyId: number) {
+    // 1. Lấy thông tin công ty (Giả sử bạn có repository Company,
+    // nhưng ở đây ta có thể query từ Job relation hoặc dùng CompanyRepo nếu đã inject)
+
+    // Cách 1: Query qua Job (nếu chưa inject CompanyRepo)
+    // Cách 2: (Khuyên dùng) Inject CompanyRepo vào constructor (bạn cần thêm vào constructor nhé)
+    // Ở đây tôi dùng queryBuilder cho linh hoạt dựa trên file bạn gửi
+
+    const jobs = await this.jobRepo.find({
+      where: { company_id: companyId },
+      relations: ['company', 'jobSkills', 'jobSkills.skill'],
+      order: { created_at: 'DESC' },
+    });
+
+    if (!jobs || jobs.length === 0) {
+      // Nếu không có job nào, thử tìm công ty (logic này cần CompanyRepo)
+      // Để đơn giản cho flow này, ta trả về mảng rỗng hoặc cấu trúc null
+      return null;
+    }
+
+    // Lấy thông tin công ty từ job đầu tiên tìm được
+    const companyInfo = jobs[0].company;
+
+    return {
+      company: companyInfo,
+      jobs: jobs.map((job) => ({
+        ...job,
+        // Map thêm các field cần thiết nếu entity chưa plain
+        skills: job.jobSkills?.map((js) => js.skill.skill_name) || [],
+      })),
+    };
   }
 }
