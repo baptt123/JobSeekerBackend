@@ -47,7 +47,7 @@ export class RecruiterController {
     return this.service.createJob(req.user.userId, dto);
   }
 
-// [SỬA ĐỔI] Thay vì trả về JSON array, ta Render view
+  // [SỬA ĐỔI] Thay vì trả về JSON array, ta Render view
   @Get('my-jobs')
   @Render('recruiter/my-jobs') // <--- Quan trọng: Trỏ tới file view
   async getMyJobs(@Req() req: any) {
@@ -59,7 +59,7 @@ export class RecruiterController {
     return {
       jobs: jobs,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      user: req.user // Truyền thêm user info nếu cần hiển thị tên
+      user: req.user, // Truyền thêm user info nếu cần hiển thị tên
     };
   }
   @Get('jobs/:jobId/applications')

@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { RegisterDto } from '../dto/register.dto';
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -41,13 +42,13 @@ export class AuthService {
     return this.usersService.forgotPassword(email);
   }
 
-  // Trong auth.service.ts -> login()
+  // --- SỬA HÀM LOGIN ---
   async login(dto: LoginDto) {
     try {
       const user = await this.usersService.userRepo.findOne({
         where: { email: dto.email },
         relations: ['role'],
-        // 👇 Cần thêm dòng này để lấy password_hash ra so sánh
+        withDeleted: true, // <--- QUAN TRỌNG: Lấy cả user đã bị xóa mềm (Ban)
         select: [
           'user_id',
           'email',
@@ -56,22 +57,21 @@ export class AuthService {
           'avatar_url',
           'role_id',
           'role',
+          'deleted_at', // <--- Lấy thêm trường này để kiểm tra
         ],
       });
-
-      // Hoặc cách viết ngắn gọn hơn nếu không liệt kê hết fields:
-      /*
-            const user = await this.usersService.userRepo.createQueryBuilder('user')
-              .addSelect('user.password_hash')
-              .leftJoinAndSelect('user.role', 'role')
-              .where('user.email = :email', { email: dto.email })
-              .getOne();
-            */
 
       if (!user)
         throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
 
-      // Logic google login (nếu user chỉ có email google mà không có pass hash)
+      // 1. KIỂM TRA TÀI KHOẢN BỊ CẤM
+      if (user.deleted_at) {
+        throw new ForbiddenException(
+          'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ Admin.',
+        );
+      }
+
+      // ... (Logic Google login giữ nguyên)
       if (!user.password_hash)
         throw new UnauthorizedException(
           'Tài khoản này đăng nhập bằng Google/Facebook',
@@ -83,7 +83,12 @@ export class AuthService {
 
       return this._generateSystemJwt(user);
     } catch (error) {
-      if (error instanceof UnauthorizedException) throw error;
+      // Ném đúng lỗi Forbidden ra ngoài để Controller bắt
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      )
+        throw error;
       throw new InternalServerErrorException('Lỗi hệ thống khi đăng nhập');
     }
   }

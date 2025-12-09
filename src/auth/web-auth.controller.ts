@@ -18,32 +18,36 @@ export class WebAuthController {
     try {
       const result = await this.authService.login(dto);
 
-      // Lưu Token vào Cookie
+      // ... (Logic cookie & redirect giữ nguyên)
       res.cookie('access_token', result.accessToken, {
         httpOnly: true,
-        secure: false, // Để true nếu chạy HTTPS
-        maxAge: 24 * 60 * 60 * 1000, // 1 ngày
+        secure: false,
+        maxAge: 24 * 60 * 60 * 1000,
       });
 
-      // Điều hướng dựa trên Role
-      // 1: ADMIN, 2: CANDIDATE, 3: RECRUITER
       const roleId = result.user.role_id;
-
-      if (roleId === 1) {
-        return res.redirect('/admin/dashboard');
-      } else if (roleId === 3) {
-        return res.redirect('/recruiter/dashboard');
-      } else {
+      if (roleId === 1) return res.redirect('/admin/dashboard');
+      else if (roleId === 3) return res.redirect('/recruiter/dashboard');
+      else {
         return res.render('auth/login', {
           layout: false,
           error: 'Tài khoản Ứng viên vui lòng sử dụng Mobile App.',
         });
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
+    } catch (err: any) {
+      // --- XỬ LÝ LỖI ---
+      let errorMessage = 'Email hoặc mật khẩu không đúng.';
+
+      // Nếu lỗi là Forbidden (403) -> Tức là bị Ban
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (err.status === 403) {
+        errorMessage =
+          'Tài khoản của bạn đã bị KHÓA. Vui lòng liên hệ quản trị viên.';
+      }
+
       return res.render('auth/login', {
         layout: false,
-        error: 'Email hoặc mật khẩu không đúng.',
+        error: errorMessage, // Truyền lỗi xuống View
       });
     }
   }

@@ -1,3 +1,5 @@
+// src/recruiter/recruiter.service.ts
+
 import {
   ForbiddenException,
   Injectable,
@@ -10,6 +12,7 @@ import { JobEntity } from '../entity/job.entity';
 import { JobApplicationEntity } from '../entity/job-application.entity';
 import { SkillEntity } from '../entity/skill.entity';
 import { JobSkillEntity } from '../entity/job-skill.entity';
+import { UserCVEntity } from '../entity/user-cv.entity'; // [MỚI] Import để query CV
 import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
 import { NotificationType } from '../entity/notification.entity';
 import { RecruiterCreateJobDto } from '../recruiter-dto/recruiter-create-job.dto';
@@ -28,6 +31,8 @@ export class RecruiterService {
     private readonly skillRepo: Repository<SkillEntity>,
     @InjectRepository(JobSkillEntity)
     private readonly jobSkillRepo: Repository<JobSkillEntity>,
+    @InjectRepository(UserCVEntity) // [MỚI] Inject CV Repository
+    private readonly cvRepo: Repository<UserCVEntity>,
 
     // Inject Service thông báo
     private readonly firebaseService: FirebaseModuleService,
@@ -54,7 +59,6 @@ export class RecruiterService {
     });
 
     // Đếm tổng số đơn ứng tuyển vào các job của công ty
-    // (Query phức tạp hơn chút vì phải join qua bảng Jobs)
     const jobs = await this.jobRepo.find({
       where: { company_id: companyId },
       select: ['job_id'],
@@ -78,7 +82,7 @@ export class RecruiterService {
     };
   }
 
-  // 2. Đăng Job Mới
+  // 2. Đăng Job Mới (Kèm logic gửi thông báo tìm ứng viên)
   async createJob(userId: number, dto: RecruiterCreateJobDto) {
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
@@ -100,12 +104,12 @@ export class RecruiterService {
       salary_max: dto.salary_max,
       location: dto.location,
       job_type: dto.job_type,
-      company: user.company, // Link với công ty
-      postedBy: user, // Link với người đăng
+      company: user.company,
+      postedBy: user,
       created_at: new Date(),
     });
 
-    // Xử lý Deadline (Mặc định 30 ngày nếu không nhập)
+    // Xử lý Deadline
     if (dto.deadline) {
       newJob.deadline = new Date(dto.deadline);
     } else {
@@ -119,26 +123,74 @@ export class RecruiterService {
     // B. Xử lý Skills (Lưu vào bảng trung gian job_skills)
     if (dto.skills && dto.skills.length > 0) {
       for (const skillName of dto.skills) {
-        // Tìm xem skill đã có trong DB chưa
         let skill = await this.skillRepo.findOneBy({ skill_name: skillName });
 
-        // Nếu chưa có thì tạo mới skill đó
         if (!skill) {
           skill = await this.skillRepo.save(
             this.skillRepo.create({ skill_name: skillName }),
           );
         }
 
-        // Lưu vào bảng job_skills
         await this.jobSkillRepo.save({
           job: savedJob,
           skill: skill,
-          is_required: true, // Mặc định là bắt buộc
+          is_required: true,
         });
       }
+
+      // [MỚI] Gọi hàm gửi thông báo cho các ứng viên phù hợp
+      // Chạy không await để không block response của API
+      this.notifyMatchingCandidates(savedJob, dto.skills).catch((err) =>
+        console.error('Lỗi gửi thông báo Job matching:', err),
+      );
     }
 
     return savedJob;
+  }
+
+  // [MỚI] Hàm phụ trợ: Tìm và gửi thông báo cho ứng viên phù hợp
+  private async notifyMatchingCandidates(job: JobEntity, skills: string[]) {
+    if (!skills || skills.length === 0) return;
+
+    try {
+      // 1. Tìm các User có CV chứa từ khóa skill tương ứng
+      // Query này join qua bảng keywords của CV để tìm match
+      const matchingCvs = await this.cvRepo
+        .createQueryBuilder('cv')
+        .leftJoin('cv.keywords', 'cvKeyword')
+        .leftJoin('cvKeyword.keyword', 'keyword')
+        .leftJoinAndSelect('cv.user', 'user')
+        .where('cv.is_default = :isDefault', { isDefault: true }) // Chỉ xét CV chính
+        .andWhere('keyword.keyword_name IN (:...skills)', { skills })
+        .select(['cv.cv_id', 'user.user_id', 'user.fcm_token']) // Chỉ lấy thông tin cần thiết
+        .distinct(true) // Tránh gửi nhiều lần cho 1 user nếu khớp nhiều skill
+        .getMany();
+
+      console.log(
+        `[Job Matching] Tìm thấy ${matchingCvs.length} ứng viên phù hợp cho job ${job.job_id}`,
+      );
+
+      // 2. Gửi thông báo
+      for (const cv of matchingCvs) {
+        // Bỏ qua nếu là chính người đăng (trường hợp test)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (cv.user.user_id === job.postedBy.user_id) continue;
+
+        await this.firebaseService.sendNotificationToUser(
+          cv.user.user_id,
+          'Có việc làm mới phù hợp! 💼',
+          `Công việc "${job.title}" tại ${job.company.name} phù hợp với kỹ năng của bạn.`,
+          NotificationType.NEW_JOB,
+          {
+            click_action: 'JOB_DETAIL',
+            job_title: job.title, // Flutter có thể dùng title để fetch detail
+            job_id: job.job_id,
+          },
+        );
+      }
+    } catch (e) {
+      console.error('Lỗi trong quá trình notifyMatchingCandidates:', e);
+    }
   }
 
   // 3. Lấy danh sách Job của công ty mình
@@ -153,13 +205,12 @@ export class RecruiterService {
     return await this.jobRepo.find({
       where: { company_id: user.company.company_id },
       order: { created_at: 'DESC' },
-      relations: ['applications'], // Để frontend hiển thị số lượng đơn
+      relations: ['applications'],
     });
   }
 
   // 4. Xem danh sách ứng viên của 1 Job cụ thể
   async getJobApplications(userId: number, jobId: number) {
-    // Check quyền: Job này có phải của công ty Recruiter đang login không?
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
       relations: ['company'],
@@ -181,7 +232,6 @@ export class RecruiterService {
       );
     }
 
-    // Lấy danh sách Application kèm User và CV
     return await this.appRepo.find({
       where: { job_id: jobId },
       relations: ['user', 'cv'],
@@ -189,7 +239,7 @@ export class RecruiterService {
     });
   }
 
-  // 5. Cập nhật trạng thái Application (Duyệt/Loại)
+  // 5. Cập nhật trạng thái Application & Gửi thông báo
   async updateApplicationStatus(
     userId: number,
     applicationId: number,
@@ -210,12 +260,10 @@ export class RecruiterService {
       relations: ['company'],
     });
 
-    // ✅ FIX: Kiểm tra recruiter có tồn tại không trước
     if (!recruiter) {
       throw new ForbiddenException('User không tồn tại.');
     }
 
-    // ✅ FIX: Kiểm tra recruiter có công ty không và so sánh ID
     if (
       !recruiter.company ||
       application.job.company.company_id !== recruiter.company.company_id
@@ -227,21 +275,29 @@ export class RecruiterService {
     application.status = dto.status;
     const updatedApp = await this.appRepo.save(application);
 
-    // --- GỬI THÔNG BÁO CHO ỨNG VIÊN (QUAN TRỌNG) ---
+    // [MỚI] --- GỬI THÔNG BÁO CHO ỨNG VIÊN ---
     const candidateId = application.user.user_id;
     let notiTitle = 'Cập nhật trạng thái hồ sơ';
     let notiBody = `Hồ sơ cho vị trí ${application.job.title} đã chuyển sang trạng thái: ${dto.status}`;
 
     // Tùy chỉnh nội dung thông báo cho hay hơn
-    if (dto.status === 'Interview') {
-      notiTitle = 'Mời phỏng vấn! 🎉';
-      notiBody = `Chúc mừng! Công ty ${application.job.company.name} muốn mời bạn phỏng vấn cho vị trí ${application.job.title}.`;
-    } else if (dto.status === 'Rejected') {
-      notiTitle = 'Thông báo từ nhà tuyển dụng';
-      notiBody = `Rất tiếc, hồ sơ ứng tuyển vị trí ${application.job.title} của bạn chưa phù hợp vào lúc này.`;
-    } else if (dto.status === 'Offer') {
-      notiTitle = 'Chúc mừng! Bạn nhận được Offer 💌';
-      notiBody = `Công ty ${application.job.company.name} đã gửi đề nghị làm việc cho bạn.`;
+    switch (dto.status) {
+      case 'Interview':
+        notiTitle = 'Mời phỏng vấn! 📅';
+        notiBody = `Chúc mừng! ${application.job.company.name} muốn hẹn lịch phỏng vấn với bạn cho vị trí ${application.job.title}.`;
+        break;
+      case 'Offer':
+        notiTitle = 'Bạn nhận được Offer! 🎉';
+        notiBody = `Tuyệt vời! Bạn đã nhận được lời mời làm việc từ ${application.job.company.name}.`;
+        break;
+      case 'Rejected':
+        notiTitle = 'Thông báo từ nhà tuyển dụng';
+        notiBody = `Rất tiếc, hồ sơ ứng tuyển vị trí ${application.job.title} của bạn chưa phù hợp vào lúc này.`;
+        break;
+      case 'Accepted':
+        notiTitle = 'Chào mừng gia nhập! 🤝';
+        notiBody = `Bạn đã chính thức trở thành thành viên của ${application.job.company.name}.`;
+        break;
     }
 
     // Gọi Service Firebase bắn noti
@@ -260,32 +316,23 @@ export class RecruiterService {
 
     return updatedApp;
   }
-  async getRecruiterChartData(userId: number) {
-    // 1. Query DB: Đếm số lượng đơn ứng tuyển theo từng trạng thái
-    // SQL tương đương:
-    // SELECT app.status, COUNT(app.application_id)
-    // FROM job_applications app
-    // JOIN jobs job ON app.job_id = job.job_id
-    // WHERE job.posted_by = :userId
-    // GROUP BY app.status
 
+  // 6. Lấy dữ liệu biểu đồ
+  async getRecruiterChartData(userId: number) {
     const rawData = await this.appRepo
       .createQueryBuilder('app')
       .select('app.status', 'status')
       .addSelect('COUNT(app.application_id)', 'count')
-      .leftJoin('app.job', 'job') // Join sang bảng Job để check quyền sở hữu
+      .leftJoin('app.job', 'job')
       .where('job.posted_by = :userId', { userId })
       .groupBy('app.status')
       .getRawMany();
 
-    // 2. Chuẩn hóa dữ liệu trả về cho Chart.js
-    // rawData sẽ có dạng: [{ status: 'Applied', count: '5' }, { status: 'Rejected', count: '1' }]
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access
     const labels = rawData.map((item) => item.status);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const data = rawData.map((item) => Number(item.count));
 
-    // Nếu chưa có dữ liệu nào thì trả về mảng rỗng để tránh lỗi Chart
     if (labels.length === 0) {
       return {
         labels: ['No Data'],

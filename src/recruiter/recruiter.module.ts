@@ -9,6 +9,7 @@ import { JobApplicationEntity } from '../entity/job-application.entity';
 import { SkillEntity } from '../entity/skill.entity';
 import { JobSkillEntity } from '../entity/job-skill.entity';
 import { FirebaseModuleModule } from '../firebase-module/firebase-module.module';
+import { UserCVEntity } from '../entity/user-cv.entity';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { FirebaseModuleModule } from '../firebase-module/firebase-module.module'
       JobApplicationEntity,
       SkillEntity,
       JobSkillEntity,
+      UserCVEntity,
     ]),
     FirebaseModuleModule, // Để dùng Notification Service
   ],
