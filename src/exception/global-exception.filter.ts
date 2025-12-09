@@ -1,4 +1,3 @@
-// src/common/filters/http-exception.filter.ts
 import {
   ExceptionFilter,
   Catch,
@@ -6,32 +5,48 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { Request, Response } from 'express';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const response = ctx.getResponse();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const request = ctx.getRequest();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    // 1. Kiểm tra nếu headers đã gửi rồi thì thôi (Tránh lỗi ERR_HTTP_HEADERS_SENT)
+    if (response.headersSent) {
+      return;
+    }
 
-    const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Server bị lỗi';
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: any = 'Internal server error';
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      message = exception.getResponse();
+    }
+
+    // 2. XỬ LÝ ĐẶC BIỆT CHO WEB AUTH
+    // Nếu lỗi là 401 (Unauthorized) VÀ đường dẫn bắt đầu bằng /admin hoặc /recruiter
+    if (status === HttpStatus.UNAUTHORIZED) {
+      const path = request.url;
+      // Kiểm tra xem request này có phải từ trình duyệt vào trang quản trị không
+      if (
+        path.startsWith('/admin') ||
+        path.startsWith('/recruiter') ||
+        path === '/'
+      ) {
+        return response.redirect('/web/login');
+      }
+    }
+
+    // 3. Trả về JSON cho các trường hợp còn lại (API Mobile/Frontend)
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
       path: request.url,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       message,
     });
   }

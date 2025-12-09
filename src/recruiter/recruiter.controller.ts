@@ -11,14 +11,14 @@ import {
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
-import { OrAuthGuard } from '../guard/or-auth.guard';
 import { Roles } from '../decorator/role.decorator';
 import { RecruiterService } from './recruiter.service';
 import { RecruiterCreateJobDto } from '../recruiter-dto/recruiter-create-job.dto';
 import { UpdateApplicationStatusDto } from '../recruiter-dto/update-application-status.dto';
+import { WebAuthGuard } from '../guard/web-auth.guard';
 
 @Controller('recruiter')
-@UseGuards(OrAuthGuard)
+@UseGuards(WebAuthGuard) // <--- Áp dụng Guard Web
 @Roles('RECRUITER', 'ADMIN') // Admin cũng có thể test chức năng của Recruiter
 export class RecruiterController {
   constructor(private readonly service: RecruiterService) {}
@@ -26,11 +26,15 @@ export class RecruiterController {
   @Get('dashboard')
   @Render('recruiter/dashboard')
   async getDashboard(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
-    const data = await this.service.getRecruiterStats(req.user.userId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    const data = await this.service.getRecruiterStats(userId);
+    const chartData = await this.service.getRecruiterChartData(userId);
+
     return {
       company: data.company,
       stats: data.stats,
+      chartData: JSON.stringify(chartData),
     };
   }
 
@@ -43,12 +47,21 @@ export class RecruiterController {
     return this.service.createJob(req.user.userId, dto);
   }
 
+// [SỬA ĐỔI] Thay vì trả về JSON array, ta Render view
   @Get('my-jobs')
+  @Render('recruiter/my-jobs') // <--- Quan trọng: Trỏ tới file view
   async getMyJobs(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
-    return this.service.getMyJobs(req.user.userId);
-  }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    const jobs = await this.service.getMyJobs(userId);
 
+    // Trả về object chứa data cho Handlebars
+    return {
+      jobs: jobs,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+      user: req.user // Truyền thêm user info nếu cần hiển thị tên
+    };
+  }
   @Get('jobs/:jobId/applications')
   async getJobApplications(@Req() req: any, @Param('jobId') jobId: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
@@ -91,10 +104,16 @@ export class RecruiterController {
   }
   @Get('chat')
   @Render('recruiter/chat') // Sẽ trỏ tới file views/recruiter/chat.hbs
-  async getChatPage(@Req() req: any) {
+  getChatPage(@Req() req: any) {
     return {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
       user: req.user, // Truyền thông tin user xuống view để lấy token/id
     };
+  }
+  // 1. Hiển thị Form tạo Job
+  @Get('post-job')
+  @Render('recruiter/post-job')
+  getPostJobPage() {
+    return {}; // Render view views/recruiter/post-job.hbs
   }
 }

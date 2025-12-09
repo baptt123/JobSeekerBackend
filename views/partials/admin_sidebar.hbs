@@ -1,35 +1,62 @@
-<aside class="flex flex-col w-64 bg-background-light dark:bg-background-dark border-r border-gray-200 dark:border-gray-800 p-4 shrink-0">
+<aside
+  class="flex flex-col w-64 bg-background-light dark:bg-background-dark border-r border-gray-200 dark:border-gray-800 p-4 shrink-0"
+>
   <div class="flex items-center gap-4 text-primary mb-8">
     <div class="size-8 text-primary">
-      <span class="material-symbols-outlined text-4xl">admin_panel_settings</span>
+      <span class="material-symbols-outlined text-4xl"
+        >admin_panel_settings</span
+      >
     </div>
-    <h2 class="text-slate-800 dark:text-slate-200 text-lg font-bold leading-tight tracking-[-0.015em]">Admin Portal</h2>
+    <h2
+      class="text-slate-800 dark:text-slate-200 text-lg font-bold leading-tight tracking-[-0.015em]"
+    >
+      Admin Portal
+    </h2>
   </div>
 
   <div class="flex flex-col gap-4">
     <div class="flex gap-3 items-center mb-4">
-      <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style='background-image: url("https://ui-avatars.com/api/?name=Admin+User&background=6b26d9&color=fff");'></div>
+      <div
+        class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+        style="
+          background-image: url('https://ui-avatars.com/api/?name=Admin+User&background=6b26d9&color=fff');
+        "
+      ></div>
       <div class="flex flex-col">
-        <h1 class="text-slate-900 dark:text-white text-base font-medium leading-normal">Administrator</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">System Owner</p>
+        <h1
+          class="text-slate-900 dark:text-white text-base font-medium leading-normal"
+        >
+          Administrator
+        </h1>
+        <p
+          class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal"
+        >
+          System Owner
+        </p>
       </div>
     </div>
 
     <div class="flex flex-col gap-2">
-      <a href="/admin/dashboard"
-         class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'dashboard')}}bg-primary/20 text-primary{{else}}text-slate-700 hover:bg-slate-200{{/if}}">
+      <a
+        href="/admin/dashboard"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'dashboard')}}bg-primary/20 text-primary{{else}}text-slate-700 hover:bg-slate-200{{/if}}"
+      >
         <span class="material-symbols-outlined">dashboard</span>
         <p class="text-sm font-medium leading-normal">Dashboard</p>
       </a>
 
-      <a href="/admin/users"
-         class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'users')}}bg-primary/20 text-primary{{else}}text-slate-700 hover:bg-slate-200{{/if}}">
+      <a
+        href="/admin/users"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'users')}}bg-primary/20 text-primary{{else}}text-slate-700 hover:bg-slate-200{{/if}}"
+      >
         <span class="material-symbols-outlined">group</span>
         <p class="text-sm font-medium leading-normal">Manage Users</p>
       </a>
 
-      <a href="/admin/company"
-         class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'company')}}bg-primary/20 text-primary{{else}}text-slate-700 hover:bg-slate-200{{/if}}">
+      <a
+        href="/admin/company"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'company')}}bg-primary/20 text-primary{{else}}text-slate-700 hover:bg-slate-200{{/if}}"
+      >
         <span class="material-symbols-outlined">apartment</span>
         <p class="text-sm font-medium leading-normal">Manage Companies</p>
       </a>

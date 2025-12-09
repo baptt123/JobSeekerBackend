@@ -1,8 +1,8 @@
 <html>
   <head>
     <title>CV - {{cv.fullName}}</title>
-    <meta charset='UTF-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -59,47 +59,47 @@
     </style>
   </head>
   <body>
-    <div class='container'>
+    <div class="container">
       <h1>{{cv.fullName}}</h1>
       <h2>{{cv.jobTitle}}</h2>
 
-      <div class='contact'>
+      <div class="contact">
         <p><strong>Email:</strong> {{cv.email}}</p>
         <p><strong>Phone:</strong> {{cv.phone}}</p>
         <p><strong>Address:</strong> {{cv.address}}</p>
       </div>
 
-      <div class='section'>
+      <div class="section">
         <h3>Giới thiệu</h3>
         <p>{{cv.summary}}</p>
       </div>
 
-      <div class='section'>
+      <div class="section">
         <h3>Kinh nghiệm làm việc</h3>
         {{#each cv.experiences}}
-          <div class='job'>
-            <h4>{{this.jobTitle}} - {{this.company}}</h4>
-            <p><i>{{this.duration}}</i></p>
-            <p>{{this.description}}</p>
-          </div>
+        <div class="job">
+          <h4>{{this.jobTitle}} - {{this.company}}</h4>
+          <p><i>{{this.duration}}</i></p>
+          <p>{{this.description}}</p>
+        </div>
         {{/each}}
       </div>
 
-      <div class='section'>
+      <div class="section">
         <h3>Học vấn</h3>
         {{#each cv.educations}}
-          <div class='job'>
-            <h4>{{this.school}}</h4>
-            <p><strong>{{this.degree}}</strong> (<i>{{this.duration}}</i>)</p>
-          </div>
+        <div class="job">
+          <h4>{{this.school}}</h4>
+          <p><strong>{{this.degree}}</strong> (<i>{{this.duration}}</i>)</p>
+        </div>
         {{/each}}
       </div>
 
-      <div class='section'>
+      <div class="section">
         <h3>Kỹ năng</h3>
-        <ul class='skills'>
+        <ul class="skills">
           {{#each cv.skills}}
-            <li>{{this.name}}</li>
+          <li>{{this.name}}</li>
           {{/each}}
         </ul>
       </div>

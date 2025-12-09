@@ -10,6 +10,8 @@ import { JwtRefreshTokenStrategy } from '../strategies/jwt-refresh-token-strateg
 import { AuthController } from './auth.controller';
 import { FirebaseModuleModule } from '../firebase-module/firebase-module.module';
 import { FirebaseAuthStrategy } from '../strategies/firebase-auth.strategy';
+import { JwtWebStrategy } from '../strategies/jwt-web.strategy';
+import { WebAuthController } from './web-auth.controller';
 
 @Module({
   imports: [
@@ -36,8 +38,9 @@ import { FirebaseAuthStrategy } from '../strategies/firebase-auth.strategy';
     JwtStrategy,
     JwtRefreshTokenStrategy,
     FirebaseAuthStrategy,
+    JwtWebStrategy, // <--- THÊM VÀO ĐÂY
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, WebAuthController],
   exports: [AuthService, PassportModule, JwtModule],
 })
 export class AuthModule {}

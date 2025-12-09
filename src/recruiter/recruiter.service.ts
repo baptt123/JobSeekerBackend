@@ -260,4 +260,42 @@ export class RecruiterService {
 
     return updatedApp;
   }
+  async getRecruiterChartData(userId: number) {
+    // 1. Query DB: Đếm số lượng đơn ứng tuyển theo từng trạng thái
+    // SQL tương đương:
+    // SELECT app.status, COUNT(app.application_id)
+    // FROM job_applications app
+    // JOIN jobs job ON app.job_id = job.job_id
+    // WHERE job.posted_by = :userId
+    // GROUP BY app.status
+
+    const rawData = await this.appRepo
+      .createQueryBuilder('app')
+      .select('app.status', 'status')
+      .addSelect('COUNT(app.application_id)', 'count')
+      .leftJoin('app.job', 'job') // Join sang bảng Job để check quyền sở hữu
+      .where('job.posted_by = :userId', { userId })
+      .groupBy('app.status')
+      .getRawMany();
+
+    // 2. Chuẩn hóa dữ liệu trả về cho Chart.js
+    // rawData sẽ có dạng: [{ status: 'Applied', count: '5' }, { status: 'Rejected', count: '1' }]
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access
+    const labels = rawData.map((item) => item.status);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const data = rawData.map((item) => Number(item.count));
+
+    // Nếu chưa có dữ liệu nào thì trả về mảng rỗng để tránh lỗi Chart
+    if (labels.length === 0) {
+      return {
+        labels: ['No Data'],
+        data: [0],
+      };
+    }
+
+    return {
+      labels,
+      data,
+    };
+  }
 }

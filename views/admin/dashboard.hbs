@@ -1,70 +1,207 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Admin Dashboard</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: { "primary": "#6b26d9", "background-light": "#f7f6f8", "background-dark": "#171220" },
-          fontFamily: { "display": ["Inter"] }
-        }
-      }
-    }
-  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - TechConnect</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
-<body class="font-display">
-<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden">
-  <div class="flex min-h-screen">
+<body class="bg-slate-50 text-slate-900">
 
-    {{> admin_sidebar activePage='dashboard'}}
+<div class="flex h-screen overflow-hidden">
 
-    <main class="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900/50">
-      <header class="flex items-center justify-between border-b border-slate-200 px-10 py-3 bg-background-light sticky top-0 z-10">
-        <h1 class="text-xl font-bold text-primary">Overview</h1>
-      </header>
+  <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20">
+    <div class="h-16 flex items-center px-6 border-b border-slate-700 bg-slate-900">
+      <span class="material-symbols-outlined text-teal-400 text-3xl mr-2">admin_panel_settings</span>
+      <span class="text-lg font-bold tracking-wide">Admin Portal</span>
+    </div>
 
-      <div class="p-6 md:p-10 flex-1">
-        <div class="flex flex-wrap justify-between gap-3 mb-8">
-          <p class="text-slate-900 text-4xl font-black">Dashboard Statistics</p>
-        </div>
+    <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+      <a href="/admin/dashboard" class="flex items-center gap-3 px-4 py-3 bg-teal-600/20 text-teal-400 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-medium">Dashboard</span>
+      </a>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <a href="/admin/users" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+        <span class="material-symbols-outlined">group</span>
+        <span class="font-medium">Users</span>
+      </a>
 
-          <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 bg-white shadow-sm border border-slate-200">
-            <p class="text-slate-600 text-base font-medium">Total Users</p>
-            <p class="text-primary text-3xl font-bold">{{stats.totalUsers}}</p>
-          </div>
+      <a href="/admin/companies" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+        <span class="material-symbols-outlined">apartment</span>
+        <span class="font-medium">Companies</span>
+      </a>
+    </nav>
 
-          <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 bg-white shadow-sm border border-slate-200">
-            <p class="text-slate-600 text-base font-medium">Total Jobs</p>
-            <p class="text-primary text-3xl font-bold">{{stats.totalJobs}}</p>
-          </div>
-
-          <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 bg-white shadow-sm border border-slate-200">
-            <p class="text-slate-600 text-base font-medium">Total Companies</p>
-            <p class="text-primary text-3xl font-bold">{{stats.totalCompanies}}</p>
-          </div>
-
-          <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 bg-white shadow-sm border border-slate-200">
-            <p class="text-slate-600 text-base font-medium">Total Applications</p>
-            <p class="text-primary text-3xl font-bold">{{stats.totalApplications}}</p>
-          </div>
-
-        </div>
-
-        <div class="mt-8">
-          <p class="text-sm text-gray-500 italic mt-4">* Charts are visualized with static data for design demonstration.</p>
+    <div class="p-4 border-t border-slate-700">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-teal-400 to-blue-500"></div>
+        <div>
+          <p class="text-sm font-semibold">Administrator</p>
+          <a href="/web/logout" class="text-xs text-slate-400 hover:text-teal-400">Logout</a>
         </div>
       </div>
+    </div>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
+      <h1 class="text-xl font-bold text-slate-800">Dashboard Overview</h1>
+      <button class="p-2 rounded-full hover:bg-slate-100 text-slate-500 relative">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+      </button>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-8">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Total Users</p>
+              <h3 class="text-3xl font-bold text-slate-800 mt-2">{{stats.totalUsers}}</h3>
+            </div>
+            <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+              <span class="material-symbols-outlined">group</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Total Jobs</p>
+              <h3 class="text-3xl font-bold text-slate-800 mt-2">{{stats.totalJobs}}</h3>
+            </div>
+            <div class="p-3 bg-green-50 text-green-600 rounded-lg">
+              <span class="material-symbols-outlined">work</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Total Companies</p>
+              <h3 class="text-3xl font-bold text-slate-800 mt-2">{{stats.totalCompanies}}</h3>
+            </div>
+            <div class="p-3 bg-purple-50 text-purple-600 rounded-lg">
+              <span class="material-symbols-outlined">apartment</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm font-medium text-slate-500">Applications</p>
+              <h3 class="text-3xl font-bold text-slate-800 mt-2">{{stats.totalApplications}}</h3>
+            </div>
+            <div class="p-3 bg-orange-50 text-orange-600 rounded-lg">
+              <span class="material-symbols-outlined">description</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">User Growth</h3>
+          <div class="relative h-72">
+            <canvas id="userChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Job Postings Trend</h3>
+          <div class="relative h-72">
+            <canvas id="jobChart"></canvas>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </div>
+
+<script>
+  // Nhận dữ liệu từ Controller (Server Side Render)
+  // Sử dụng 3 dấu ngoặc nhọn để không bị escape ký tự
+  const chartData = {{{chartData}}};
+
+  console.log("Chart Data:", chartData); // Debug nếu không hiện biểu đồ
+
+  // 1. Cấu hình Biểu đồ User (Line Chart)
+  const ctxUser = document.getElementById('userChart').getContext('2d');
+  new Chart(ctxUser, {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: [{
+        label: 'New Users',
+        data: chartData.users,
+        borderColor: '#4f46e5', // Indigo 600
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        borderWidth: 2,
+        tension: 0.4, // Đường cong mềm mại
+        fill: true,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#4f46e5',
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // 2. Cấu hình Biểu đồ Job (Bar Chart)
+  const ctxJob = document.getElementById('jobChart').getContext('2d');
+  new Chart(ctxJob, {
+    type: 'bar',
+    data: {
+      labels: chartData.labels,
+      datasets: [{
+        label: 'Jobs Posted',
+        data: chartData.jobs,
+        backgroundColor: '#10b981', // Emerald 500
+        borderRadius: 4,
+        barThickness: 30
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+</script>
+
 </body>
 </html>

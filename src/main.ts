@@ -6,41 +6,65 @@ import { GlobalExceptionFilter } from './exception/global-exception.filter';
 import { config } from 'dotenv';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'; // ⚡ thêm dòng này
-import hbs from 'hbs';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import hbs from 'hbs'; // Import hbs
+
 config();
 
 async function bootstrap() {
-  // const app = await NestFactory.create(AppModule);
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.setBaseViewsDir(join(__dirname, '..', 'views')); // thư mục chứa HTML template
+
+  // Cấu hình thư mục Views
+  app.setBaseViewsDir(join(__dirname, '..', 'views'));
+  app.setViewEngine('hbs');
+
+  // Cấu hình thư mục Public (CSS, JS, Images)
+  app.useStaticAssets(join(__dirname, '..', 'public'));
+
+  // Middleware & Pipes
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.use(cookieParser());
-  // Đăng ký thư mục partials để dùng {{> sidebar}}
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Đăng ký Partials (nếu dùng)
+  // Lưu ý: Chỉ cần trỏ đến thư mục cha chứa partials
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerPartials(join(__dirname, '..', 'views', 'partials'));
 
-  // Helper so sánh bằng để highlight menu active
+  // ======================================================
+  // 👇 QUAN TRỌNG: ĐĂNG KÝ CÁC HELPER CHO HANDLEBARS 👇
+  // ======================================================
+
+  // Helper so sánh bằng
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-  hbs.registerHelper('eq', function (a, b) {
-    return a === b;
-  });
-  app.useGlobalFilters(new GlobalExceptionFilter());
-  app.setViewEngine('hbs');
-  app.useStaticAssets(join(__dirname, '..', 'public')); // nơi chứa CSS, ảnh, JS tĩnh
+  hbs.registerHelper('eq', (a, b) => a === b);
+
+  // Helper so sánh lớn hơn (Greater Than)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  hbs.registerHelper('gt', (a, b) => a > b);
+
+  // Helper phép cộng (Dùng cho phân trang: Next Page)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  hbs.registerHelper('add', (a, b) => Number(a) + Number(b));
+
+  // Helper phép trừ (Dùng cho phân trang: Prev Page)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  hbs.registerHelper('subtract', (a, b) => Number(a) - Number(b));
+
+  // ======================================================
+
   // Cấu hình Swagger
   const config = new DocumentBuilder()
-    .setTitle('Hướng dẫn test API backend Nestjs') // Tiêu đề
-    .setDescription('Hướng dẫn chạy demo test API') // Mô tả
-    .setVersion('1.0') // Version
-    .addTag('users') // Tag để nhóm các API (tùy chọn)
-    .addBearerAuth() // Thêm cấu hình JWT Auth (nếu cần)
+    .setTitle('Job Seeker API')
+    .setDescription('Tài liệu API cho hệ thống tuyển dụng')
+    .setVersion('1.0')
+    .addTag('users')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-
-  // Setup đường dẫn truy cập Swagger (VD: localhost:3000/api)
   SwaggerModule.setup('api', app, document);
+
   await app.listen(3000);
   console.log('Server running on http://localhost:3000');
 }

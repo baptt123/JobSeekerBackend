@@ -6,6 +6,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   OneToMany,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
 import { RoleEntity } from './role.entity';
@@ -101,4 +102,6 @@ export class UserEntity {
     description: 'Firebase Cloud Messaging Token',
   })
   fcm_token: string;
+  @DeleteDateColumn()
+  deleted_at: Date;
 }
