@@ -18,22 +18,17 @@ import { UserService } from '../user/user.service';
 @Injectable()
 export class FirebaseModuleService implements OnModuleInit {
   private readonly logger = new Logger(FirebaseModuleService.name);
-
-  // --- QUAN TRỌNG: Phải khai báo biến này để lưu instance sau khi lazy load ---
   private userService: UserService;
-  // --------------------------------------------------------------------------
 
   constructor(
     private configService: ConfigService,
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
-    // Inject ModuleRef thay vì UserService trực tiếp để tránh Circular Dependency
     private moduleRef: ModuleRef,
   ) {}
 
-  /**
-   * Khởi tạo Firebase Admin SDK
-   */
+  // ... (Các hàm init, sendPushNotification, sendNotificationToUser, sendNotificationToTopic giữ nguyên)
+
   onModuleInit() {
     const privateKey = this.configService.get<string>('FIREBASE_PRIVATE_KEY');
     const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
@@ -60,16 +55,10 @@ export class FirebaseModuleService implements OnModuleInit {
     }
   }
 
-  /**
-   * Helper lấy Messaging service
-   */
   getMessaging(): admin.messaging.Messaging {
     return admin.messaging();
   }
 
-  /**
-   * Gửi Push Notification (Core function)
-   */
   async sendPushNotification(dto: SendNotificationDto): Promise<string> {
     const { token, title, body, userId, data, type } = dto;
 
@@ -78,26 +67,15 @@ export class FirebaseModuleService implements OnModuleInit {
       : {};
 
     const message: admin.messaging.Message = {
-      notification: {
-        title,
-        body,
-      },
+      notification: { title, body },
       token: token,
       data: {
         ...stringData,
         click_action: 'FLUTTER_NOTIFICATION_CLICK',
         type: type ? String(type) : String(NotificationType.SYSTEM),
       },
-      android: {
-        priority: 'high',
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-          },
-        },
-      },
+      android: { priority: 'high' },
+      apns: { payload: { aps: { sound: 'default' } } },
     };
 
     try {
@@ -105,9 +83,14 @@ export class FirebaseModuleService implements OnModuleInit {
       this.logger.log(`Successfully sent FCM message: ${response}`);
 
       if (userId) {
-        await this.saveNotificationToDb(userId, title, body, type, data);
+        await this.saveNotificationToDb(
+          userId,
+          title,
+          body,
+          type ?? NotificationType.SYSTEM,
+          data,
+        );
       }
-
       return response;
     } catch (error) {
       this.logger.error('Error sending FCM message:', error);
@@ -117,9 +100,6 @@ export class FirebaseModuleService implements OnModuleInit {
     }
   }
 
-  /**
-   * Hàm tiện ích: Gửi thông báo đến User ID
-   */
   async sendNotificationToUser(
     userId: number,
     title: string,
@@ -127,14 +107,8 @@ export class FirebaseModuleService implements OnModuleInit {
     type: NotificationType = NotificationType.SYSTEM,
     metadata?: Record<string, any>,
   ): Promise<string | null> {
-    // Gọi hàm lazy load để lấy service
     const userService = this.getUserService();
-
-    // Kiểm tra kỹ phòng trường hợp không lấy được service (dù hiếm)
-    if (!userService) {
-      this.logger.error('UserService not found via ModuleRef');
-      return null;
-    }
+    if (!userService) return null;
 
     const user = await userService.userRepo.findOne({
       where: { user_id: userId },
@@ -163,14 +137,44 @@ export class FirebaseModuleService implements OnModuleInit {
     }
   }
 
-  /**
-   * Lưu thông báo vào Database
-   */
+  async sendNotificationToTopic(
+    topic: string,
+    title: string,
+    body: string,
+    data?: Record<string, any>,
+  ): Promise<string | null> {
+    const stringData = data
+      ? Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]))
+      : {};
+
+    const message: admin.messaging.Message = {
+      notification: { title, body },
+      topic: topic,
+      data: {
+        ...stringData,
+        type: String(NotificationType.NEW_JOB),
+      },
+      android: { priority: 'high' },
+      apns: { payload: { aps: { sound: 'default' } } },
+    };
+
+    try {
+      const response = await this.getMessaging().send(message);
+      this.logger.log(
+        `Successfully sent topic message to ${topic}: ${response}`,
+      );
+      return response;
+    } catch (error) {
+      this.logger.error(`Error sending topic message to ${topic}:`, error);
+      return null;
+    }
+  }
+
   private async saveNotificationToDb(
     userId: number,
     title: string,
     message: string,
-    type: NotificationType = NotificationType.SYSTEM,
+    type: NotificationType,
     metadata?: Record<string, any>,
   ) {
     try {
@@ -191,30 +195,27 @@ export class FirebaseModuleService implements OnModuleInit {
     }
   }
 
+  private getUserService(): UserService {
+    if (!this.userService) {
+      this.userService = this.moduleRef.get(UserService, { strict: false });
+    }
+    return this.userService;
+  }
+
+  // --- [NEW] CÁC HÀM BỔ SUNG ĐỂ CONTROLLER GỌI ---
+
   /**
-   * Lấy danh sách thông báo của User
+   * 1. Lấy danh sách thông báo của User
    */
   async getNotifications(userId: number): Promise<NotificationEntity[]> {
-    // Query where user_id = userId
     return await this.notificationRepository.find({
-      where: { user_id: userId }, // TypeORM sẽ so sánh cột user_id
+      where: { user_id: userId },
       order: { created_at: 'DESC' },
     });
   }
 
   /**
-   * Hàm này lấy UserService một lần khi cần dùng (Lazy Loading)
-   * Giúp tránh Circular Dependency tại thời điểm khởi tạo Constructor
-   */
-  private getUserService(): UserService {
-    if (!this.userService) {
-      // strict: false cho phép tìm kiếm provider trong context của module khác
-      this.userService = this.moduleRef.get(UserService, { strict: false });
-    }
-    return this.userService;
-  }
-  /**
-   * Đánh dấu thông báo là đã đọc
+   * 2. Đánh dấu 1 thông báo là đã đọc
    */
   async markAsRead(notificationId: number, userId: number): Promise<void> {
     const notification = await this.notificationRepository.findOne({
@@ -228,7 +229,7 @@ export class FirebaseModuleService implements OnModuleInit {
   }
 
   /**
-   * Đánh dấu tất cả là đã đọc
+   * 3. Đánh dấu tất cả thông báo là đã đọc
    */
   async markAllAsRead(userId: number): Promise<void> {
     await this.notificationRepository.update(

@@ -1,155 +1,202 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Post New Job - TechConnect</title>
+  <title>Đăng tin tuyển dụng | TechConnect</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-  <style> body { font-family: 'Inter', sans-serif; } </style>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900 h-screen flex overflow-hidden">
 
-<div class="flex h-screen overflow-hidden">
-  <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm z-20">
-    <div class="h-16 flex items-center px-6 border-b border-slate-100">
-      <span class="material-symbols-outlined text-indigo-600 text-3xl mr-2">rocket_launch</span>
-      <span class="text-lg font-bold text-slate-800">Recruiter</span>
+{{> recruiter_sidebar activePage='post-job'}}
+
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+  <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
+    <h1 class="text-xl font-bold text-slate-800">Tạo tin tuyển dụng mới</h1>
+    <div class="flex items-center gap-3">
+      <img src="{{user.avatar_url}}" class="w-8 h-8 rounded-full border border-slate-200 object-cover">
+      <span class="text-sm font-medium text-slate-700">{{user.full_name}}</span>
     </div>
-    <nav class="flex-1 px-4 py-6 space-y-2">
-      <a href="/recruiter/dashboard" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors">
-        <span class="material-symbols-outlined">dashboard</span> Dashboard
-      </a>
-      <a href="/recruiter/my-jobs" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors">
-        <span class="material-symbols-outlined">business_center</span> My Jobs
-      </a>
-      <a href="/recruiter/post-job" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-600 rounded-lg transition-colors font-medium">
-        <span class="material-symbols-outlined">add_circle</span> Post Job
-      </a>
-    </nav>
-    <div class="p-4 border-t border-slate-100">
-      <a href="/web/logout" class="text-sm text-red-500 hover:text-red-700">Sign Out</a>
-    </div>
-  </aside>
+  </header>
 
-  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
-      <h1 class="text-xl font-bold text-slate-800">Create New Job Opportunity</h1>
-    </header>
+  <div class="flex-1 overflow-y-auto p-8">
+    <form id="postJobForm" class="max-w-4xl mx-auto space-y-6">
 
-    <main class="flex-1 overflow-y-auto p-8">
-      <div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-        <form id="postJobForm" class="space-y-6">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Job Title</label>
-            <input type="text" name="title" required placeholder="e.g. Senior Backend Developer"
-                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Job Type</label>
-              <select name="job_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Freelance">Freelance</option>
-                <option value="Internship">Internship</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Location</label>
-              <input type="text" name="location" placeholder="e.g. Ho Chi Minh City / Remote"
-                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Min Salary ($)</label>
-              <input type="number" name="salary_min" placeholder="1000"
-                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Max Salary ($)</label>
-              <input type="number" name="salary_max" placeholder="2000"
-                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Required Skills (Comma separated)</label>
-            <input type="text" name="skills" placeholder="Java, Spring Boot, MySQL" required
-                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-            <p class="text-xs text-slate-500 mt-1">Example: Nodejs, React, MongoDB</p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Deadline</label>
-            <input type="date" name="deadline"
-                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Job Description</label>
-            <textarea name="description" rows="5" required placeholder="Describe the role..."
-                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Requirements</label>
-            <textarea name="requirements" rows="4" placeholder="List requirements..."
-                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-          </div>
-
-          <div class="pt-4 flex justify-end">
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition shadow-lg shadow-indigo-200">
-              Publish Job
-            </button>
-          </div>
-        </form>
+      <div class="flex justify-end">
+        <button type="button" onclick="fillSampleData()" class="text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+          ⚡ Điền dữ liệu mẫu (Test)
+        </button>
       </div>
-    </main>
+
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-indigo-500">article</span> Thông tin chung
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tiêu đề công việc <span class="text-red-500">*</span></label>
+            <input type="text" name="title" required placeholder="VD: Senior Frontend Developer" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Địa điểm <span class="text-red-500">*</span></label>
+            <input type="text" name="location" required placeholder="VD: Hồ Chí Minh" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-slate-700 mb-1">Kỹ năng yêu cầu <span class="text-red-500">*</span></label>
+            <input type="text" id="skillsInput" placeholder="VD: ReactJS, NodeJS, MySQL"
+                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <p class="text-xs text-slate-500 mt-1">Nhập các kỹ năng phân cách nhau bằng dấu phẩy.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Lương tối thiểu ($)</label>
+              <input type="number" name="salary_min" required placeholder="VD: 1000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Lương tối đa ($)</label>
+              <input type="number" name="salary_max" required placeholder="VD: 2000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Loại hình</label>
+            <select name="job_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Remote">Remote</option>
+              <option value="Freelance">Freelance</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Hạn nộp</label>
+            <input type="date" name="deadline" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-indigo-500">description</span> Chi tiết
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả công việc</label>
+            <textarea name="description" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Yêu cầu</label>
+            <textarea name="requirements" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Quyền lợi</label>
+            <textarea name="benefits" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pb-8">
+        <button type="button" onclick="window.history.back()" class="px-6 py-2 border border-slate-300 text-slate-600 font-bold rounded-lg hover:bg-slate-50 transition">
+          Hủy bỏ
+        </button>
+        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">send</span> Đăng tin ngay
+        </button>
+      </div>
+    </form>
   </div>
-</div>
+</main>
 
 <script>
-  document.getElementById('postJobForm').addEventListener('submit', async function(e) {
+  // 1. HÀM ĐIỀN DỮ LIỆU MẪU
+  function fillSampleData() {
+    const form = document.getElementById('postJobForm');
+
+    // Set giá trị ngẫu nhiên để tránh trùng lặp
+    const rand = Math.floor(Math.random() * 1000);
+
+    form.elements['title'].value = `Senior Backend Developer (NodeJS) #${rand}`;
+    form.elements['location'].value = 'Hà Nội, Việt Nam';
+    form.elements['salary_min'].value = 1500;
+    form.elements['salary_max'].value = 3000;
+    form.elements['job_type'].value = 'Full-time';
+
+    // Set ngày hết hạn (30 ngày sau)
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    form.elements['deadline'].value = date.toISOString().split('T')[0];
+
+    document.getElementById('skillsInput').value = "NestJS, TypeScript, PostgreSQL, Redis, Docker";
+
+    form.elements['description'].value = "- Thiết kế và phát triển các API RESTful hiệu suất cao.\n- Tối ưu hóa cơ sở dữ liệu và truy vấn.\n- Làm việc với Microservices.";
+    form.elements['requirements'].value = "- Ít nhất 3 năm kinh nghiệm với Node.js (NestJS).\n- Thành thạo TypeScript và SQL.\n- Có kinh nghiệm với AWS là một lợi thế.";
+    form.elements['benefits'].value = "- Lương tháng 13 + Thưởng hiệu suất.\n- Laptop MacBook Pro M3.\n- Bảo hiểm sức khỏe cao cấp.";
+  }
+
+  // 2. XỬ LÝ SUBMIT FORM
+  document.getElementById('postJobForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const formData = new FormData(e.target);
 
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData.entries());
+    // Xử lý chuỗi kỹ năng
+    const skillsString = document.getElementById('skillsInput').value;
+    const skillsArray = skillsString.split(',')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
 
-    // Xử lý skills: Chuyển string "A, B, C" thành mảng ["A", "B", "C"]
-    if (data.skills) {
-      data.skills = data.skills.split(',').map(s => s.trim()).filter(s => s !== '');
-    }
+    const payload = {
+      title: formData.get('title'),
+      location: formData.get('location'),
+      salary_min: Number(formData.get('salary_min')),
+      salary_max: Number(formData.get('salary_max')),
+      job_type: formData.get('job_type'),
+      deadline: formData.get('deadline'),
+      description: formData.get('description'),
+      requirements: formData.get('requirements'),
+      benefits: formData.get('benefits'),
+      skills: skillsArray
+    };
 
-    // Chuyển lương sang số
-    data.salary_min = data.salary_min ? Number(data.salary_min) : null;
-    data.salary_max = data.salary_max ? Number(data.salary_max) : null;
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Đang xử lý...';
+
+    console.log("Payload:", payload);
 
     try {
-      const response = await fetch('/recruiter/jobs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
+      await axios.post('/recruiter/jobs', payload);
 
-      if (response.ok) {
-        alert('Job Posted Successfully!');
-        window.location.href = '/recruiter/dashboard';
+      alert('✅ Đăng tin thành công!');
+      window.location.href = '/recruiter/jobs';
+
+    } catch (error) {
+      console.error(error);
+      let msg = "Lỗi không xác định";
+
+      if (error.response && error.response.data) {
+        const data = error.response.data;
+        if (Array.isArray(data.message)) {
+          msg = data.message.join('\n- ');
+        } else {
+          msg = data.message || JSON.stringify(data);
+        }
       } else {
-        const error = await response.json();
-        alert('Error: ' + (error.message || 'Failed to post job'));
+        msg = error.message;
       }
-    } catch (err) {
-      console.error(err);
-      alert('Something went wrong.');
+
+      alert('⚠️ Lỗi đăng tin:\n- ' + msg);
+
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
     }
   });
 </script>
-
 </body>
 </html>

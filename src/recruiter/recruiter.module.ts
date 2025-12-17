@@ -10,21 +10,26 @@ import { SkillEntity } from '../entity/skill.entity';
 import { JobSkillEntity } from '../entity/job-skill.entity';
 import { FirebaseModuleModule } from '../firebase-module/firebase-module.module';
 import { UserCVEntity } from '../entity/user-cv.entity';
+import { CommentsModule } from '../comments/comments.module';
+import { CommentService } from '../comments/comments.service';
+import { CommentEntity } from '../entity/comment.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      UserEntity,
       JobEntity,
-      CompanyEntity,
-      JobApplicationEntity,
+      UserEntity,
       SkillEntity,
       JobSkillEntity,
+      JobApplicationEntity, // <--- Đăng ký Repository
+      CompanyEntity,
       UserCVEntity,
+      CommentEntity,
     ]),
     FirebaseModuleModule, // Để dùng Notification Service
+    CommentsModule,
   ],
   controllers: [RecruiterController],
-  providers: [RecruiterService],
+  providers: [RecruiterService, CommentService],
 })
 export class RecruiterModule {}

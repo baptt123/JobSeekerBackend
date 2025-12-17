@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Quản lý Doanh nghiệp | TechConnect Admin</title>
+  <title>Quản lý Việc làm | TechConnect Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
@@ -11,17 +11,12 @@
 </head>
 <body class="bg-slate-50 text-slate-900 h-screen flex overflow-hidden">
 
-{{> admin_sidebar activePage='companies'}}
+{{> admin_sidebar activePage='jobs'}}
 
 <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
   <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-    <h1 class="text-xl font-bold text-slate-800">Doanh nghiệp</h1>
-    <div class="flex gap-3 items-center">
-      <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold">Tổng: {{pagination.total}}</span>
-      <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2">
-        <span class="material-symbols-outlined text-sm">add</span> Thêm mới
-      </button>
-    </div>
+    <h1 class="text-xl font-bold text-slate-800">Tin tuyển dụng</h1>
+    <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold">Tổng: {{pagination.total}}</span>
   </header>
 
   <div class="flex-1 overflow-y-auto p-8">
@@ -29,46 +24,40 @@
       <table class="w-full text-left border-collapse">
         <thead class="bg-slate-50 border-b border-slate-200">
         <tr>
+          <th class="p-5 text-xs font-bold text-slate-500 uppercase">Tiêu đề</th>
           <th class="p-5 text-xs font-bold text-slate-500 uppercase">Công ty</th>
-          <th class="p-5 text-xs font-bold text-slate-500 uppercase">Địa chỉ</th>
-          <th class="p-5 text-xs font-bold text-slate-500 uppercase">Website</th>
-          <th class="p-5 text-xs font-bold text-slate-500 uppercase">Quy mô</th>
+          <th class="p-5 text-xs font-bold text-slate-500 uppercase">Người đăng</th>
+          <th class="p-5 text-xs font-bold text-slate-500 uppercase">Ngày tạo</th>
           <th class="p-5 text-xs font-bold text-slate-500 uppercase text-right">Hành động</th>
         </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-        {{#each companies}}
-          <tr class="hover:bg-slate-50 transition">
+        {{#each jobs}}
+          <tr class="hover:bg-slate-50 transition group">
             <td class="p-5">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-lg border border-slate-200 bg-white flex items-center justify-center p-1">
-                  <img src="{{this.logo_url}}" onerror="this.src='https://ui-avatars.com/api/?name={{this.name}}'" class="max-w-full max-h-full object-contain">
-                </div>
-                <div>
-                  <p class="font-bold text-slate-800">{{this.name}}</p>
-                  <p class="text-xs text-slate-400">ID: {{this.company_id}}</p>
-                </div>
+              <a href="/jobs/{{this.job_id}}" target="_blank" class="font-bold text-slate-800 hover:text-blue-600 mb-1 block">
+                {{this.title}}
+              </a>
+              <div class="flex items-center gap-2">
+                <span class="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[11px] uppercase font-semibold">{{this.job_type}}</span>
+                <span class="text-xs text-slate-500">{{this.location}}</span>
               </div>
             </td>
-            <td class="p-5 text-sm text-slate-600 max-w-xs truncate" title="{{this.address}}">
-              {{this.address}}
-            </td>
-            <td class="p-5 text-sm">
-              {{#if this.website}}
-                <a href="{{this.website}}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[16px]">link</span> Link
-                </a>
+            <td class="p-5 text-sm font-medium text-slate-700">
+              {{#if this.company}}
+                {{this.company.name}}
               {{else}}
-                <span class="text-slate-400">--</span>
+                <span class="text-slate-400 italic">Freelance</span>
               {{/if}}
             </td>
-            <td class="p-5">
-                 <span class="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium border border-slate-200">
-                    <span class="material-symbols-outlined text-[14px]">work</span> {{this.jobs.length}} Jobs
-                 </span>
+            <td class="p-5 text-sm text-slate-600">
+              {{this.postedBy.full_name}}
+            </td>
+            <td class="p-5 text-sm text-slate-500 whitespace-nowrap">
+              {{this.created_at}}
             </td>
             <td class="p-5 text-right">
-              <button onclick="deleteCompany({{this.company_id}})" class="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Xóa">
+              <button onclick="deleteJob({{this.job_id}})" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Gỡ bài đăng">
                 <span class="material-symbols-outlined">delete</span>
               </button>
             </td>
@@ -111,9 +100,9 @@
 </main>
 
 <script>
-  async function deleteCompany(id) {
-    if(confirm('CẢNH BÁO: Xóa công ty sẽ xóa tất cả tin tuyển dụng liên quan. Tiếp tục?')) {
-      try { await axios.delete(`/admin/companies/${id}`); window.location.reload(); } catch(e) { alert(e.message); }
+  async function deleteJob(id) {
+    if(confirm('Bạn có chắc muốn GỠ bài tuyển dụng này không? (Soft Delete)')) {
+      try { await axios.delete(`/admin/jobs/${id}`); window.location.reload(); } catch(e) { alert(e.message); }
     }
   }
 </script>

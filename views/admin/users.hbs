@@ -1,145 +1,207 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Manage Users - Admin</title>
+  <title>Quản lý Người dùng | TechConnect Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-  <style>body { font-family: 'Inter', sans-serif; }</style>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900 h-screen flex overflow-hidden">
 
-<div class="flex h-screen overflow-hidden">
-  <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20">
-    <div class="h-16 flex items-center px-6 border-b border-slate-700 bg-slate-900">
-      <span class="material-symbols-outlined text-teal-400 text-3xl mr-2">admin_panel_settings</span>
-      <span class="text-lg font-bold">Admin Portal</span>
+{{> admin_sidebar activePage='users'}}
+
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+  <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+    <div>
+      <h1 class="text-xl font-bold text-slate-800">Danh sách Người dùng</h1>
+      <p class="text-sm text-slate-500 mt-1">Quản lý tài khoản và phân quyền hệ thống</p>
     </div>
-    <nav class="flex-1 px-4 py-6 space-y-2">
-      <a href="/admin/dashboard" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 rounded-lg transition-colors">
-        <span class="material-symbols-outlined">dashboard</span> Dashboard
-      </a>
-      <a href="/admin/users" class="flex items-center gap-3 px-4 py-3 bg-teal-600/20 text-teal-400 rounded-lg transition-colors">
-        <span class="material-symbols-outlined">group</span> Users
-      </a>
-      <a href="/admin/companies" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 rounded-lg transition-colors">
-        <span class="material-symbols-outlined">apartment</span> Companies
-      </a>
-    </nav>
-  </aside>
+    <div class="flex items-center gap-3">
+        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold border border-slate-200">
+          Tổng thành viên: {{pagination.total}}
+        </span>
+    </div>
+  </header>
 
-  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
-      <h1 class="text-xl font-bold text-slate-800">User Management (Total: {{total}})</h1>
-    </header>
+  <div class="flex-1 overflow-y-auto p-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Thông tin</th>
+          <th class="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Liên hệ</th>
+          <th class="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Điều chỉnh quyền</th>
+          <th class="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Trạng thái</th>
+          <th class="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Hành động</th>
+        </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+        {{#each users}}
+          <tr class="hover:bg-slate-50 transition group">
 
-    <main class="flex-1 overflow-y-auto p-8">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <table class="w-full text-left border-collapse">
-          <thead class="bg-slate-50 border-b border-slate-200">
-          <tr>
-            <th class="p-4 text-sm font-semibold text-slate-600">ID</th>
-            <th class="p-4 text-sm font-semibold text-slate-600">User Info</th>
-            <th class="p-4 text-sm font-semibold text-slate-600">Status</th>
-            <th class="p-4 text-sm font-semibold text-slate-600">Role Action</th>
-            <th class="p-4 text-sm font-semibold text-slate-600 text-right">Ban/Restore</th>
-          </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-          {{#each users}}
-            <tr class="hover:bg-slate-50 transition {{#if this.deleted_at}}bg-red-50{{/if}}">
-              <td class="p-4 text-slate-500">#{{this.user_id}}</td>
-              <td class="p-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-slate-200 bg-cover bg-center" style="background-image: url('{{this.avatar_url}}')"></div>
-                  <div>
-                    <p class="font-medium text-slate-900">{{this.full_name}}</p>
-                    <p class="text-xs text-slate-500">{{this.email}}</p>
-                  </div>
+            <td class="p-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full border border-slate-200 overflow-hidden flex-shrink-0 bg-slate-100">
+                  <img src="{{this.avatar_url}}"
+                       onerror="this.src='https://ui-avatars.com/api/?name={{this.full_name}}&background=random'"
+                  class="w-full h-full object-cover">
                 </div>
-              </td>
-              <td class="p-4">
-                {{#if this.deleted_at}}
-                  <span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700">BANNED</span>
-                {{else}}
-                  <span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700">ACTIVE</span>
-                {{/if}}
-              </td>
-              <td class="p-4">
-                <select onchange="changeRole({{this.user_id}}, this.value)" class="text-xs border border-slate-300 rounded px-2 py-1 focus:ring-teal-500">
-                  <option value="2" {{#if (eq this.role_id 2)}}selected{{/if}}>Candidate</option>
-                  <option value="3" {{#if (eq this.role_id 3)}}selected{{/if}}>Recruiter</option>
-                  <option value="1" {{#if (eq this.role_id 1)}}selected{{/if}}>Admin</option>
-                </select>
-              </td>
-              <td class="p-4 text-right">
-                {{#if this.deleted_at}}
-                  <button onclick="restoreUser({{this.user_id}})" class="text-green-600 hover:text-green-800 font-medium text-sm flex items-center justify-end gap-1 ml-auto">
-                    <span class="material-symbols-outlined text-lg">settings_backup_restore</span> Restore
-                  </button>
-                {{else}}
-                  <button onclick="banUser({{this.user_id}})" class="text-red-500 hover:text-red-700 font-medium text-sm flex items-center justify-end gap-1 ml-auto">
-                    <span class="material-symbols-outlined text-lg">block</span> Ban
-                  </button>
-                {{/if}}
-              </td>
-            </tr>
-          {{/each}}
-          </tbody>
-        </table>
+                <div>
+                  <p class="font-bold text-slate-800 text-sm">{{this.full_name}}</p>
+                  <p class="text-xs text-slate-500 font-mono">ID: #{{this.user_id}}</p>
+                </div>
+              </div>
+            </td>
 
-        <div class="p-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
-          <span class="text-sm text-slate-500">Page {{page}} of {{totalPages}}</span>
-          <div class="flex gap-2">
-            <a href="/admin/users?page={{subtract page 1}}"
-            class="px-3 py-1 border bg-white rounded hover:bg-slate-100 text-sm {{#if (eq page 1)}}pointer-events-none opacity-50{{/if}}">
-            Prev
-            </a>
-            <a href="/admin/users?page={{add page 1}}"
-            class="px-3 py-1 border bg-white rounded hover:bg-slate-100 text-sm {{#if (eq page totalPages)}}pointer-events-none opacity-50{{/if}}">
-            Next
-            </a>
+            <td class="p-5 text-sm text-slate-600">
+              <div class="flex flex-col gap-1">
+                    <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px] text-slate-400">mail</span> {{this.email}}
+                    </span>
+                {{#if this.phone}}
+                  <span class="flex items-center gap-1 text-xs text-slate-500">
+                        <span class="material-symbols-outlined text-[14px] text-slate-400">call</span> {{this.phone}}
+                    </span>
+                {{/if}}
+              </div>
+            </td>
+
+            <td class="p-5">
+              <div class="relative w-36">
+                <select onchange="changeRole({{this.user_id}}, this.value)"
+                        class="w-full text-xs font-medium border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-slate-700 cursor-pointer hover:border-blue-400 transition shadow-sm appearance-none pr-8">
+                  <option value="2" {{#if (eq this.role.role_id 2)}}selected{{/if}}>Candidate</option>
+                  <option value="3" {{#if (eq this.role.role_id 3)}}selected{{/if}}>Recruiter</option>
+                  <option value="1" {{#if (eq this.role.role_id 1)}}selected{{/if}}>Admin</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                  <span class="material-symbols-outlined text-sm">expand_more</span>
+                </div>
+              </div>
+            </td>
+
+            <td class="p-5">
+              {{#if this.deleted_at}}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Đã khóa
+                  </span>
+              {{else}}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-600 border border-green-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Hoạt động
+                  </span>
+              {{/if}}
+            </td>
+
+            <td class="p-5 text-right">
+              <div class="flex justify-end gap-2">
+                {{#if this.deleted_at}}
+                  <button onclick="restoreUser({{this.user_id}})"
+                          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition"
+                          title="Mở khóa tài khoản">
+                    <span class="material-symbols-outlined text-[16px]">lock_open</span> Mở khóa
+                  </button>
+                {{else}}
+                  <button onclick="deleteUser({{this.user_id}})"
+                          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition"
+                          title="Khóa tài khoản">
+                    <span class="material-symbols-outlined text-[16px]">lock</span> Khóa
+                  </button>
+                {{/if}}
+              </div>
+            </td>
+          </tr>
+        {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    {{#if (gt pagination.totalPages 1)}}
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 border-t border-slate-200 pt-4">
+        <p class="text-sm text-slate-500">
+          Đang hiển thị trang <span class="font-bold text-slate-900">{{pagination.currentPage}}</span> trên tổng số <span class="font-bold text-slate-900">{{pagination.totalPages}}</span>
+        </p>
+
+        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+        <a href="{{#if pagination.hasPrev}}?page={{pagination.prevPage}}{{else}}#{{/if}}"
+          class="relative inline-flex items-center rounded-l-md px-3 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 {{#unless pagination.hasPrev}}opacity-50 cursor-not-allowed{{/unless}}">
+          <span class="material-symbols-outlined text-sm">chevron_left</span>
+          <span class="sr-only">Previous</span>
+          </a>
+
+          <div class="flex overflow-x-auto max-w-[200px] sm:max-w-xs scrollbar-hide border-y border-gray-300">
+            {{#each pagination.pages}}
+              <a href="?page={{this}}"
+              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0 border-x border-gray-300
+              {{#if (eq this ../pagination.currentPage)}} z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 {{else}} text-gray-900 hover:bg-gray-50 {{/if}}">
+              {{this}}
+              </a>
+            {{/each}}
           </div>
-        </div>
+
+          <a href="{{#if pagination.hasNext}}?page={{pagination.nextPage}}{{else}}#{{/if}}"
+          class="relative inline-flex items-center rounded-r-md px-3 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 {{#unless pagination.hasNext}}opacity-50 cursor-not-allowed{{/unless}}">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+          <span class="sr-only">Next</span>
+          </a>
+        </nav>
       </div>
-    </main>
+    {{/if}}
+
   </div>
-</div>
+</main>
 
 <script>
-  // 1. Hàm Ban User
-  async function banUser(id) {
-    if(!confirm('Ban this user? They will not be able to login.')) return;
-    try {
-      const res = await fetch(`/admin/users/${id}`, { method: 'DELETE' });
-      if(res.ok) window.location.reload();
-    } catch(e) { alert('Error banning user'); }
-  }
+  // 1. Thay đổi quyền (Role)
+  async function changeRole(userId, newRoleId) {
+    // Hỏi xác nhận trước khi đổi
+    if(!confirm('Bạn có chắc chắn muốn thay đổi quyền hạn của người dùng này?')) {
+      window.location.reload(); // Reset lại dropdown nếu user bấm Cancel
+      return;
+    }
 
-  // 2. Hàm Restore User
-  async function restoreUser(id) {
-    if(!confirm('Restore this user?')) return;
     try {
-      const res = await fetch(`/admin/users/${id}/restore`, { method: 'PATCH' });
-      if(res.ok) window.location.reload();
-    } catch(e) { alert('Error restoring user'); }
-  }
-
-  // 3. Hàm Đổi Role
-  async function changeRole(id, newRole) {
-    if(!confirm('Change user role?')) return;
-    try {
-      const res = await fetch(`/admin/users/${id}/role`, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ roleId: Number(newRole) })
+      // Gọi API PATCH users/:id/role
+      const response = await axios.patch(`/admin/users/${userId}/role`, {
+        roleId: Number(newRoleId)
       });
-      if(res.ok) {
-        alert('Role changed successfully');
+
+      if (response.status === 200 || response.status === 201) {
+        alert('✅ Cập nhật quyền thành công!');
         window.location.reload();
       }
-    } catch(e) { alert('Error changing role'); }
+    } catch (error) {
+      console.error(error);
+      const msg = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật quyền';
+      alert('❌ Lỗi: ' + msg);
+      window.location.reload();
+    }
+  }
+
+  // 2. Khóa tài khoản (Ban)
+  async function deleteUser(id) {
+    if(confirm('⚠️ CẢNH BÁO: Người dùng này sẽ không thể đăng nhập được nữa. Bạn có chắc muốn KHÓA tài khoản?')) {
+      try {
+        await axios.delete(`/admin/users/${id}`);
+        window.location.reload();
+      } catch(e) {
+        alert('Lỗi: ' + (e.response?.data?.message || e.message));
+      }
+    }
+  }
+
+  // 3. Mở khóa tài khoản (Restore)
+  async function restoreUser(id) {
+    if(confirm('Bạn có chắc muốn MỞ KHÓA cho tài khoản này?')) {
+      try {
+        await axios.post(`/admin/users/${id}/restore`);
+        window.location.reload();
+      } catch(e) {
+        alert('Lỗi: ' + (e.response?.data?.message || e.message));
+      }
+    }
   }
 </script>
 </body>

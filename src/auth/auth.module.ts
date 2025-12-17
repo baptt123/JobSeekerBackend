@@ -12,6 +12,8 @@ import { FirebaseModuleModule } from '../firebase-module/firebase-module.module'
 import { FirebaseAuthStrategy } from '../strategies/firebase-auth.strategy';
 import { JwtWebStrategy } from '../strategies/jwt-web.strategy';
 import { WebAuthController } from './web-auth.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserEntity } from '../entity/user.entity';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { WebAuthController } from './web-auth.controller';
         },
       }),
     }),
+    TypeOrmModule.forFeature([UserEntity]),
     FirebaseModuleModule,
   ],
   providers: [

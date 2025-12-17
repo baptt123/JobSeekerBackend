@@ -34,6 +34,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AdminModule } from './admin/admin.module';
 import { RecruiterModule } from './recruiter/recruiter.module';
+import { CommentsModule } from './comments/comments.module';
+import { CommentEntity } from './entity/comment.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -65,6 +67,7 @@ import { RecruiterModule } from './recruiter/recruiter.module';
         UserCVEntity,
         CallHistoryEntity,
         MessageEntity,
+        CommentEntity,
       ],
       autoLoadEntities: true,
       synchronize: true, // chỉ bật true khi dev
@@ -103,6 +106,7 @@ import { RecruiterModule } from './recruiter/recruiter.module';
     MessageModule,
     AdminModule,
     RecruiterModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [

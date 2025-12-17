@@ -1,117 +1,190 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  Param,
-  ParseIntPipe,
-  Patch,
+  Delete,
   Post,
-  Query,
   Render,
+  Req,
   UseGuards,
+  Param,
+  Query,
+  Body,
+  Patch,
 } from '@nestjs/common';
-import { AdminService } from './admin.service';
 import { WebAuthGuard } from '../guard/web-auth.guard';
 import { Roles } from '../decorator/role.decorator';
-import { AdminCreateCompanyDto } from '../admin-dto/admin-create-company.dto';
+
+import { AdminService } from './admin.service';
+import { JobService } from '../job/job.service';
+import { CommentService } from '../comments/comments.service';
 
 @Controller('admin')
-@UseGuards(WebAuthGuard) // <--- 1. Bảo vệ bằng Cookie Guard (cho trình duyệt)
-@Roles('ADMIN') // <--- 2. Chỉ cho phép Role ADMIN
+@UseGuards(WebAuthGuard)
+@Roles('ADMIN')
 export class AdminController {
-  constructor(private readonly service: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly jobService: JobService,
+    private readonly commentService: CommentService,
+  ) {}
 
-  // ==========================================
   // 1. DASHBOARD
-  // ==========================================
   @Get('dashboard')
   @Render('admin/dashboard')
-  async getDashboard() {
-    // Lấy số liệu thống kê tổng quan
-    const stats = await this.service.getDashboardStats();
-
-    // Lấy dữ liệu biểu đồ (User tăng trưởng, Job mới...)
-    const chartData = await this.service.getChartData();
+  async getDashboard(@Req() req: any) {
+    const stats = await this.adminService.getDashboardStats();
+    const chartData = await this.adminService.getChartData();
 
     return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
       stats,
-      // Quan trọng: Stringify dữ liệu biểu đồ để truyền xuống Script dưới View
       chartData: JSON.stringify(chartData),
+      activePage: 'dashboard',
     };
   }
 
-  // ==========================================
-  // 2. USER MANAGEMENT (Quản lý người dùng)
-  // ==========================================
+  // 2. USERS
   @Get('users')
   @Render('admin/users')
-  async getAllUsers(@Query('page') page = 1, @Query('limit') limit = 10) {
-    const result = await this.service.getAllUsers(Number(page), Number(limit));
+  async getUsersPage(@Req() req: any, @Query('page') page: string) {
+    const pageNum = page ? parseInt(page) : 1;
+
+    // [FIX LỖI 1] Chỉ truyền 1 tham số (pageNum), bỏ số 10 đi
+    const result = await this.adminService.getAllUsers(pageNum);
+
     return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
       users: result.data,
-      total: result.total,
-      page: result.page,
-      totalPages: result.totalPages,
+      pagination: {
+        ...result,
+        // [FIX LỖI 2] Dùng 'currentPage' thay vì 'page'
+        currentPage: result.currentPage,
+        hasNext: result.hasNext,
+        hasPrev: result.hasPrev,
+        nextPage: result.nextPage,
+        prevPage: result.prevPage,
+        pages: result.pages,
+      },
+      activePage: 'users',
     };
   }
 
-  // Soft Delete User (Ban user - Không xóa hẳn khỏi DB)
   @Delete('users/:id')
-  async softDeleteUser(@Param('id') id: string) {
-    return this.service.softDeleteUser(+id);
+  async deleteUser(@Param('id') id: string) {
+    await this.adminService.softDeleteUser(+id);
+    return { message: 'Đã khóa tài khoản thành công' };
   }
 
-  // Restore User (Mở khóa tài khoản đã Ban)
-  @Patch('users/:id/restore')
+  @Post('users/:id/restore')
   async restoreUser(@Param('id') id: string) {
-    return this.service.restoreUser(+id);
+    await this.adminService.restoreUser(+id);
+    return { message: 'Đã mở khóa tài khoản' };
   }
 
-  // Đổi Role (Chuyển Candidate <-> Recruiter <-> Admin)
+// [SỬA LẠI HÀM NÀY] Thay vì @Post('users/assign-role')
   @Patch('users/:id/role')
-  async changeRole(@Param('id') id: string, @Body('roleId') roleId: number) {
-    return this.service.changeUserRole(+id, roleId);
+  async changeUserRole(
+    @Param('id') id: string,
+    @Body('roleId') roleId: number // Nhận roleId từ body
+  ) {
+    // Gọi service
+    await this.adminService.changeUserRole(+id, roleId);
+    return { message: 'Cập nhật quyền thành công' };
   }
 
-  // ==========================================
-  // 3. COMPANY MANAGEMENT (Quản lý công ty)
-  // ==========================================
+  // 3. COMPANIES
   @Get('companies')
   @Render('admin/companies')
-  async getAllCompanies(@Query('page') page = 1, @Query('limit') limit = 10) {
-    const result = await this.service.getAllCompanies(
-      Number(page),
-      Number(limit),
-    );
+  async getCompaniesPage(@Req() req: any, @Query('page') page: string) {
+    const pageNum = page ? parseInt(page) : 1;
+
+    // [FIX LỖI TƯƠNG TỰ] Chỉ truyền 1 tham số
+    const result = await this.adminService.getAllCompanies(pageNum);
+
     return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
       companies: result.data,
-      total: result.total,
-      page: result.page,
-      totalPages: result.totalPages,
+      pagination: {
+        ...result,
+        currentPage: result.currentPage, // Dùng currentPage
+        hasNext: result.hasNext,
+        hasPrev: result.hasPrev,
+        nextPage: result.nextPage,
+        prevPage: result.prevPage,
+        pages: result.pages,
+      },
+      activePage: 'companies',
     };
   }
 
-  // Tạo công ty mới
-  @Post('company')
-  async createCompany(@Body() dto: AdminCreateCompanyDto) {
-    return this.service.createCompany(dto);
-  }
-
-  // Xóa công ty (Nếu bạn đã implement trong Service, có thể bỏ comment)
-  // [CẬP NHẬT] API Xóa Công ty
   @Delete('companies/:id')
-  async deleteCompany(@Param('id', ParseIntPipe) id: number) {
-    // Gọi service để xử lý xóa
-    return this.service.deleteCompany(id);
+  async deleteCompany(@Param('id') id: string) {
+    await this.adminService.deleteCompany(+id);
+    return { message: 'Đã xóa công ty thành công' };
   }
 
-  // Gán User làm Recruiter cho Công ty
-  @Post('assign-recruiter')
-  async assignRecruiter(
-    @Body('userId') userId: number,
-    @Body('companyId') companyId: number,
-  ) {
-    return this.service.assignRecruiterToCompany(userId, companyId);
+  // 4. JOBS (Giữ nguyên vì JobService của bạn trả về 'page')
+  @Get('jobs')
+  @Render('admin/jobs')
+  async getJobsPage(@Req() req: any, @Query('page') page: string) {
+    const pageNum = page ? parseInt(page) : 1;
+    const result = await this.jobService.getAllJobsForAdmin(pageNum);
+
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
+      jobs: result.data,
+      pagination: {
+        total: result.total,
+        currentPage: result.page, // JobService trả về 'page'
+        totalPages: result.totalPages,
+        hasNext: result.page < result.totalPages,
+        hasPrev: result.page > 1,
+        nextPage: result.page + 1,
+        prevPage: result.page - 1,
+        pages: Array.from({ length: result.totalPages }, (_, i) => i + 1),
+      },
+      activePage: 'jobs',
+    };
+  }
+
+  @Delete('jobs/:id')
+  async deleteJob(@Param('id') id: string) {
+    await this.jobService.deleteJob(+id);
+    return { message: 'Đã gỡ bài đăng thành công' };
+  }
+
+  // 5. COMMENTS
+  @Get('comments')
+  @Render('admin/comments')
+  async getCommentsPage(@Req() req: any, @Query('page') page: string) {
+    const pageNum = page ? parseInt(page) : 1;
+    const result = await this.commentService.getAllComments(pageNum);
+
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
+      comments: result.data,
+      pagination: {
+        total: result.total,
+        currentPage: result.page, // CommentService trả về 'page'
+        totalPages: result.totalPages,
+        hasNext: result.page < result.totalPages,
+        hasPrev: result.page > 1,
+        nextPage: result.page + 1,
+        prevPage: result.page - 1,
+        pages: Array.from({ length: result.totalPages }, (_, i) => i + 1),
+      },
+      activePage: 'comments',
+    };
+  }
+
+  @Delete('comments/:id')
+  async deleteComment(@Param('id') id: string) {
+    await this.commentService.deleteCommentByAdmin(+id);
+    return { message: 'Đã xóa bình luận' };
   }
 }

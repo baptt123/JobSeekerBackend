@@ -1,141 +1,140 @@
-// src/message/message.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MessageEntity } from '../entity/messages.entity';
-import { CreateMessageDto } from '../dto/create-message.dto';
 import { UserEntity } from '../entity/user.entity';
-import { FirebaseModuleService } from '../firebase-module/firebase-module.service'; // [MỚI]
-import { NotificationType } from '../entity/notification.entity'; // [MỚI]
+import { FirebaseModuleService } from '../firebase-module/firebase-module.service'; // [IMPORT]
+import { NotificationType } from '../entity/notification.entity';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectRepository(MessageEntity)
-    private readonly messageRepository: Repository<MessageEntity>,
+    private readonly messageRepo: Repository<MessageEntity>,
     @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
-    // [MỚI] Inject Service thông báo
-    private readonly firebaseService: FirebaseModuleService,
+    private readonly userRepo: Repository<UserEntity>,
+    private readonly firebaseService: FirebaseModuleService, // [INJECT]
   ) {}
 
-  async createMessage(
-    createMessageDto: CreateMessageDto,
-    senderId: number,
-  ): Promise<MessageEntity> {
-    // 1. Lưu tin nhắn vào DB
-    const newMessage = this.messageRepository.create({
-      sender_id: senderId,
-      receiver_id: createMessageDto.receiver_id,
-      content: createMessageDto.content,
-      image_url: createMessageDto.image_url,
-      message_type: createMessageDto.message_type,
+  // 1. [ĐÃ ĐIỀU CHỈNH] Lưu tin nhắn & Gửi Notification
+  async saveMessage(data: {
+    sender_id: number;
+    receiver_id: number;
+    content: string;
+    type: string;
+    file_url?: string;
+  }) {
+    // A. Lưu vào DB
+    const msg = this.messageRepo.create({
+      sender_id: data.sender_id,
+      receiver_id: data.receiver_id,
+      content: data.content,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      message_type: data.type as any,
+      image_url: data.file_url,
       sent_at: new Date(),
+      is_read: false,
     });
-    const savedMessage = await this.messageRepository.save(newMessage);
+    const savedMsg = await this.messageRepo.save(msg);
 
-    // 2. [MỚI] Gửi thông báo Push Notification (Chạy ngầm)
-    this.sendChatNotification(senderId, createMessageDto).catch((err) =>
-      console.error('Lỗi gửi thông báo chat:', err),
-    );
-
-    return savedMessage;
-  }
-
-  // [MỚI] Hàm phụ để gửi thông báo
-  private async sendChatNotification(senderId: number, dto: CreateMessageDto) {
-    // Lấy thông tin người gửi để hiển thị tên trong thông báo
-    const sender = await this.userRepository.findOne({
-      where: { user_id: senderId },
-      select: ['full_name', 'avatar_url', 'user_id'],
-    });
-
-    if (!sender) return;
-
-    // Xác định nội dung hiển thị
-    let body = dto.content;
-    if (dto.message_type === 'image') body = '📷 Đã gửi một ảnh';
-    else if (dto.message_type === 'file') body = '📁 Đã gửi một tệp tin';
-    else if (dto.message_type === 'sticker') body = 'Đã gửi một nhãn dán';
-
-    // Gửi thông báo
+    // B. Gửi Firebase Notification (Nếu user đang login - có token)
     await this.firebaseService.sendNotificationToUser(
-      dto.receiver_id,
-      `Tin nhắn mới từ ${sender.full_name}`, // Tiêu đề
-      body || 'Bạn có tin nhắn mới', // Nội dung
-      NotificationType.NEW_MESSAGE, // Loại thông báo
+      data.receiver_id,
+      'Tin nhắn mới',
+      data.content,
+      NotificationType.SYSTEM, // Hoặc loại CHAT
       {
-        click_action: 'CHAT_DETAIL',
-        // Truyền các thông tin cần thiết để Flutter mở màn hình chat
-        other_user_id: sender.user_id,
-        other_user_name: sender.full_name,
-        other_user_avatar: sender.avatar_url || '',
+        type: 'CHAT_MSG',
+        senderId: data.sender_id.toString(),
+        messageId: savedMsg.message_id.toString(),
       },
     );
+
+    return savedMsg;
   }
 
-  async getConversation(
-    userId1: number,
-    userId2: number,
-  ): Promise<MessageEntity[]> {
-    return this.messageRepository
-      .createQueryBuilder('message')
-      .where(
-        '(message.sender_id = :userId1 AND message.receiver_id = :userId2) OR (message.sender_id = :userId2 AND message.receiver_id = :userId1)',
-        { userId1, userId2 },
+  // 2. Lấy danh sách hội thoại
+  async getConversations(userId: number) {
+    const subQuery = this.messageRepo
+      .createQueryBuilder('m')
+      .select('MAX(m.message_id)', 'max_id')
+      .where('m.sender_id = :userId OR m.receiver_id = :userId', { userId })
+      .groupBy(
+        'CASE WHEN m.sender_id = :userId THEN m.receiver_id ELSE m.sender_id END',
+      );
+
+    const messages = await this.messageRepo
+      .createQueryBuilder('msg')
+      .innerJoin(
+        `(${subQuery.getQuery()})`,
+        'sub',
+        'msg.message_id = sub.max_id',
       )
-      .orderBy('message.sent_at', 'ASC')
+      .setParameters(subQuery.getParameters())
+      .leftJoinAndSelect('msg.sender', 'sender')
+      .leftJoinAndSelect('msg.receiver', 'receiver')
+      .orderBy('msg.sent_at', 'DESC')
+      .getMany();
+
+    const conversations = await Promise.all(
+      messages.map(async (msg) => {
+        const partner = msg.sender_id === userId ? msg.receiver : msg.sender;
+
+        const unreadCount = await this.messageRepo.count({
+          where: {
+            sender_id: partner.user_id,
+            receiver_id: userId,
+            is_read: false,
+          },
+        });
+
+        return {
+          partner_id: partner.user_id,
+          full_name: partner.full_name,
+          avatar_url: partner.avatar_url,
+          is_online: partner.is_online,
+          last_active_at: partner.last_active_at,
+          last_message: {
+            content: msg.content,
+            type: msg.message_type,
+            created_at: msg.sent_at,
+            is_read: msg.is_read,
+            is_me: msg.sender_id === userId,
+          },
+          unread_count: unreadCount,
+        };
+      }),
+    );
+
+    return conversations;
+  }
+
+  // 3. Lấy chi tiết lịch sử chat
+  async getMessages(user1: number, user2: number) {
+    return await this.messageRepo
+      .createQueryBuilder('msg')
+      .where(
+        '(msg.sender_id = :u1 AND msg.receiver_id = :u2) OR (msg.sender_id = :u2 AND msg.receiver_id = :u1)',
+        { u1: user1, u2: user2 },
+      )
+      .orderBy('msg.sent_at', 'ASC')
       .getMany();
   }
 
-  async markMessagesAsRead(
-    receiverId: number,
-    senderId: number,
-  ): Promise<void> {
-    await this.messageRepository.update(
-      {
-        receiver_id: receiverId,
-        sender_id: senderId,
-        is_read: false,
-      },
+  // 4. Cập nhật trạng thái User
+  async updateUserStatus(userId: number, isOnline: boolean) {
+    await this.userRepo.update(userId, {
+      is_online: isOnline,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
+      last_active_at: (isOnline ? null : new Date()) as any,
+    });
+  }
+
+  // 5. Đánh dấu đã đọc
+  async markAsRead(myId: number, senderId: number) {
+    await this.messageRepo.update(
+      { sender_id: senderId, receiver_id: myId, is_read: false },
       { is_read: true },
     );
-  }
-
-  async getChatPartners(currentUserId: number): Promise<UserEntity[]> {
-    const senders = await this.messageRepository
-      .createQueryBuilder('msg')
-      .select('msg.sender_id')
-      .where('msg.receiver_id = :id', { id: currentUserId })
-      .distinct(true)
-      .getRawMany();
-
-    const receivers = await this.messageRepository
-      .createQueryBuilder('msg')
-      .select('msg.receiver_id')
-      .where('msg.sender_id = :id', { id: currentUserId })
-      .distinct(true)
-      .getRawMany();
-
-    const partnerIds = new Set<number>();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
-    senders.forEach((s) => partnerIds.add(s.sender_id));
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
-    receivers.forEach((r) => partnerIds.add(r.receiver_id));
-
-    if (partnerIds.size === 0) {
-      return [];
-    }
-
-    return await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.user_id IN (:...ids)', { ids: Array.from(partnerIds) })
-      .select([
-        'user.user_id',
-        'user.email',
-        'user.full_name',
-        'user.avatar_url',
-      ])
-      .getMany();
   }
 }

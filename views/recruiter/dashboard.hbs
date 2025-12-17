@@ -1,86 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recruiter Dashboard - TechConnect</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+    rel="stylesheet"
+  />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-  </style>
+  <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body class="bg-slate-50 text-slate-900">
-
 <div class="flex h-screen overflow-hidden">
-
-  <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm z-20">
-    <div class="h-16 flex items-center px-6 border-b border-slate-100">
-      <span class="material-symbols-outlined text-indigo-600 text-3xl mr-2">rocket_launch</span>
-      <span class="text-lg font-bold tracking-wide text-slate-800">Recruiter</span>
-    </div>
-
-    <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-      <a href="/recruiter/dashboard" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-600 rounded-lg transition-colors font-medium">
-        <span class="material-symbols-outlined">dashboard</span>
-        <span>Dashboard</span>
-      </a>
-
-      <a href="/recruiter/my-jobs" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors font-medium">
-        <span class="material-symbols-outlined">business_center</span>
-        <span>My Jobs</span>
-      </a>
-
-      <a href="/recruiter/chat" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors font-medium">
-        <span class="material-symbols-outlined">chat</span>
-        <span>Messages</span>
-      </a>
-    </nav>
-
-    <div class="p-4 border-t border-slate-100 bg-slate-50">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-          RC
-        </div>
-        <div class="overflow-hidden">
-          <p class="text-sm font-semibold truncate">{{company.name}}</p>
-          <a href="/web/logout" class="text-xs text-red-500 hover:text-red-700 font-medium">Sign Out</a>
-        </div>
-      </div>
-    </div>
-  </aside>
+  {{> recruiter_sidebar activePage='dashboard'}}
 
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
       <div>
         <h1 class="text-xl font-bold text-slate-800">Company Overview</h1>
-        <p class="text-xs text-slate-500">Welcome back, {{company.name}}</p>
+        <p class="text-xs text-slate-500">Welcome back, {{company}}</p>
       </div>
-
       <div class="flex gap-4">
-        <button class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm shadow-indigo-200">
+        <a href="/recruiter/post-job" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm shadow-indigo-200">
           <span class="material-symbols-outlined text-lg">add</span>
           Post New Job
-        </button>
+        </a>
       </div>
     </header>
 
     <main class="flex-1 overflow-y-auto p-8">
-
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <div class="flex justify-between items-center mb-4">
             <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
               <span class="material-symbols-outlined">work</span>
             </div>
-            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">+2 this week</span>
+            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">Real-time</span>
           </div>
           <p class="text-slate-500 text-sm font-medium">Active Jobs</p>
           <h3 class="text-3xl font-bold text-slate-800">{{stats.activeJobs}}</h3>
@@ -100,125 +61,69 @@
         <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <div class="flex justify-between items-center mb-4">
             <div class="p-3 bg-orange-50 text-orange-600 rounded-lg">
-              <span class="material-symbols-outlined">pending_actions</span>
+              <span class="material-symbols-outlined">post_add</span>
             </div>
-            <span class="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">Action Needed</span>
           </div>
-          <p class="text-slate-500 text-sm font-medium">Pending Review</p>
-          <h3 class="text-3xl font-bold text-slate-800">5</h3> </div>
+          <p class="text-slate-500 text-sm font-medium">Total Jobs Posted</p>
+          <h3 class="text-3xl font-bold text-slate-800">{{stats.totalJobs}}</h3>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-          <h3 class="text-lg font-bold text-slate-800 mb-6">Application Status</h3>
-          <div class="flex-1 flex items-center justify-center relative min-h-[250px]">
-            <canvas id="statusChart"></canvas>
-          </div>
-          <div class="mt-6 text-center text-sm text-slate-500">
-            Overview of candidate pipeline
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 class="text-lg font-bold text-slate-800 mb-6">Application Trends (6 Months)</h3>
+          <div class="flex-1 flex items-center justify-center relative min-h-[300px]">
+            <canvas id="applicationChart"></canvas>
           </div>
         </div>
 
-        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-slate-800">Recent Candidates</h3>
-            <a href="#" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">View All</a>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
-              <tr>
-                <th class="px-4 py-3 font-semibold">Candidate</th>
-                <th class="px-4 py-3 font-semibold">Applied For</th>
-                <th class="px-4 py-3 font-semibold">Date</th>
-                <th class="px-4 py-3 font-semibold">Status</th>
-              </tr>
-              </thead>
-              <tbody class="text-sm divide-y divide-slate-100">
-              <tr class="hover:bg-slate-50 transition">
-                <td class="px-4 py-3 font-medium text-slate-800">Nguyen Van A</td>
-                <td class="px-4 py-3 text-slate-600">Senior Backend Dev</td>
-                <td class="px-4 py-3 text-slate-500">Today</td>
-                <td class="px-4 py-3">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            Screening
-                                        </span>
-                </td>
-              </tr>
-              <tr class="hover:bg-slate-50 transition">
-                <td class="px-4 py-3 font-medium text-slate-800">Tran Thi B</td>
-                <td class="px-4 py-3 text-slate-600">React Native Dev</td>
-                <td class="px-4 py-3 text-slate-500">Yesterday</td>
-                <td class="px-4 py-3">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                            Interview
-                                        </span>
-                </td>
-              </tr>
-              <tr class="hover:bg-slate-50 transition">
-                <td class="px-4 py-3 font-medium text-slate-800">Le Van C</td>
-                <td class="px-4 py-3 text-slate-600">Product Manager</td>
-                <td class="px-4 py-3 text-slate-500">2 days ago</td>
-                <td class="px-4 py-3">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Offer Sent
-                                        </span>
-                </td>
-              </tr>
-              </tbody>
-            </table>
+        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+          <h3 class="text-lg font-bold text-slate-800 mb-6">Quick Actions</h3>
+          <div class="space-y-4">
+            <a href="/recruiter/jobs/create" class="block p-4 border border-slate-100 rounded-lg hover:bg-slate-50 transition">
+              <div class="font-semibold text-slate-700">Post a Job</div>
+              <div class="text-xs text-slate-500">Create a new opening</div>
+            </a>
+            <a href="/recruiter/jobs" class="block p-4 border border-slate-100 rounded-lg hover:bg-slate-50 transition">
+              <div class="font-semibold text-slate-700">Manage Jobs</div>
+              <div class="text-xs text-slate-500">View and edit your listings</div>
+            </a>
           </div>
         </div>
       </div>
-
     </main>
   </div>
 </div>
 
 <script>
-  // Nhận dữ liệu từ Controller
-  const chartData = {{{chartData}}};
+  // Lấy dữ liệu từ Controller (đã JSON.stringify)
+  const rawData = {{{chartData}}};
+  console.log("Chart Data:", rawData);
 
-  console.log("Recruiter Chart Data:", chartData);
-
-  const ctx = document.getElementById('statusChart').getContext('2d');
+  const ctx = document.getElementById('applicationChart').getContext('2d');
 
   new Chart(ctx, {
-    type: 'doughnut',
+    type: 'bar', // Đổi sang biểu đồ cột cho dễ nhìn xu hướng
     data: {
-      labels: chartData.labels,
+      labels: rawData.labels, // ['Tháng 7', 'Tháng 8'...]
       datasets: [{
-        data: chartData.data,
-        backgroundColor: [
-          '#64748b', // Applied (Slate 500)
-          '#3b82f6', // Screening (Blue 500)
-          '#f59e0b', // Interview (Amber 500)
-          '#10b981', // Offer (Emerald 500)
-          '#ef4444'  // Rejected (Red 500)
-        ],
-        borderWidth: 0,
-        hoverOffset: 4
+        label: 'Applications',
+        data: rawData.data,   // [10, 15...]
+        backgroundColor: '#6366f1',
+        borderRadius: 6,
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '70%', // Làm vòng tròn mỏng hơn cho hiện đại
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            usePointStyle: true,
-            padding: 20,
-            font: { size: 11 }
-          }
-        }
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true }
       }
     }
   });
 </script>
-
 </body>
 </html>

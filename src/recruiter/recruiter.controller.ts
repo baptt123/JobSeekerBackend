@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -16,55 +17,135 @@ import { RecruiterService } from './recruiter.service';
 import { RecruiterCreateJobDto } from '../recruiter-dto/recruiter-create-job.dto';
 import { UpdateApplicationStatusDto } from '../recruiter-dto/update-application-status.dto';
 import { WebAuthGuard } from '../guard/web-auth.guard';
+import { UpdateCompanyDto } from '../recruiter-dto/update-company.dto';
+import { CommentService } from '../comments/comments.service';
+import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
 
 @Controller('recruiter')
-@UseGuards(WebAuthGuard) // <--- Áp dụng Guard Web
-@Roles('RECRUITER', 'ADMIN') // Admin cũng có thể test chức năng của Recruiter
+@UseGuards(WebAuthGuard)
+@Roles('RECRUITER', 'ADMIN')
 export class RecruiterController {
-  constructor(private readonly service: RecruiterService) {}
+  constructor(
+    private readonly service: RecruiterService,
+    private readonly commentService: CommentService,
+    private readonly firebaseService: FirebaseModuleService,
+  ) {}
 
   @Get('dashboard')
   @Render('recruiter/dashboard')
   async getDashboard(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
     const userId = req.user.userId;
     const data = await this.service.getRecruiterStats(userId);
     const chartData = await this.service.getRecruiterChartData(userId);
 
     return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
       company: data.company,
       stats: data.stats,
       chartData: JSON.stringify(chartData),
+      activePage: 'dashboard', // Highlight Sidebar
     };
   }
 
-  @Post('jobs')
-  async createJob(
-    @Req() req: any,
-    @Body(new ValidationPipe({ whitelist: true })) dto: RecruiterCreateJobDto,
-  ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
-    return this.service.createJob(req.user.userId, dto);
+  // ==================================================================
+  // KHU VỰC QUẢN LÝ VIỆC LÀM (JOBS) - LƯU Ý THỨ TỰ ROUTE
+  // ==================================================================
+
+  // 1. Trang Form Đăng Tin (GET /recruiter/jobs/create)
+  // [QUAN TRỌNG]: Phải đặt route này TRƯỚC route 'jobs/:id' để tránh lỗi 500
+  @Get('jobs/create')
+  @Render('recruiter/post-job')
+  getPostJobPage(@Req() req: any) {
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+      user: req.user,
+      activePage: 'post-job', // Highlight Sidebar mục "Đăng tin mới"
+    };
   }
 
-  // [SỬA ĐỔI] Thay vì trả về JSON array, ta Render view
-  @Get('my-jobs')
-  @Render('recruiter/my-jobs') // <--- Quan trọng: Trỏ tới file view
+  // 2. Danh sách tin đã đăng (GET /recruiter/jobs)
+  // Đã đổi từ 'my-jobs' thành 'jobs' cho chuẩn RESTful
+  @Get('jobs')
+  @Render('recruiter/my-jobs')
   async getMyJobs(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId;
     const jobs = await this.service.getMyJobs(userId);
 
-    // Trả về object chứa data cho Handlebars
+    const jobsWithSkills = jobs.map((job) => ({
+      ...job,
+      skillNames: job.jobSkills.map((js) => js.skill.skill_name).join(', '),
+    }));
+
     return {
-      jobs: jobs,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      user: req.user, // Truyền thêm user info nếu cần hiển thị tên
+      jobs: jobsWithSkills,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
+      activePage: 'jobs', // Highlight Sidebar mục "Tin đã đăng"
     };
   }
+
+  // 3. Xử lý Đăng Tin Mới (POST /recruiter/jobs)
+  @Post('jobs')
+  async createJob(
+    @Req() req: any,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: RecruiterCreateJobDto,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const job = await this.service.createJob(req.user.userId, dto);
+
+    // Gửi thông báo Firebase
+    await this.firebaseService.sendNotificationToTopic(
+      'job_alerts',
+      '🔥 Việc làm mới hấp dẫn!',
+      `${job.title} tại ${job.location}`,
+      {
+        jobId: job.job_id.toString(),
+        type: 'NEW_JOB_POST',
+      },
+    );
+
+    return job;
+  }
+
+  // 4. Chi tiết tin tuyển dụng (GET /recruiter/jobs/:id)
+  // Route này bắt tham số động, nên phải để SAU route tĩnh 'jobs/create'
+  @Get('jobs/:id')
+  @Render('recruiter/job-detail')
+  async getJobDetail(@Req() req: any, @Param('id') id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    const jobId = +id; // Chuyển chuỗi sang số
+
+    const job = await this.service.getJobDetail(userId, jobId);
+    if (!job) {
+      throw new NotFoundException('Job không tìm thấy');
+    }
+
+    const applications = await this.service.getJobApplications(userId, jobId);
+
+    return {
+      job: {
+        ...job,
+        skillList: job.jobSkills.map((js) => js.skill.skill_name),
+      },
+      applications,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
+      activePage: 'jobs', // Vẫn highlight mục "Tin đã đăng" khi xem chi tiết
+    };
+  }
+
+  // ==================================================================
+  // CÁC CHỨC NĂNG KHÁC
+  // ==================================================================
+
   @Get('jobs/:jobId/applications')
   async getJobApplications(@Req() req: any, @Param('jobId') jobId: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return this.service.getJobApplications(req.user.userId, +jobId);
   }
 
@@ -74,46 +155,61 @@ export class RecruiterController {
     @Param('id') id: string,
     @Body(new ValidationPipe()) dto: UpdateApplicationStatusDto,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return this.service.updateApplicationStatus(req.user.userId, +id, dto);
   }
-  @Get('jobs/:id')
-  @Render('recruiter/job-detail') // Trỏ tới file view mới
-  async getJobDetail(@Req() req: any, @Param('id') id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-    const userId = req.user.userId;
-    const jobId = +id;
 
-    // 1. Lấy danh sách Job để check quyền sở hữu (hoặc viết hàm check riêng cho tối ưu)
-    const myJobs = await this.service.getMyJobs(userId);
-    const job = myJobs.find((j) => j.job_id === jobId);
-
-    if (!job) {
-      throw new NotFoundException(
-        'Job không tồn tại hoặc bạn không có quyền truy cập',
-      );
-    }
-
-    // 2. Lấy danh sách ứng viên của Job này
-    const applications = await this.service.getJobApplications(userId, jobId);
-
-    return {
-      job, // Thông tin Job (Title, Salary...)
-      applications, // Danh sách người ứng tuyển
-    };
-  }
   @Get('chat')
-  @Render('recruiter/chat') // Sẽ trỏ tới file views/recruiter/chat.hbs
+  @Render('recruiter/chat')
   getChatPage(@Req() req: any) {
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      user: req.user, // Truyền thông tin user xuống view để lấy token/id
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
+      activePage: 'chat',
     };
   }
-  // 1. Hiển thị Form tạo Job
-  @Get('post-job')
-  @Render('recruiter/post-job')
-  getPostJobPage() {
-    return {}; // Render view views/recruiter/post-job.hbs
+
+  @Get('company-profile')
+  @Render('recruiter/company-profile')
+  async getCompanyProfilePage(@Req() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const company = await this.service.getMyCompanyProfile(req.user.userId);
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      user: req.user,
+      company: company,
+      activePage: 'profile',
+    };
+  }
+
+  @Patch('company-profile')
+  async updateCompanyProfile(
+    @Req() req: any,
+    @Body(new ValidationPipe()) dto: UpdateCompanyDto,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return await this.service.updateCompanyProfile(req.user.userId, dto);
+  }
+
+  @Get('comments')
+  @Render('recruiter/comments')
+  async getCommentsPage(@Req() req: any) {
+    const comments = await this.commentService.getCommentsByRecruiter(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      req.user.userId,
+    );
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+      user: req.user,
+      comments: comments,
+      activePage: 'comments',
+    };
+  }
+
+  @Delete('comments/:id')
+  async deleteComment(@Req() req: any, @Param('id') id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    await this.commentService.deleteComment(+id, req.user.userId, 'RECRUITER');
+    return { message: 'Deleted successfully' };
   }
 }

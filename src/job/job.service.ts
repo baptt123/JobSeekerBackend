@@ -16,7 +16,7 @@ import { JobApplicationEntity } from '../entity/job-application.entity';
 @Injectable()
 export class JobService {
   private esClient: Client;
-
+  ITEMS_PER_PAGE = 10; // Số lượng hiển thị 1 trang
   constructor(
     @InjectRepository(JobEntity) private jobRepo: Repository<JobEntity>,
     @InjectRepository(UserCVEntity) private cvRepo: Repository<UserCVEntity>,
@@ -420,5 +420,33 @@ export class JobService {
         skills: job.jobSkills?.map((js) => js.skill.skill_name) || [],
       })),
     };
+  }
+  // [UPDATE] Hỗ trợ phân trang
+  // [SỬA LẠI HÀM NÀY]
+  async getAllJobsForAdmin(page: number) {
+    const skip = (page - 1) * this.ITEMS_PER_PAGE;
+
+    // Dùng findAndCount để lấy dữ liệu + tổng số dòng
+    const [jobs, total] = await this.jobRepo.findAndCount({
+      relations: ['company', 'postedBy'],
+      order: { created_at: 'DESC' },
+      skip: skip,
+      take: this.ITEMS_PER_PAGE,
+      withDeleted: false, // Không lấy job đã xóa mềm (hoặc true nếu muốn xem thùng rác)
+    });
+
+    const totalPages = Math.ceil(total / this.ITEMS_PER_PAGE);
+
+    // TRẢ VỀ ĐÚNG CẤU TRÚC NÀY ĐỂ CONTROLLER DÙNG
+    return {
+      data: jobs,
+      total: total,
+      page: page, // <-- Biến page "đào" ở đây ra
+      totalPages: totalPages, // <-- Biến totalPages "đào" ở đây ra
+    };
+  }
+
+  async deleteJob(id: number) {
+    return await this.jobRepo.softDelete(id);
   }
 }

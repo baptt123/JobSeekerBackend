@@ -17,6 +17,7 @@ import { JobApplicationEntity } from './job-application.entity';
 import { SavedJobEntity } from './save_job.entity';
 import { MessageEntity } from './messages.entity';
 import NotificationEntity from './notification.entity';
+import { CommentEntity } from './comment.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -104,4 +105,16 @@ export class UserEntity {
   fcm_token: string;
   @DeleteDateColumn()
   deleted_at: Date;
+  // ✅ Thêm dòng này
+  @OneToMany(() => CommentEntity, (comment) => comment.user)
+  comments: CommentEntity[];
+// [THÊM MỚI] Trạng thái Online
+  @Column({ type: 'boolean', default: false })
+  @ApiProperty()
+  is_online: boolean;
+
+  // [THÊM MỚI] Thời gian truy cập cuối
+  @Column({ type: 'timestamp', nullable: true })
+  @ApiProperty({ required: false })
+  last_active_at: Date;
 }

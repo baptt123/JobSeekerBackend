@@ -1,7 +1,20 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsIn, IsNotEmpty } from 'class-validator';
 
 export class UpdateApplicationStatusDto {
   @IsNotEmpty()
-  @IsEnum(['Screening', 'Interview', 'Offer', 'Accepted', 'Rejected'])
-  status: 'Screening' | 'Interview' | 'Offer' | 'Accepted' | 'Rejected';
+  @IsIn([
+    'Applied',
+    'Screening',
+    'Interview',
+    'Offer',
+    'Accepted',
+    'Rejected',
+  ]) // Khớp với entity/job-application.entity.ts
+  status:
+    | 'Applied'
+    | 'Screening'
+    | 'Interview'
+    | 'Offer'
+    | 'Accepted'
+    | 'Rejected';
 }

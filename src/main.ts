@@ -34,7 +34,12 @@ async function bootstrap() {
   // ======================================================
   // 👇 QUAN TRỌNG: ĐĂNG KÝ CÁC HELPER CHO HANDLEBARS 👇
   // ======================================================
-
+  // --- 👇 THÊM ĐOẠN NÀY ĐỂ FIX LỖI 👇 ---
+  // Helper để so sánh Role ID và in ra chữ "selected"
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  hbs.registerHelper('isSelected', function (currentValue, targetValue) {
+    return currentValue == targetValue ? 'selected' : '';
+  });
   // Helper so sánh bằng
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerHelper('eq', (a, b) => a === b);

@@ -1,45 +1,54 @@
-<aside
-  class="flex flex-col w-64 bg-white dark:bg-background-dark/50 p-4 border-r border-gray-200 dark:border-white/10"
->
-  <div class="flex items-center gap-4 text-primary p-3 mb-4">
-    <span class="material-symbols-outlined text-4xl">rocket_launch</span>
-    <h2
-      class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]"
-    >
-      Recruiter
-    </h2>
+<aside class="flex flex-col w-64 bg-slate-900 text-white h-screen border-r border-slate-800 shadow-xl shrink-0 z-50">
+  <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-800 bg-slate-900">
+    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+      <span class="material-symbols-outlined text-xl">business_center</span>
+    </div>
+    <div>
+      <h2 class="text-base font-bold tracking-wide text-white">Recruiter</h2>
+      <p class="text-[10px] text-slate-400 font-medium">Nhà tuyển dụng</p>
+    </div>
   </div>
 
-  <div class="flex flex-col justify-between flex-1">
-    <div class="flex flex-col gap-2">
-      <a
-        href="/recruiter/dashboard"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'dashboard')}}bg-primary/20 text-primary{{else}}text-gray-700 hover:bg-primary/10{{/if}}"
-      >
-        <span
-          class="material-symbols-outlined {{#if (eq activePage 'dashboard')}}fill{{/if}}"
-          >dashboard</span
-        >
-        <p class="text-sm font-medium leading-normal">Dashboard</p>
-      </a>
+  <nav class="flex-1 flex flex-col gap-1 p-3 overflow-y-auto custom-scroll">
+    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 mt-2">Quản lý</p>
 
-      <a
-        href="/recruiter/my-jobs"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg {{#if (eq activePage 'jobs')}}bg-primary/20 text-primary{{else}}text-gray-700 hover:bg-primary/10{{/if}}"
-      >
-        <span class="material-symbols-outlined">business_center</span>
-        <p class="text-sm font-medium leading-normal">My Jobs</p>
-      </a>
-    </div>
+    <a href="/recruiter/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{#if (eq activePage 'dashboard')}}bg-indigo-600/20 text-indigo-400 font-medium{{else}}text-slate-400 hover:bg-slate-800 hover:text-white{{/if}}">
+      <span class="material-symbols-outlined text-[20px]">dashboard</span>
+      <span class="text-sm">Tổng quan</span>
+    </a>
 
-    <div class="flex flex-col gap-1 mt-auto">
-      <a
-        href="/auth/logout"
-        class="flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg cursor-pointer"
-      >
-        <span class="material-symbols-outlined">logout</span>
-        <p class="text-sm font-medium leading-normal">Logout</p>
-      </a>
-    </div>
+    <a href="/recruiter/jobs/create" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{#if (eq activePage 'post-job')}}bg-indigo-600/20 text-indigo-400 font-medium{{else}}text-slate-400 hover:bg-slate-800 hover:text-white{{/if}}">
+      <span class="material-symbols-outlined text-[20px]">add_circle</span>
+      <span class="text-sm">Đăng tin mới</span>
+    </a>
+
+    <a href="/recruiter/jobs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{#if (eq activePage 'jobs')}}bg-indigo-600/20 text-indigo-400 font-medium{{else}}text-slate-400 hover:bg-slate-800 hover:text-white{{/if}}">
+      <span class="material-symbols-outlined text-[20px]">list_alt</span>
+      <span class="text-sm">Tin đã đăng</span>
+    </a>
+
+    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 mt-4">Tương tác</p>
+
+    <a href="/recruiter/chat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{#if (eq activePage 'chat')}}bg-indigo-600/20 text-indigo-400 font-medium{{else}}text-slate-400 hover:bg-slate-800 hover:text-white{{/if}}">
+      <span class="material-symbols-outlined text-[20px]">chat</span>
+      <span class="text-sm">Tin nhắn</span>
+    </a>
+
+    <a href="/recruiter/comments" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{#if (eq activePage 'comments')}}bg-indigo-600/20 text-indigo-400 font-medium{{else}}text-slate-400 hover:bg-slate-800 hover:text-white{{/if}}">
+      <span class="material-symbols-outlined text-[20px]">forum</span>
+      <span class="text-sm">Bình luận</span>
+    </a>
+
+    <a href="/recruiter/company-profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{#if (eq activePage 'profile')}}bg-indigo-600/20 text-indigo-400 font-medium{{else}}text-slate-400 hover:bg-slate-800 hover:text-white{{/if}}">
+      <span class="material-symbols-outlined text-[20px]">domain</span>
+      <span class="text-sm">Hồ sơ công ty</span>
+    </a>
+  </nav>
+
+  <div class="p-4 border-t border-slate-800 bg-slate-900">
+    <a href="/web/logout" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all cursor-pointer">
+      <span class="material-symbols-outlined text-[20px]">logout</span>
+      <span class="text-sm font-medium">Đăng xuất</span>
+    </a>
   </div>
 </aside>

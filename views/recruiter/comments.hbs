@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Comments | TechConnect</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script>tailwind.config = { theme: { extend: { colors: { primary: '#6b26d9' } } } }</script>
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-900 h-screen flex overflow-hidden">
+
+{{> recruiter_sidebar activePage='comments'}}
+
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+  <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+    <h1 class="text-xl font-bold text-slate-800">Job Comments</h1>
+    <span class="text-sm text-slate-500">Manage interactions on your job posts</span>
+  </header>
+
+  <div class="flex-1 overflow-y-auto p-8">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="p-4 text-sm font-semibold text-slate-600">Candidate</th>
+          <th class="p-4 text-sm font-semibold text-slate-600">Comment</th>
+          <th class="p-4 text-sm font-semibold text-slate-600">Job Post</th>
+          <th class="p-4 text-sm font-semibold text-slate-600">Date</th>
+          <th class="p-4 text-sm font-semibold text-slate-600 text-right">Action</th>
+        </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+        {{#each comments}}
+          <tr class="hover:bg-slate-50 transition group">
+            <td class="p-4">
+              <div class="flex items-center gap-3">
+                <img src="{{this.user.avatar_url}}" onerror="this.src='https://ui-avatars.com/api/?name={{this.user.full_name}}'" class="w-8 h-8 rounded-full object-cover">
+                <div>
+                  <p class="font-medium text-slate-800 text-sm">{{this.user.full_name}}</p>
+                  <p class="text-xs text-slate-500">{{this.user.email}}</p>
+                </div>
+              </div>
+            </td>
+
+            <td class="p-4">
+              <p class="text-sm text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100 inline-block max-w-md">
+                {{this.content}}
+              </p>
+            </td>
+
+            <td class="p-4">
+              <a href="/recruiter/jobs/{{this.job.job_id}}" class="text-sm text-indigo-600 hover:underline font-medium">
+                {{this.job.title}}
+              </a>
+            </td>
+
+            <td class="p-4 text-sm text-slate-500">
+              {{this.createdAt}}
+            </td>
+
+            <td class="p-4 text-right">
+              <button onclick="deleteComment({{this.id}})" class="text-slate-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition" title="Delete Comment">
+                <span class="material-symbols-outlined text-xl">delete</span>
+              </button>
+            </td>
+          </tr>
+        {{/each}}
+
+        {{#unless comments}}
+          <tr>
+            <td colspan="5" class="p-10 text-center text-slate-400">
+              <span class="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
+              <p>No comments found on your jobs yet.</p>
+            </td>
+          </tr>
+        {{/unless}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  async function deleteComment(id) {
+    if(!confirm('Are you sure you want to delete this comment?')) return;
+    try {
+      await axios.delete(`/recruiter/comments/${id}`);
+      window.location.reload();
+    } catch (e) {
+      alert('Error deleting comment');
+      console.error(e);
+    }
+  }
+</script>
+</body>
+</html>
