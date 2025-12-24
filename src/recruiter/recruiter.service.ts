@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm'; // <--- Nhớ import MoreThan
+import { Repository, MoreThan } from 'typeorm';
 
 // Entities
 import { JobEntity } from '../entity/job.entity';
@@ -13,12 +13,17 @@ import { UserEntity } from '../entity/user.entity';
 import { SkillEntity } from '../entity/skill.entity';
 import { JobSkillEntity } from '../entity/job-skill.entity';
 import { JobApplicationEntity } from '../entity/job-application.entity';
+import { CompanyEntity } from '../entity/company.entity';
+import {
+  NotificationEntity,
+  NotificationType,
+} from '../entity/notification.entity';
 
-// DTOs
+// DTOs & Services
 import { RecruiterCreateJobDto } from '../recruiter-dto/recruiter-create-job.dto';
 import { UpdateApplicationStatusDto } from '../recruiter-dto/update-application-status.dto';
-import { CompanyEntity } from '../entity/company.entity';
 import { UpdateCompanyDto } from '../recruiter-dto/update-company.dto';
+import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
 
 @Injectable()
 export class RecruiterService {
@@ -35,14 +40,18 @@ export class RecruiterService {
     private readonly applicationRepository: Repository<JobApplicationEntity>,
     @InjectRepository(CompanyEntity)
     private readonly companyRepository: Repository<CompanyEntity>,
+    @InjectRepository(NotificationEntity)
+    private readonly notificationRepository: Repository<NotificationEntity>,
+    private readonly firebaseService: FirebaseModuleService,
   ) {}
 
-  // --- 1. CREATE JOB ---
+  // --- 1. TẠO VIỆC LÀM MỚI ---
   async createJob(userId: number, dto: RecruiterCreateJobDto) {
+    // Lấy thông tin Recruiter đang đăng nhập để gán ID và Company ID chính xác
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
     });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('Người dùng không tồn tại');
 
     try {
       const newJob = new JobEntity();
@@ -55,14 +64,14 @@ export class RecruiterService {
       newJob.requirements = dto.requirements;
       newJob.deadline = new Date(dto.deadline);
 
-      // Quan hệ
+      // Gán ID của Recruiter hiện tại, không dùng ID mặc định
       newJob.postedBy = user;
-      newJob.posted_by = userId;
+      newJob.posted_by = user.user_id;
       if (user.company_id) newJob.company_id = user.company_id;
 
       const savedJob = await this.jobRepository.save(newJob);
 
-      // Xử lý Skills
+      // Xử lý lưu kỹ năng (Skills) yêu cầu cho công việc
       if (dto.skills && dto.skills.length > 0) {
         for (const skillName of dto.skills) {
           const cleanName = skillName.trim();
@@ -70,8 +79,9 @@ export class RecruiterService {
             where: { skill_name: cleanName },
           });
           if (!skill) {
-            skill = this.skillRepository.create({ skill_name: cleanName });
-            skill = await this.skillRepository.save(skill);
+            skill = await this.skillRepository.save(
+              this.skillRepository.create({ skill_name: cleanName }),
+            );
           }
           await this.jobSkillRepository.save({
             job_id: savedJob.job_id,
@@ -80,16 +90,54 @@ export class RecruiterService {
           });
         }
       }
+
+      // Xử lý gửi thông báo ngầm cho toàn bộ ứng viên về việc làm mới
+      this.handleJobNotification(savedJob).catch((err) =>
+        console.error('Lỗi gửi thông báo:', err),
+      );
+
       return savedJob;
     } catch (error) {
       console.error('Create Job Error:', error);
-      throw new InternalServerErrorException(
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+      throw new InternalServerErrorException('Lỗi hệ thống khi đăng tin');
     }
   }
 
-  // --- 2. GET MY JOBS ---
+  // Hàm hỗ trợ gửi thông báo FCM và lưu lịch sử thông báo vào Database
+  private async handleJobNotification(job: JobEntity) {
+    const title = 'Cơ hội việc làm mới!';
+    const body = `Công ty đang tuyển vị trí: ${job.title}. Xem ngay!`;
+    const notiData = { job_id: job.job_id.toString(), type: 'NEW_JOB_POST' };
+
+    // Gửi FCM tới topic chung của ứng viên
+    await this.firebaseService.sendNotificationToTopic(
+      'job_alerts',
+      title,
+      body,
+      notiData,
+    );
+
+    // Lưu thông báo vào Database cho tất cả tài khoản ứng viên (Role ID = 2)
+    const candidates = await this.userRepository.find({
+      where: { role_id: 2 },
+      select: ['user_id'],
+    });
+
+    if (candidates.length > 0) {
+      const notifications = candidates.map((c) =>
+        this.notificationRepository.create({
+          user_id: c.user_id,
+          title,
+          message: body,
+          type: NotificationType.NEW_JOB,
+          metadata: notiData,
+        }),
+      );
+      await this.notificationRepository.save(notifications);
+    }
+  }
+
+  // --- 2. LẤY DANH SÁCH VIỆC LÀM CỦA TÔI ---
   async getMyJobs(userId: number) {
     return await this.jobRepository.find({
       where: { posted_by: userId },
@@ -98,170 +146,115 @@ export class RecruiterService {
     });
   }
 
-  // --- 3. GET JOB DETAIL ---
+  // --- 3. LẤY CHI TIẾT VIỆC LÀM ---
   async getJobDetail(userId: number, jobId: number) {
-    const job = await this.jobRepository.findOne({
-      where: {
-        job_id: jobId,
-        posted_by: userId,
-      },
+    return await this.jobRepository.findOne({
+      where: { job_id: jobId, posted_by: userId },
       relations: ['company', 'jobSkills', 'jobSkills.skill'],
     });
-
-    return job;
   }
 
-  // --- 4. GET JOB APPLICATIONS ---
+  // --- 4. LẤY DANH SÁCH HỒ SƠ ỨNG TUYỂN THEO TIN ---
   async getJobApplications(userId: number, jobId: number) {
     const job = await this.jobRepository.findOne({
       where: { job_id: jobId, posted_by: userId },
     });
+    if (!job) throw new NotFoundException('Tin tuyển dụng không tồn tại');
 
-    if (!job) {
-      throw new NotFoundException(
-        'Job không tồn tại hoặc bạn không có quyền truy cập',
-      );
-    }
-
-    const applications = await this.applicationRepository.find({
+    return await this.applicationRepository.find({
       where: { job_id: jobId },
       relations: ['user', 'cv'],
       order: { applied_at: 'DESC' },
     });
-
-    return applications;
   }
 
-  // --- 5. UPDATE APPLICATION STATUS ---
+  // --- 5. CẬP NHẬT TRẠNG THÁI HỒ SƠ ỨNG TUYỂN ---
   async updateApplicationStatus(
     userId: number,
-    applicationId: number,
+    appId: number,
     dto: UpdateApplicationStatusDto,
   ) {
     const application = await this.applicationRepository.findOne({
-      where: { application_id: applicationId },
+      where: { application_id: appId },
       relations: ['job'],
     });
 
-    if (!application) {
-      throw new NotFoundException('Hồ sơ ứng tuyển không tồn tại');
-    }
-
-    if (application.job.posted_by !== userId) {
-      throw new ForbiddenException('Bạn không có quyền chỉnh sửa hồ sơ này');
+    if (!application || application.job.posted_by !== userId) {
+      throw new ForbiddenException('Bạn không có quyền xử lý hồ sơ này');
     }
 
     application.status = dto.status;
     return await this.applicationRepository.save(application);
   }
 
-  // --- 6. DASHBOARD STATS (Dữ liệu thật) ---
+  // --- 6. THỐNG KÊ DASHBOARD ---
   async getRecruiterStats(userId: number) {
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
       relations: ['company'],
     });
-
     if (!user) throw new NotFoundException('User not found');
 
-    // 1. Tổng số Job đã đăng
     const totalJobs = await this.jobRepository.count({
       where: { posted_by: userId },
     });
-
-    // 2. Tổng số Hồ sơ ứng tuyển (Query qua bảng Job)
     const totalApplications = await this.applicationRepository
       .createQueryBuilder('app')
       .innerJoin('app.job', 'job')
       .where('job.posted_by = :userId', { userId })
       .getCount();
 
-    // 3. Số Job đang Active (Chưa hết hạn deadline)
     const activeJobs = await this.jobRepository.count({
-      where: {
-        posted_by: userId,
-        deadline: MoreThan(new Date()), // Hạn nộp phải lớn hơn thời gian hiện tại
-      },
+      where: { posted_by: userId, deadline: MoreThan(new Date()) },
     });
 
     return {
-      company: user.company ? user.company.name : 'Chưa cập nhật công ty',
-      stats: {
-        totalJobs,
-        totalApplications,
-        activeJobs,
-      },
+      company: user.company?.name || 'Chưa cập nhật',
+      stats: { totalJobs, totalApplications, activeJobs },
     };
   }
 
-  // --- 7. CHART DATA (Biểu đồ 6 tháng gần nhất - MySQL) ---
+  // --- 7. DỮ LIỆU BIỂU ĐỒ 6 THÁNG ---
   async getRecruiterChartData(userId: number) {
-    // A. Chuẩn bị khung dữ liệu cho 6 tháng (Labels & Map)
     const labels: string[] = [];
     const dataMap = new Map<string, number>();
     const now = new Date();
 
     for (let i = 5; i >= 0; i--) {
-      // Tạo ngày của tháng quá khứ
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-
-      // Key để map dữ liệu (Format: YYYY-MM) -> Khớp với format MySQL bên dưới
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-
-      // Label hiển thị ra view (VD: Tháng 12)
-      const label = `Tháng ${d.getMonth() + 1}`;
-
-      labels.push(label);
-      dataMap.set(key, 0); // Mặc định là 0
+      labels.push(`Tháng ${d.getMonth() + 1}`);
+      dataMap.set(key, 0);
     }
 
-    // B. Query dữ liệu thật từ DB
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1); // Lấy ngày đầu tiên của 6 tháng trước
+    sixMonthsAgo.setDate(1);
 
     const result = await this.applicationRepository
       .createQueryBuilder('app')
       .leftJoin('app.job', 'job')
-      // MySQL: Format ngày tháng năm-tháng để group
       .select("DATE_FORMAT(app.applied_at, '%Y-%m')", 'month')
       .addSelect('COUNT(app.application_id)', 'count')
       .where('job.posted_by = :userId', { userId })
       .andWhere('app.applied_at >= :date', { date: sixMonthsAgo })
       .groupBy('month')
-      .orderBy('month', 'ASC')
       .getRawMany();
 
-    // C. Đổ dữ liệu từ DB vào Map
-    // result trả về dạng: [{ month: '2025-12', count: '5' }, ...]
     result.forEach((item) => {
-      // Ép kiểu item.month về string cho chắc chắn
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const monthKey = String(item.month);
-      if (dataMap.has(monthKey)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        dataMap.set(monthKey, Number(item.count));
-      }
+      if (dataMap.has(item.month)) dataMap.set(item.month, Number(item.count));
     });
 
-    // D. Trả về format ChartJS
-    return {
-      labels: labels,
-      data: Array.from(dataMap.values()),
-    };
+    return { labels, data: Array.from(dataMap.values()) };
   }
-  // --- [MỚI] CẬP NHẬT THÔNG TIN CÔNG TY ---
+
+  // --- 8. CẬP NHẬT & LẤY THÔNG TIN CÔNG TY ---
   async updateCompanyProfile(userId: number, dto: UpdateCompanyDto) {
-    // 1. Lấy thông tin User để biết company_id
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
     });
+    if (!user?.company_id) throw new NotFoundException('Chưa liên kết công ty');
 
-    if (!user || !user.company_id) {
-      throw new NotFoundException('Bạn chưa liên kết với công ty nào');
-    }
-
-    // 2. Cập nhật thông tin Company
     await this.companyRepository.update(
       { company_id: user.company_id },
       {
@@ -269,26 +262,19 @@ export class RecruiterService {
         description: dto.description,
         address: dto.address,
         website: dto.website,
-        logo_url: dto.logo_url, // Nếu có gửi kèm
+        logo_url: dto.logo_url,
       },
     );
-
-    // 3. Trả về thông tin mới nhất
     return await this.companyRepository.findOne({
       where: { company_id: user.company_id },
     });
   }
 
-  // --- [MỚI] LẤY THÔNG TIN CÔNG TY CỦA TÔI ---
   async getMyCompanyProfile(userId: number) {
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
       relations: ['company'],
     });
-
-    if (!user || !user.company) {
-      return null; // Hoặc throw exception tùy logic
-    }
-    return user.company;
+    return user?.company || null;
   }
 }

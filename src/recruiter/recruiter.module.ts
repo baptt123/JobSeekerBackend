@@ -1,3 +1,4 @@
+// src/recruiter/recruiter.module.ts
 import { Module } from '@nestjs/common';
 import { RecruiterService } from './recruiter.service';
 import { RecruiterController } from './recruiter.controller';
@@ -11,8 +12,9 @@ import { JobSkillEntity } from '../entity/job-skill.entity';
 import { FirebaseModuleModule } from '../firebase-module/firebase-module.module';
 import { UserCVEntity } from '../entity/user-cv.entity';
 import { CommentsModule } from '../comments/comments.module';
-import { CommentService } from '../comments/comments.service';
-import { CommentEntity } from '../entity/comment.entity';
+import { NotificationEntity } from '../entity/notification.entity'; // ✅ Sửa lại import có { }
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -21,15 +23,27 @@ import { CommentEntity } from '../entity/comment.entity';
       UserEntity,
       SkillEntity,
       JobSkillEntity,
-      JobApplicationEntity, // <--- Đăng ký Repository
+      JobApplicationEntity,
       CompanyEntity,
       UserCVEntity,
-      CommentEntity,
+      // CommentEntity, // ❌ Xóa dòng này, để CommentsModule quản lý Entity của nó
+      NotificationEntity,
     ]),
-    FirebaseModuleModule, // Để dùng Notification Service
-    CommentsModule,
+    FirebaseModuleModule,
+    CommentsModule, // ✅ Module này đã export CommentService
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_ACCESS_SECRET') || 'secret', // Đồng bộ với AuthService
+        signOptions: { expiresIn: '1d' },
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [RecruiterController],
-  providers: [RecruiterService, CommentService],
+  providers: [
+    RecruiterService,
+    // ❌ Xóa CommentService ở đây
+  ],
 })
 export class RecruiterModule {}

@@ -3,7 +3,7 @@ import { FirebaseModuleService } from './firebase-module.service';
 import { FirebaseModuleController } from './firebase-module.controller';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import NotificationEntity from '../entity/notification.entity';
+import { NotificationEntity } from '../entity/notification.entity';
 import { JobApplicationEntity } from '../entity/job-application.entity';
 import { JobEntity } from '../entity/job.entity';
 import { UserCVEntity } from '../entity/user-cv.entity';

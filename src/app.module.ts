@@ -19,7 +19,7 @@ import { CVKeywordEntity } from './entity/cv-keyword.entity';
 import { JobApplicationEntity } from './entity/job-application.entity';
 import { JobSkillEntity } from './entity/job-skill.entity';
 import { KeywordEntity } from './entity/keyword.entity';
-import NotificationEntity from './entity/notification.entity';
+import { NotificationEntity } from './entity/notification.entity';
 import { SavedJobEntity } from './entity/save_job.entity';
 import { SkillEntity } from './entity/skill.entity';
 import { UserCVEntity } from './entity/user-cv.entity';

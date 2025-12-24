@@ -94,18 +94,20 @@ export class RecruiterController {
     @Body(new ValidationPipe({ whitelist: true, transform: true }))
     dto: RecruiterCreateJobDto,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const job = await this.service.createJob(req.user.userId, dto);
+    // Strategy jwt-web trả về req.user.userId
+    const userId = req.user.userId;
 
-    // Gửi thông báo Firebase
+    // Log để kiểm tra ID trước khi lưu (Giúp bạn debug)
+    console.log(`Recruiter ID ${userId} đang tạo job mới...`);
+
+    const job = await this.service.createJob(userId, dto);
+
+    // Gửi thông báo Firebase (Topic cho ứng viên)
     await this.firebaseService.sendNotificationToTopic(
       'job_alerts',
-      '🔥 Việc làm mới hấp dẫn!',
+      '🔥 Việc làm mới!',
       `${job.title} tại ${job.location}`,
-      {
-        jobId: job.job_id.toString(),
-        type: 'NEW_JOB_POST',
-      },
+      { jobId: job.job_id.toString(), type: 'NEW_JOB_POST' },
     );
 
     return job;

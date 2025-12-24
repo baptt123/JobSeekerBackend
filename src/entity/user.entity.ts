@@ -16,7 +16,7 @@ import { JobEntity } from './job.entity';
 import { JobApplicationEntity } from './job-application.entity';
 import { SavedJobEntity } from './save_job.entity';
 import { MessageEntity } from './messages.entity';
-import NotificationEntity from './notification.entity';
+import { NotificationEntity } from './notification.entity';
 import { CommentEntity } from './comment.entity';
 
 @Entity('users')

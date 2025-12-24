@@ -128,33 +128,28 @@ export class AuthService {
   // Helper: Tạo Token và Format Response chuẩn
   private async _generateSystemJwt(user: UserEntity): Promise<AuthResponseDto> {
     const payload = {
-      sub: user.user_id,
+      sub: user.user_id, // sub là trường chuẩn của JWT, chứa ID người dùng
+      userId: user.user_id, // Trường phụ để dễ truy cập
       email: user.email,
       role: user.role_id,
     };
 
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        // 🔥 SỬA: Đổi JWT_ACCESS_TOKEN_SECRET -> JWT_ACCESS_SECRET
-        secret:
-          this.configService.get<string>('JWT_ACCESS_SECRET') ||
-          'access-secret',
-        expiresIn:
-          this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
-      }),
-      this.jwtService.signAsync(payload, {
-        secret:
-          this.configService.get<string>('JWT_REFRESH_SECRET') ||
-          'refresh-secret',
-        expiresIn:
-          this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
-      }),
-    ]);
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret:
+        this.configService.get<string>('JWT_ACCESS_SECRET') || 'access-secret',
+      expiresIn: '1d', // Token sống trong 1 ngày để bạn dễ test decode
+    });
 
-    // Format dữ liệu trả về client
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret:
+        this.configService.get<string>('JWT_REFRESH_SECRET') ||
+        'refresh-secret',
+      expiresIn: '7d',
+    });
+
     return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
+      accessToken,
+      refreshToken,
       user: {
         id: user.user_id,
         email: user.email,
