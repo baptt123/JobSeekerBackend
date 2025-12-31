@@ -216,4 +216,8 @@ export class UserService {
     delete user.password_hash;
     return user;
   }
+  async saveFcmToken(userId: number, token: string | null) {
+    // Nếu token là null (user từ chối quyền), server sẽ xóa token cũ
+    await this.userRepo.update(userId, { fcm_token: token as any });
+  }
 }

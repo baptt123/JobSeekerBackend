@@ -169,22 +169,38 @@ export class RecruiterService {
   }
 
   // --- 5. CẬP NHẬT TRẠNG THÁI HỒ SƠ ỨNG TUYỂN ---
-  async updateApplicationStatus(
-    userId: number,
-    appId: number,
-    dto: UpdateApplicationStatusDto,
-  ) {
+// src/recruiter/recruiter.service.ts
+
+  async updateApplicationStatus(userId: number, appId: number, dto: UpdateApplicationStatusDto) {
     const application = await this.applicationRepository.findOne({
       where: { application_id: appId },
-      relations: ['job'],
+      relations: ['job', 'user'],
     });
 
     if (!application || application.job.posted_by !== userId) {
       throw new ForbiddenException('Bạn không có quyền xử lý hồ sơ này');
     }
 
+    // 1. Cập nhật DB
     application.status = dto.status;
-    return await this.applicationRepository.save(application);
+    const result = await this.applicationRepository.save(application);
+
+    // 2. Gửi thông báo cho ứng viên [MỚI]
+    const title = 'Cập nhật hồ sơ ứng tuyển';
+    const body = `Hồ sơ của bạn cho vị trí "${application.job.title}" đã chuyển sang trạng thái: ${dto.status}`;
+
+    // Logic: sendNotificationToUser sẽ kiểm tra fcm_token của application.user_id
+    // Nếu fcm_token exists -> Gửi Push + Lưu DB
+    // Nếu fcm_token is null (do Flutter gửi lên khi từ chối) -> Chỉ lưu DB
+    this.firebaseService.sendNotificationToUser(
+      application.user_id,
+      title,
+      body,
+      NotificationType.APPLICATION_UPDATE,
+      { job_id: application.job_id.toString(), status: dto.status }
+    ).catch(err => console.error('Lỗi gửi thông báo ứng tuyển:', err));
+
+    return result;
   }
 
   // --- 6. THỐNG KÊ DASHBOARD ---

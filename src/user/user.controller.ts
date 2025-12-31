@@ -85,4 +85,12 @@ export class UserController {
     const user = await this.userService.getUserProfile(userId);
     return { message: 'Lấy thông tin user thành công', data: user };
   }
+  @Put('update-fcm-token')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE', 'RECRUITER')
+  async updateFcmToken(@Req() req: any, @Body('fcm_token') token: string) {
+    const userId = req.user.userId;
+    await this.userService.saveFcmToken(userId, token);
+    return { message: 'Cập nhật token thành công' };
+  }
 }
