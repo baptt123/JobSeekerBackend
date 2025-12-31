@@ -9,6 +9,7 @@ import { GenerateCvService } from './generate-cv.service';
 import { GenAIModule } from 'nestjs-genai';
 import { GenerateCvController } from './generate-cv.controller';
 import { CloudinaryCustomModule } from '../cloudinary-custom/cloudinary-custom.module';
+import { LogEntity } from '../entity/log.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -17,6 +18,7 @@ import { CloudinaryCustomModule } from '../cloudinary-custom/cloudinary-custom.m
       KeywordEntity,
       CVKeywordEntity,
       JobEntity,
+      LogEntity,
     ]),
     GenAIModule.forRoot({
       apiKey: process.env.GEMINI_API_KEY, // .env

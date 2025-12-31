@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   InternalServerErrorException,
+  BadRequestException, // Thêm Exception này
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
@@ -45,9 +46,11 @@ export class RecruiterService {
     private readonly firebaseService: FirebaseModuleService,
   ) {}
 
+  // ... [GIỮ NGUYÊN CÁC HÀM createJob, handleJobNotification, getMyJobs, getJobDetail, getJobApplications] ...
+
   // --- 1. TẠO VIỆC LÀM MỚI ---
   async createJob(userId: number, dto: RecruiterCreateJobDto) {
-    // Lấy thông tin Recruiter đang đăng nhập để gán ID và Company ID chính xác
+    // ... (Giữ nguyên logic cũ)
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
     });
@@ -64,14 +67,12 @@ export class RecruiterService {
       newJob.requirements = dto.requirements;
       newJob.deadline = new Date(dto.deadline);
 
-      // Gán ID của Recruiter hiện tại, không dùng ID mặc định
       newJob.postedBy = user;
       newJob.posted_by = user.user_id;
       if (user.company_id) newJob.company_id = user.company_id;
 
       const savedJob = await this.jobRepository.save(newJob);
 
-      // Xử lý lưu kỹ năng (Skills) yêu cầu cho công việc
       if (dto.skills && dto.skills.length > 0) {
         for (const skillName of dto.skills) {
           const cleanName = skillName.trim();
@@ -91,7 +92,6 @@ export class RecruiterService {
         }
       }
 
-      // Xử lý gửi thông báo ngầm cho toàn bộ ứng viên về việc làm mới
       this.handleJobNotification(savedJob).catch((err) =>
         console.error('Lỗi gửi thông báo:', err),
       );
@@ -103,13 +103,12 @@ export class RecruiterService {
     }
   }
 
-  // Hàm hỗ trợ gửi thông báo FCM và lưu lịch sử thông báo vào Database
   private async handleJobNotification(job: JobEntity) {
+    // ... (Giữ nguyên logic cũ)
     const title = 'Cơ hội việc làm mới!';
     const body = `Công ty đang tuyển vị trí: ${job.title}. Xem ngay!`;
     const notiData = { job_id: job.job_id.toString(), type: 'NEW_JOB_POST' };
 
-    // Gửi FCM tới topic chung của ứng viên
     await this.firebaseService.sendNotificationToTopic(
       'job_alerts',
       title,
@@ -117,7 +116,6 @@ export class RecruiterService {
       notiData,
     );
 
-    // Lưu thông báo vào Database cho tất cả tài khoản ứng viên (Role ID = 2)
     const candidates = await this.userRepository.find({
       where: { role_id: 2 },
       select: ['user_id'],
@@ -137,8 +135,8 @@ export class RecruiterService {
     }
   }
 
-  // --- 2. LẤY DANH SÁCH VIỆC LÀM CỦA TÔI ---
   async getMyJobs(userId: number) {
+    // ... (Giữ nguyên logic cũ)
     return await this.jobRepository.find({
       where: { posted_by: userId },
       relations: ['company', 'jobSkills', 'jobSkills.skill'],
@@ -146,16 +144,16 @@ export class RecruiterService {
     });
   }
 
-  // --- 3. LẤY CHI TIẾT VIỆC LÀM ---
   async getJobDetail(userId: number, jobId: number) {
+    // ... (Giữ nguyên logic cũ)
     return await this.jobRepository.findOne({
       where: { job_id: jobId, posted_by: userId },
       relations: ['company', 'jobSkills', 'jobSkills.skill'],
     });
   }
 
-  // --- 4. LẤY DANH SÁCH HỒ SƠ ỨNG TUYỂN THEO TIN ---
   async getJobApplications(userId: number, jobId: number) {
+    // ... (Giữ nguyên logic cũ)
     const job = await this.jobRepository.findOne({
       where: { job_id: jobId, posted_by: userId },
     });
@@ -168,9 +166,7 @@ export class RecruiterService {
     });
   }
 
-  // --- 5. CẬP NHẬT TRẠNG THÁI HỒ SƠ ỨNG TUYỂN ---
-// src/recruiter/recruiter.service.ts
-
+  // --- 5. CẬP NHẬT TRẠNG THÁI HỒ SƠ ỨNG TUYỂN (LOGIC MỚI) ---
   async updateApplicationStatus(userId: number, appId: number, dto: UpdateApplicationStatusDto) {
     const application = await this.applicationRepository.findOne({
       where: { application_id: appId },
@@ -181,17 +177,38 @@ export class RecruiterService {
       throw new ForbiddenException('Bạn không có quyền xử lý hồ sơ này');
     }
 
+    // [YÊU CẦU 1]: Chỉ được xử lý khi đang ở trạng thái chờ (Applied)
+    // Nếu đã là Accepted hoặc Rejected (hoặc khác Applied) thì không cho sửa nữa
+    if (application.status !== 'Applied') {
+      throw new BadRequestException('Hồ sơ đã được xử lý, không thể thay đổi trạng thái.');
+    }
+
+    // [YÊU CẦU 1]: Chỉ được chọn "Xác nhận" hoặc "Từ chối"
+    if (dto.status !== 'Accepted' && dto.status !== 'Rejected') {
+      throw new BadRequestException('Trạng thái không hợp lệ. Chỉ chấp nhận "Accepted" hoặc "Rejected".');
+    }
+
     // 1. Cập nhật DB
     application.status = dto.status;
     const result = await this.applicationRepository.save(application);
 
-    // 2. Gửi thông báo cho ứng viên [MỚI]
-    const title = 'Cập nhật hồ sơ ứng tuyển';
-    const body = `Hồ sơ của bạn cho vị trí "${application.job.title}" đã chuyển sang trạng thái: ${dto.status}`;
+    // 2. Gửi thông báo (LOGIC QUYỀN TRUY CẬP)
+    // Logic: Dựa vào việc User có fcm_token (đã cấp quyền ở frontend Flutter) hay không.
+    // Hàm sendNotificationToUser trong FirebaseService đã xử lý logic này:
+    // - Nếu có token -> Gửi Push + Lưu DB.
+    // - Nếu không có token -> Chỉ lưu DB.
 
-    // Logic: sendNotificationToUser sẽ kiểm tra fcm_token của application.user_id
-    // Nếu fcm_token exists -> Gửi Push + Lưu DB
-    // Nếu fcm_token is null (do Flutter gửi lên khi từ chối) -> Chỉ lưu DB
+    let title = '';
+    let body = '';
+
+    if (dto.status === 'Accepted') {
+      title = 'Hồ sơ được chấp nhận!';
+      body = `Chúc mừng! Hồ sơ ứng tuyển vị trí "${application.job.title}" của bạn đã được nhà tuyển dụng xác nhận.`;
+    } else {
+      title = 'Kết quả ứng tuyển';
+      body = `Rất tiếc, hồ sơ cho vị trí "${application.job.title}" của bạn chưa phù hợp vào lúc này.`;
+    }
+
     this.firebaseService.sendNotificationToUser(
       application.user_id,
       title,
@@ -203,8 +220,10 @@ export class RecruiterService {
     return result;
   }
 
-  // --- 6. THỐNG KÊ DASHBOARD ---
+  // ... [GIỮ NGUYÊN CÁC HÀM getRecruiterStats, getRecruiterChartData, updateCompanyProfile, getMyCompanyProfile] ...
+
   async getRecruiterStats(userId: number) {
+    // ... (Giữ nguyên logic cũ)
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
       relations: ['company'],
@@ -230,8 +249,8 @@ export class RecruiterService {
     };
   }
 
-  // --- 7. DỮ LIỆU BIỂU ĐỒ 6 THÁNG ---
   async getRecruiterChartData(userId: number) {
+    // ... (Giữ nguyên logic cũ)
     const labels: string[] = [];
     const dataMap = new Map<string, number>();
     const now = new Date();
@@ -264,8 +283,8 @@ export class RecruiterService {
     return { labels, data: Array.from(dataMap.values()) };
   }
 
-  // --- 8. CẬP NHẬT & LẤY THÔNG TIN CÔNG TY ---
   async updateCompanyProfile(userId: number, dto: UpdateCompanyDto) {
+    // ... (Giữ nguyên logic cũ)
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
     });
@@ -287,6 +306,7 @@ export class RecruiterService {
   }
 
   async getMyCompanyProfile(userId: number) {
+    // ... (Giữ nguyên logic cũ)
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
       relations: ['company'],

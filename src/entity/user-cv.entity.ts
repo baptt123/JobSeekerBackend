@@ -1,16 +1,6 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  Index,
-  OneToMany,
-} from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, Index, OneToMany } from 'typeorm';
 import { UserEntity } from './user.entity';
-import { CVKeywordEntity } from './cv-keyword.entity';
+import { CVKeywordEntity } from './cv-keyword.entity'; // Giả sử đã có file này hoặc bạn tự tạo tương tự
 
 @Entity('user_cvs')
 @Index('idx_fulltext_content', ['content'], { fulltext: true })
@@ -23,29 +13,30 @@ export class UserCVEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.cvs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  @ApiProperty({ type: () => UserEntity }) // <--- FIX CIRCULAR
   user: UserEntity;
 
   @Column({ length: 255, nullable: true })
-  @ApiProperty({ required: false })
   title: string;
 
   @Column({ length: 500, nullable: true })
-  @ApiProperty({ required: false })
-  file_url: string;
+  file_url: string; // URL từ Cloudinary
 
   @Column('text', { nullable: true })
-  @ApiProperty({ required: false })
-  content: string;
-
-  @Column('boolean', { default: false })
-  @ApiProperty()
-  is_default: boolean;
+  content: string; // Nội dung rút trích (nếu cần)
 
   @CreateDateColumn()
   created_at: Date;
 
   @OneToMany(() => CVKeywordEntity, (keyword) => keyword.cv)
-  @ApiProperty({ type: () => CVKeywordEntity, isArray: true }) // <--- FIX CIRCULAR
   keywords: CVKeywordEntity[];
+
+  // --- CÁC TRƯỜNG MỚI THEO YÊU CẦU ---
+  @Column('boolean', { default: false })
+  is_default: boolean;
+
+  @Column('boolean', { default: false })
+  is_deleted: boolean; // Soft delete
+
+  @Column({ type: 'timestamp', nullable: true })
+  deleted_at: Date;
 }

@@ -100,7 +100,7 @@ export class UserEntity {
   @Column({ type: 'text', nullable: true })
   @ApiProperty({
     required: false,
-    description: 'Firebase Cloud Messaging Token',
+    description: 'Gửi thông báo từ xa bằng Firebase',
   })
   fcm_token: string;
   @DeleteDateColumn()
@@ -117,4 +117,5 @@ export class UserEntity {
   @Column({ type: 'timestamp', nullable: true })
   @ApiProperty({ required: false })
   last_active_at: Date;
+
 }

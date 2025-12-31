@@ -55,7 +55,12 @@ async function bootstrap() {
   // Helper phép trừ (Dùng cho phân trang: Prev Page)
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerHelper('subtract', (a, b) => Number(a) - Number(b));
-
+  hbs.registerHelper('or', function (...args: any[]) {
+    // Loại bỏ tham số cuối cùng (là options object của Handlebars)
+    args.pop();
+    // Trả về true nếu có bất kỳ tham số nào là true
+    return args.some(Boolean);
+  });
   // ======================================================
 
   // Cấu hình Swagger

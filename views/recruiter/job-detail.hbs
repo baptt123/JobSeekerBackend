@@ -9,7 +9,7 @@
     tailwind.config = { theme: { extend: { colors: { primary: '#6b26d9' } } } };
   </script>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-gray-50 font-sans relative">
 <div class="flex min-h-screen">
   {{> recruiter_sidebar activePage='jobs'}}
 
@@ -85,33 +85,40 @@
             <td class="p-4">
                    <span class="px-2 py-1 rounded text-xs font-bold border
                     {{#if (eq this.status 'Applied')}}bg-gray-50 border-gray-200 text-gray-600{{/if}}
-                     {{#if (eq this.status 'Interview')}}bg-yellow-50 border-yellow-200 text-yellow-600{{/if}}
                      {{#if (eq this.status 'Accepted')}}bg-green-50 border-green-200 text-green-600{{/if}}
                      {{#if (eq this.status 'Rejected')}}bg-red-50 border-red-200 text-red-600{{/if}}">
-                     {{this.status}}
+                     {{#if (eq this.status 'Applied')}}Chờ phê duyệt{{/if}}
+                     {{#if (eq this.status 'Accepted')}}Đã xác nhận{{/if}}
+                     {{#if (eq this.status 'Rejected')}}Đã từ chối{{/if}}
+                     {{#unless (or (eq this.status 'Applied') (eq this.status 'Accepted') (eq this.status 'Rejected'))}}
+                       {{this.status}}
+                     {{/unless}}
                    </span>
             </td>
             <td class="p-4">
               {{#if this.cv}}
-                <a href="{{this.cv.file_url}}" target="_blank" class="text-primary hover:underline text-sm flex items-center gap-1">
-                  <span class="material-symbols-outlined text-base">picture_as_pdf</span> View CV
-                </a>
+                <button onclick="openCvModal('{{this.cv.file_url}}')" class="text-primary hover:underline text-sm flex items-center gap-1">
+                  <span class="material-symbols-outlined text-base">visibility</span> Xem CV
+                </button>
               {{else}}
-                <span class="text-gray-400 text-sm">No CV</span>
+                <span class="text-gray-400 text-sm">Chưa có CV</span>
               {{/if}}
             </td>
             <td class="p-4 text-right">
-              <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="updateStatus({{this.application_id}}, 'Interview')" class="p-2 rounded bg-yellow-50 text-yellow-600 hover:bg-yellow-100" title="Interview">
-                  <span class="material-symbols-outlined text-lg">calendar_month</span>
-                </button>
-                <button onclick="updateStatus({{this.application_id}}, 'Accepted')" class="p-2 rounded bg-green-50 text-green-600 hover:bg-green-100" title="Accept">
-                  <span class="material-symbols-outlined text-lg">check</span>
-                </button>
-                <button onclick="updateStatus({{this.application_id}}, 'Rejected')" class="p-2 rounded bg-red-50 text-red-600 hover:bg-red-100" title="Reject">
-                  <span class="material-symbols-outlined text-lg">close</span>
-                </button>
-              </div>
+              {{#if (eq this.status 'Applied')}}
+                <div class="flex justify-end gap-2">
+                  <button onclick="updateStatus({{this.application_id}}, 'Accepted')" class="p-2 rounded bg-green-50 text-green-600 hover:bg-green-100 flex items-center gap-1" title="Xác nhận">
+                    <span class="material-symbols-outlined text-lg">check_circle</span>
+                    <span class="text-xs font-bold">Xác nhận</span>
+                  </button>
+                  <button onclick="updateStatus({{this.application_id}}, 'Rejected')" class="p-2 rounded bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-1" title="Từ chối">
+                    <span class="material-symbols-outlined text-lg">cancel</span>
+                    <span class="text-xs font-bold">Từ chối</span>
+                  </button>
+                </div>
+              {{else}}
+                <span class="text-gray-400 text-xs italic">Đã xử lý</span>
+              {{/if}}
             </td>
           </tr>
         {{/each}}
@@ -119,7 +126,7 @@
         {{#unless applications}}
           <tr>
             <td colspan="5" class="p-8 text-center text-gray-500">
-              No applications received yet.
+              Chưa có ứng viên nào nộp hồ sơ.
             </td>
           </tr>
         {{/unless}}
@@ -129,27 +136,61 @@
   </main>
 </div>
 
+<div id="cvModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[90vh] flex flex-col p-2">
+    <div class="flex justify-between items-center px-4 py-2 border-b">
+      <h3 class="font-bold text-gray-800">Chi tiết CV</h3>
+      <button onclick="closeCvModal()" class="text-gray-500 hover:text-red-600">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="flex-1 bg-gray-100 relative">
+      <iframe id="cvFrame" src="" class="w-full h-full" frameborder="0"></iframe>
+    </div>
+  </div>
+</div>
+
 <script>
+  // Hàm xử lý duyệt/từ chối
   async function updateStatus(appId, newStatus) {
-    if (!confirm(`Change status to ${newStatus}?`)) return;
+    const actionName = newStatus === 'Accepted' ? 'Xác nhận' : 'Từ chối';
+    if (!confirm(`Bạn có chắc chắn muốn ${actionName} hồ sơ này không? Hành động này không thể hoàn tác.`)) return;
+
     try {
-      // Endpoint này đã đúng chuẩn REST
       const response = await fetch(`/recruiter/applications/${appId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
+
       if (response.ok) {
-        alert('Status updated successfully!');
+        alert('Cập nhật trạng thái thành công!');
         window.location.reload();
       } else {
         const err = await response.json();
-        alert('Failed: ' + (err.message || 'Unknown error'));
+        alert('Thất bại: ' + (err.message || 'Lỗi không xác định'));
       }
     } catch (error) {
       console.error(error);
-      alert('Network error');
+      alert('Lỗi mạng, vui lòng thử lại.');
     }
+  }
+
+  // Hàm bật Modal PDF
+  function openCvModal(url) {
+    const modal = document.getElementById('cvModal');
+    const frame = document.getElementById('cvFrame');
+    // Thêm #view=FitH để PDF tự động scale vừa chiều ngang
+    frame.src = url;
+    modal.classList.remove('hidden');
+  }
+
+  // Hàm tắt Modal
+  function closeCvModal() {
+    const modal = document.getElementById('cvModal');
+    const frame = document.getElementById('cvFrame');
+    frame.src = ''; // Clear src để dừng load
+    modal.classList.add('hidden');
   }
 </script>
 </body>
