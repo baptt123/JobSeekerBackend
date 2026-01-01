@@ -30,7 +30,7 @@ export class UserCVEntity {
   @OneToMany(() => CVKeywordEntity, (keyword) => keyword.cv)
   keywords: CVKeywordEntity[];
 
-  // --- CÁC TRƯỜNG MỚI THEO YÊU CẦU ---
+// --- BỔ SUNG CÁC TRƯỜNG MỚI ---
   @Column('boolean', { default: false })
   is_default: boolean;
 

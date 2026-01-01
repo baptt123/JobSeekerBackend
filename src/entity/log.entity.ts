@@ -7,10 +7,10 @@ export class LogEntity {
   id: number;
 
   @Column()
-  action: string; // Vd: UPLOAD_CV, GENERATE_CV, DELETE_CV
+  action: string; // Vd: UPLOAD_CV, GENERATE_CV_AI, DELETE_CV...
 
   @Column('text')
-  details: string;
+  details: string; // Mô tả chi tiết hoặc lỗi
 
   @CreateDateColumn()
   createdAt: Date;
