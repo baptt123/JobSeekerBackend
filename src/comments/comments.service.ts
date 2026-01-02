@@ -60,7 +60,7 @@ export class CommentService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         error.code === 'ER_NO_REFERENCED_ROW_2' ||
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-        error.message.includes('foreign key constraint fails')
+        error.message.includes('Lỗi kết nối khoá')
       ) {
         throw new BadRequestException(
           'Công việc hoặc Người dùng không tồn tại.',
@@ -116,7 +116,7 @@ export class CommentService {
       relations: ['job'],
     });
 
-    if (!comment) throw new NotFoundException('Comment not found');
+    if (!comment) throw new NotFoundException('Không tìm thấy comment');
 
     if (role === 'RECRUITER') {
       // Check quyền sở hữu Job

@@ -1,9 +1,10 @@
-import { Controller, Post, UploadedFile, UseInterceptors, Body, Res, Get, Patch, Delete, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, UploadedFile, UseInterceptors, Body, Res, Get, Patch, Delete, Param, UseGuards, Req, UsePipes, ValidationPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GenerateCvService } from './generate-cv.service';
 import express, { Response } from 'express';
 import { OrAuthGuard } from '../guard/or-auth.guard';
 import { Roles } from '../decorator/role.decorator';
+import { GenerateTemplateDto } from '../dto/generate-template.dto';
 
 @Controller('cv')
 @UseGuards(OrAuthGuard)
@@ -21,7 +22,6 @@ export class GenerateCvController {
   async generateAi(@Body('prompt') prompt: string, @Res() res: express.Response, @Req() req) {
     const pdfBuffer = await this.service.generateCvByAi(prompt, req.user.userId);
 
-    // Set Header bắt buộc cho PDF
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename="cv_ai_generated.pdf"',
@@ -32,8 +32,9 @@ export class GenerateCvController {
   }
 
   @Post('generate-template')
-  async generateTemplate(@Body() body: any, @Res() res: express.Response, @Req() req) {
-    // Body gồm { templateId: number, data: object }
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async generateTemplate(@Body() body: GenerateTemplateDto, @Res() res: express.Response, @Req() req) {
+    // Body đã được validate qua DTO
     const pdfBuffer = await this.service.generateCvFromTemplate(body.templateId, body.data, req.user.userId);
 
     res.set({

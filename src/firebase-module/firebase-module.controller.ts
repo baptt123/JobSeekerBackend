@@ -58,7 +58,7 @@ export class FirebaseModuleController {
         userId,
       );
       console.log(
-        `>>> Found ${notifications.length} notifications for User ${userId}`,
+        `>>> Tìm thấy ${notifications.length} thông báo cho user ${userId}`,
       );
 
       const unreadCount = notifications.filter((n) => !n.is_read).length;

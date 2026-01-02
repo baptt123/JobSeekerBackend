@@ -239,6 +239,6 @@ export class RecruiterController {
   @Delete('comments/:id')
   async deleteComment(@Req() req: any, @Param('id') id: string) {
     await this.commentService.deleteComment(+id, req.user.userId, 'RECRUITER');
-    return { message: 'Deleted successfully' };
+    return { message: 'Xoá thành công' };
   }
 }

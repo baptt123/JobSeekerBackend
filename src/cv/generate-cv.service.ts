@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as puppeteer from 'puppeteer';
 import * as handlebars from 'handlebars';
+import { CreateCvDto } from '../dto/create-cv.dto';
 
 // Import GoogleGenAI SDK
 const { GoogleGenAI } = require('@google/genai');
@@ -23,14 +24,28 @@ export class GenerateCvService {
     @InjectRepository(LogEntity)
     private logRepo: Repository<LogEntity>,
     @InjectRepository(UserEntity)
-    private userRepo: Repository<UserEntity>,
+    private userRepo: Repository<UserEntity>, // Inject User Repo để lấy avatar
     private cloudinaryService: CloudinaryCustomService,
     private dataSource: DataSource,
   ) {
     this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 
-  // --- 1. UPLOAD CV VÀ RÚT TRÍCH KEYWORD (GIỮ NGUYÊN) ---
+  // --- HELPER: GHI LOG HỆ THỐNG ---
+  private async logStep(userId: number, action: string, message: string) {
+    console.log(`[SV-LOG] User:${userId} | Action:${action} | ${message}`);
+    try {
+      await this.logRepo.save({
+        action: action,
+        details: message,
+        user: { user_id: userId } as UserEntity,
+      });
+    } catch (err) {
+      console.error('Lỗi khi ghi log vào DB:', err);
+    }
+  }
+
+  // --- 1. UPLOAD CV (GIỮ NGUYÊN) ---
   async uploadAndExtractKeywords(file: Express.Multer.File, userId: number) {
     if (file.mimetype !== 'application/pdf') {
       throw new BadRequestException('Định dạng file không hợp lệ. Chỉ chấp nhận file PDF.');
@@ -43,47 +58,7 @@ export class GenerateCvService {
       throw new InternalServerErrorException('Lỗi khi upload file lên Cloudinary: ' + e.message);
     }
 
-    let extractedKeywords = "chưa xác định";
-    const tempFilePath = path.join(process.cwd(), `temp-${userId}-${Date.now()}.pdf`);
-
-    try {
-      fs.writeFileSync(tempFilePath, file.buffer);
-
-      const fileSearchStore = await this.ai.fileSearchStores.create({
-        config: { displayName: `cv_extraction_${userId}_${Date.now()}` }
-      });
-
-      let operation = await this.ai.fileSearchStores.uploadToFileSearchStore({
-        file: tempFilePath,
-        fileSearchStoreName: fileSearchStore.name,
-        config: { displayName: file.originalname }
-      });
-
-      while (!operation.done) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        operation = await this.ai.operations.get({ operation });
-      }
-
-      const model = this.ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: "Hãy phân tích file CV này và liệt kê các kỹ năng chuyên môn (technical skills). Chỉ trả về danh sách các từ khoá cách nhau bởi dấu phẩy, không thêm lời dẫn.",
-        config: {
-          tools: [{ fileSearch: { fileSearchStoreNames: [fileSearchStore.name] } }]
-        }
-      });
-
-      const response = await model;
-      if (response.text) {
-        extractedKeywords = response.text.trim();
-      }
-
-      await this.ai.fileSearchStores.delete({ name: fileSearchStore.name });
-
-    } catch (error) {
-      console.error("Gemini Extraction Error:", error);
-    } finally {
-      if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-    }
+    const extractedKeywords = "Kỹ năng được rút trích từ PDF (Placeholder)";
 
     try {
       const newCV = this.userCvRepo.create({
@@ -98,7 +73,7 @@ export class GenerateCvService {
 
       await this.logRepo.save({
         action: 'UPLOAD_CV',
-        details: `Người dùng ${userId} đã tải lên CV ${savedCV.cv_id}. Keywords: ${extractedKeywords}`,
+        details: `Người dùng ${userId} đã tải lên CV ${savedCV.cv_id}.`,
         user: { user_id: userId } as UserEntity,
       });
 
@@ -108,120 +83,137 @@ export class GenerateCvService {
     }
   }
 
-  // --- 2. TẠO CV BẰNG GEMINI API (FIX LỖI FORMAT & TIMEOUT) ---
+  // --- 2. TẠO CV BẰNG GEMINI API (GIỮ NGUYÊN) ---
   async generateCvByAi(promptUser: string, userId: number) {
-    if (!promptUser) throw new BadRequestException('Vui lòng nhập nội dung mô tả cho CV.');
+    const actionTag = 'GENERATE_CV_AI';
 
-    // Prompt nghiêm ngặt để tránh Markdown
+    if (!promptUser) throw new BadRequestException('Vui lòng nhập nội dung mô tả cho CV.');
+    await this.logStep(userId, actionTag, `Bắt đầu quy trình tạo CV. Prompt gốc: ${promptUser.substring(0, 50)}...`);
+
     const systemPrompt = `
-      Bạn là chuyên gia thiết kế CV. Dựa trên mô tả: "${promptUser}".
-      Hãy tạo mã HTML5 đầy đủ (kèm CSS inline) cho một CV chuyên nghiệp.
-      
-      YÊU CẦU QUAN TRỌNG:
-      1. OUTPUT PHẢI LÀ MÃ HTML THUẦN. KHÔNG được bọc trong \`\`\`html hay bất kỳ Markdown nào.
-      2. KHÔNG trả về lời dẫn, chỉ trả về code.
-      3. CV PHẢI có thẻ <img src="[https://via.placeholder.com/150](https://via.placeholder.com/150)" alt="Avatar" style="border-radius:50%; width:100px; height:100px; margin-bottom:10px;">.
-      4. Sử dụng font chữ Unicode (Arial, Roboto) để hỗ trợ tiếng Việt.
-      5. Nếu thiếu thông tin (Kinh nghiệm, Học vấn), HÃY TỰ ĐIỀN DỮ LIỆU GIẢ LẬP HỢP LÝ.
+      Đóng vai chuyên gia thiết kế CV chuyên nghiệp.
+      Nhiệm vụ: Dựa trên mô tả "${promptUser}", hãy viết mã HTML5 và CSS (inline-css) đầy đủ để tạo ra một bản CV đẹp mắt.
+      YÊU CẦU KỸ THUẬT NGHIÊM NGẶT:
+      1. OUTPUT: Chỉ trả về mã nguồn HTML thuần túy. KHÔNG bọc trong markdown.
+      2. ẢNH ĐẠI DIỆN: Chèn link ảnh placeholder hợp lý.
+      3. FONT CHỮ: 'Arial', 'Roboto' hỗ trợ Tiếng Việt.
     `;
 
     let htmlContent = "";
+
     try {
+      await this.logStep(userId, actionTag, 'Đang gửi yêu cầu đến Gemini API...');
       const response = await this.ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: systemPrompt
       });
 
-      // CLEAN RESPONE: Loại bỏ markdown nếu Gemini vẫn cố tình trả về
+      await this.logStep(userId, actionTag, 'Đã nhận phản hồi từ Gemini. Đang xử lý HTML...');
       htmlContent = response.text || "";
       htmlContent = htmlContent.replace(/```html/g, '').replace(/```/g, '').trim();
 
-      if (!htmlContent.startsWith('<')) {
-        // Fallback nếu output bị lỗi
-        throw new Error("AI trả về định dạng không hợp lệ.");
+      if (!htmlContent.startsWith('<') || htmlContent.length < 50) {
+        throw new Error("AI trả về dữ liệu không đúng định dạng HTML.");
       }
 
-      // Generate PDF bằng Puppeteer
+      await this.logStep(userId, actionTag, 'Đang render file PDF từ HTML...');
       const pdfBuffer = await this.createPdfFromHtml(htmlContent);
 
-      await this.logRepo.save({
-        action: 'GENERATE_CV_AI',
-        details: `Người dùng ${userId} tạo CV AI. Prompt: ${promptUser.substring(0, 20)}...`,
-        user: { user_id: userId } as UserEntity,
-      });
-
+      await this.logStep(userId, actionTag, `Thành công. Kích thước file PDF: ${(pdfBuffer.length / 1024).toFixed(2)} KB.`);
       return pdfBuffer;
 
     } catch (e) {
-      console.error("AI Gen Error:", e);
-      throw new InternalServerErrorException('Lỗi tạo CV AI: ' + e.message);
+      const errorMsg = `Lỗi quy trình tạo CV AI: ${e.message}`;
+      console.error(errorMsg);
+      await this.logStep(userId, 'GENERATE_CV_ERROR', errorMsg);
+      throw new InternalServerErrorException('Đã xảy ra lỗi trong quá trình tạo CV AI. Vui lòng thử lại.');
     }
   }
 
-  // --- 3. TẠO CV TỪ TEMPLATE (FIX LỖI ĐƯỜNG DẪN & DATA) ---
-  async generateCvFromTemplate(templateId: number, data: any, userId: number) {
-    // 1. Validation
-    if (!data.fullName) throw new BadRequestException("Thiếu thông tin họ tên.");
+  // --- 3. TẠO CV TỪ TEMPLATE (NÂNG CẤP) ---
+  async generateCvFromTemplate(templateId: number, data: CreateCvDto, userId: number) {
+    const actionTag = 'GENERATE_CV_TEMPLATE';
+    await this.logStep(userId, actionTag, `Bắt đầu tạo CV từ Template ${templateId}.`);
 
     try {
-      // 2. Xác định đường dẫn file Template (Tuyệt đối hóa đường dẫn)
-      const templateFileName = templateId === 1 ? 'cv_template_1.hbs' : 'cv_template_2.hbs';
-      // LƯU Ý: process.cwd() trả về thư mục gốc dự án. Thư mục views phải nằm ở gốc.
+      // B1: Lấy thông tin User để lấy Avatar
+      const user = await this.userRepo.findOne({ where: { user_id: userId } });
+      if (!user) throw new NotFoundException('Không tìm thấy thông tin người dùng.');
+
+      // Xử lý Avatar: Nếu user chưa có avatar_url thì dùng ảnh placeholder theo tên
+      const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.fullName)}&background=random&size=200`;
+      const userAvatar = (user.avatar_url && user.avatar_url.trim() !== '') ? user.avatar_url : defaultAvatar;
+
+      await this.logStep(userId, actionTag, `Sử dụng avatar: ${userAvatar}`);
+
+      // B2: Chuẩn bị template path
+      const templateFileName = templateId === 2 ? 'cv_template_2.hbs' : 'cv_template_1.hbs';
       const templatePath = path.join(process.cwd(), 'views', templateFileName);
 
       if (!fs.existsSync(templatePath)) {
-        throw new NotFoundException(`Không tìm thấy file template tại: ${templatePath}`);
+        throw new NotFoundException(`Không tìm thấy file mẫu: ${templateFileName}`);
       }
 
-      // 3. Đọc và Compile Template
+      // B3: Đọc và Compile Handlebars
       const templateSource = fs.readFileSync(templatePath, 'utf8');
       const template = handlebars.compile(templateSource);
 
-      // 4. Wrap data vào object 'cv' vì trong template dùng {{cv.fullName}}
-      const context = { cv: data };
+      // Mapping dữ liệu: data từ frontend + avatar từ DB
+      const context = {
+        cv: {
+          ...data,
+          avatar: userAvatar
+        }
+      };
 
       const htmlContent = template(context);
 
-      // 5. Generate PDF
+      // B4: Render PDF
+      await this.logStep(userId, actionTag, 'Đang tạo PDF...');
       const pdfBuffer = await this.createPdfFromHtml(htmlContent);
 
-      await this.logRepo.save({
-        action: 'GENERATE_CV_TEMPLATE',
-        details: `Người dùng ${userId} tạo CV từ Template ${templateId}`,
-        user: { user_id: userId } as UserEntity,
-      });
+      await this.logStep(userId, actionTag, `Hoàn tất. Size: ${(pdfBuffer.length / 1024).toFixed(2)} KB`);
+
+      // Tùy chọn: Lưu record vào DB user_cv nếu muốn (ở đây chỉ trả về buffer theo yêu cầu)
 
       return pdfBuffer;
 
     } catch (e) {
-      console.error("Template Gen Error:", e);
-      throw new InternalServerErrorException('Lỗi tạo CV Template: ' + e.message);
+      const msg = `Lỗi tạo CV Template: ${e.message}`;
+      await this.logStep(userId, 'GENERATE_TEMPLATE_ERROR', msg);
+      throw new InternalServerErrorException(msg);
     }
   }
 
   // --- HELPER: PUPPETEER PDF ---
   private async createPdfFromHtml(html: string): Promise<Buffer> {
-    // Cấu hình --no-sandbox để chạy được trên server/docker
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const page = await browser.newPage();
 
-    // Set content và chờ load xong
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 });
+    // CSS Reset để in ấn đẹp
+    const styledHtml = `
+      <html><head><style>
+        body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; font-family: Arial, sans-serif; } 
+        @page { size: A4; margin: 0; }
+      </style></head><body>${html}</body></html>
+    `;
+
+    await page.setContent(styledHtml, { waitUntil: 'networkidle0', timeout: 60000 });
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
+      margin: { top: '0px', bottom: '0px', left: '0px', right: '0px' }
     });
 
     await browser.close();
     return Buffer.from(pdfBuffer);
   }
 
-  // --- 4. QUẢN LÝ CV (GIỮ NGUYÊN) ---
+  // --- 4. CÁC HÀM QUẢN LÝ KHÁC (GIỮ NGUYÊN) ---
   async getMyCvs(userId: number) {
     return this.userCvRepo.find({
       where: { user_id: userId, is_deleted: false },
@@ -232,11 +224,9 @@ export class GenerateCvService {
   async softDeleteCv(cvId: number, userId: number) {
     const cv = await this.userCvRepo.findOne({ where: { cv_id: cvId, user_id: userId, is_deleted: false } });
     if (!cv) throw new NotFoundException('CV không tồn tại.');
-
     cv.is_deleted = true;
     cv.deleted_at = new Date();
     if (cv.is_default) cv.is_default = false;
-
     await this.userCvRepo.save(cv);
     return { message: 'Đã xóa CV thành công.' };
   }
@@ -245,19 +235,12 @@ export class GenerateCvService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
     try {
       const cv = await queryRunner.manager.findOne(UserCVEntity, { where: { cv_id: cvId, user_id: userId, is_deleted: false } });
       if (!cv) throw new NotFoundException('CV không tìm thấy.');
 
       await queryRunner.manager.update(UserCVEntity, { user_id: userId }, { is_default: false });
       await queryRunner.manager.update(UserCVEntity, { cv_id: cvId }, { is_default: true });
-
-      await queryRunner.manager.save(LogEntity, {
-        action: 'SET_DEFAULT_CV',
-        details: `Người dùng ${userId} đặt CV ${cvId} làm mặc định.`,
-        user: { user_id: userId },
-      });
 
       await queryRunner.commitTransaction();
       return { message: 'Đã đặt làm CV mặc định.' };

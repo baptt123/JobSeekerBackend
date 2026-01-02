@@ -76,7 +76,7 @@ export class AuthController {
     // đã được xác thực từ token.
     console.log(user);
     return {
-      message: `Hello, this is a protected route!`,
+      message: `Xin chào,route này được bảo vệ`,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
       userId: user.uid,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access

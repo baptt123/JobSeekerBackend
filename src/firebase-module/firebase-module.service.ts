@@ -81,7 +81,7 @@ export class FirebaseModuleService implements OnModuleInit {
 
     try {
       const response = await this.getMessaging().send(message);
-      this.logger.log(`Successfully sent FCM message: ${response}`);
+      this.logger.log(`Thành công gửi thông báo: ${response}`);
 
       if (userId) {
         await this.saveNotificationToDb(
@@ -94,9 +94,9 @@ export class FirebaseModuleService implements OnModuleInit {
       }
       return response;
     } catch (error) {
-      this.logger.error('Error sending FCM message:', error);
+      this.logger.error('Lỗi khi gửi thông báo:', error);
       throw new InternalServerErrorException(
-        'Failed to send push notification.',
+        'Lỗi gửi thông báo.',
       );
     }
   }
@@ -117,7 +117,7 @@ export class FirebaseModuleService implements OnModuleInit {
     });
 
     if (!user || !user.fcm_token) {
-      this.logger.warn(`User ${userId} has no FCM token. Saving to DB only.`);
+      this.logger.warn(`User ${userId} không có FCM token. Chỉ lưu xuống DB.`);
       await this.saveNotificationToDb(userId, title, body, type, metadata);
       return null;
     }
@@ -132,7 +132,7 @@ export class FirebaseModuleService implements OnModuleInit {
         data: metadata,
       });
     } catch (error) {
-      this.logger.error(`Failed to send notification to user ${userId}`, error);
+      this.logger.error(`Lỗi khi gửi thông báo ${userId}`, error);
       await this.saveNotificationToDb(userId, title, body, type, metadata);
       return null;
     }
@@ -162,11 +162,11 @@ export class FirebaseModuleService implements OnModuleInit {
     try {
       const response = await this.getMessaging().send(message);
       this.logger.log(
-        `Successfully sent topic message to ${topic}: ${response}`,
+        `Gửi thông báo thành công  ${topic}: ${response}`,
       );
       return response;
     } catch (error) {
-      this.logger.error(`Error sending topic message to ${topic}:`, error);
+      this.logger.error(`Lỗi khi gửi thông báo ${topic}:`, error);
       return null;
     }
   }
@@ -190,7 +190,7 @@ export class FirebaseModuleService implements OnModuleInit {
       await this.notificationRepository.save(newNotification);
     } catch (error) {
       this.logger.error(
-        `Failed to save notification for user ${userId}`,
+        `Lỗi khi lưu thông báo: ${userId}`,
         error,
       );
     }

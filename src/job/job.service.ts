@@ -206,7 +206,7 @@ export class JobService {
         ...(hit._source || {}),
       }));
     } catch (error: any) {
-      console.error('🔴 Elasticsearch filter error:', error);
+      console.error('🔴 Elasticsearch filter lỗi:', error);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       throw new Error(error.message);
     }
@@ -373,7 +373,7 @@ export class JobService {
     });
 
     if (!record) {
-      throw new NotFoundException('Saved job not found or already unsaved');
+      throw new NotFoundException('Công việc không thể được tìm thấy hoặc đã lưu');
     }
     await this.savedJobRepo.softDelete({ user_id: userId, job_id: jobId });
   }
@@ -448,5 +448,24 @@ export class JobService {
 
   async deleteJob(id: number) {
     return await this.jobRepo.softDelete(id);
+  }
+// [THÊM MỚI] Hàm lấy 5 công việc ngẫu nhiên từ Database
+  async getRandomJobs(): Promise<JobEntity[]> {
+    try {
+      // Sử dụng QueryBuilder để lấy ngẫu nhiên
+      const jobs = await this.jobRepo
+        .createQueryBuilder('job')
+        .leftJoinAndSelect('job.company', 'company') // Join bảng company để lấy logo, tên cty
+        // .where('job.status = :status', { status: 'Open' }) // Bỏ comment nếu muốn chỉ lấy job đang mở
+        .orderBy('RAND()') // Dùng 'RAND()' cho MySQL. Nếu dùng PostgreSQL đổi thành 'RANDOM()'
+        .take(5) // Chỉ lấy 5 bản ghi
+        .getMany();
+
+      return jobs;
+    } catch (error) {
+      console.error('Lỗi khi lấy job ngẫu nhiên:', error);
+      // Trả về mảng rỗng thay vì ném lỗi để không làm crash App client
+      return [];
+    }
   }
 }

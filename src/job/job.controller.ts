@@ -150,4 +150,19 @@ export class JobController {
     }
     return { data: result };
   }
+  @Get('random')
+  async getRandomJobs() {
+    try {
+      const jobs = await this.jobService.getRandomJobs();
+      return {
+        message: 'Lấy danh sách việc làm ngẫu nhiên thành công',
+        data: jobs,
+      };
+    } catch (error) {
+      return {
+        message: 'Lỗi hệ thống',
+        data: [],
+      };
+    }
+  }
 }

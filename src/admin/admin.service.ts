@@ -158,7 +158,7 @@ export class AdminService {
 
   async changeUserRole(userId: number, roleId: number) {
     await this.userRepo.update(userId, { role_id: roleId });
-    return { message: 'Role updated successfully' };
+    return { message: 'Cập nhật phân quyền thành công' };
   }
 
   // ==========================================
