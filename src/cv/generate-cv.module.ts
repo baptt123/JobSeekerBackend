@@ -10,6 +10,7 @@ import { GenAIModule } from 'nestjs-genai';
 import { GenerateCvController } from './generate-cv.controller';
 import { CloudinaryCustomModule } from '../cloudinary-custom/cloudinary-custom.module';
 import { LogEntity } from '../entity/log.entity';
+import { SkillEntity } from '../entity/skill.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -19,6 +20,7 @@ import { LogEntity } from '../entity/log.entity';
       CVKeywordEntity,
       JobEntity,
       LogEntity,
+      SkillEntity, // <--- Đăng ký Repository
     ]),
     GenAIModule.forRoot({
       apiKey: process.env.GEMINI_API_KEY, // .env

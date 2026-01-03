@@ -57,6 +57,7 @@ export class JobApplicationEntity {
       'Offer',
       'Accepted',
       'Rejected',
+      'Cancelled', // [FIX] Thêm trạng thái Cancelled vào đây
     ],
     default: 'Applied',
   })
@@ -76,7 +77,8 @@ export class JobApplicationEntity {
     | 'Interview'
     | 'Offer'
     | 'Accepted'
-    | 'Rejected';
+    | 'Rejected'
+    | 'Cancelled'; // [FIX] Thêm trạng thái Cancelled vào TypeScript Type
 
   @CreateDateColumn()
   applied_at: Date;

@@ -6,7 +6,10 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-  ValidationPipe, // Import ValidationPipe
+  ValidationPipe,
+  Patch,
+  Param,
+  ParseIntPipe, // Import ValidationPipe
 } from '@nestjs/common';
 import { ApplyJobDto } from '../dto/apply-job.dto';
 import { JobApplicationsService } from './job-application.service';
@@ -31,5 +34,18 @@ export class JobApplicationController {
     const userId = req.user.userId;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.jobApplicationService.applyForJob(userId, applyJobDto);
+  }
+// [NEW] API Hủy ứng tuyển
+  @Patch('cancel/:jobId')
+  @UseGuards(OrAuthGuard)
+  @Roles('CANDIDATE') // Chỉ ứng viên mới được hủy
+  async cancelApplication(
+    @Param('jobId', ParseIntPipe) jobId: number,
+    @Req() req: any,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.jobApplicationService.cancelJobApplication(userId, jobId);
   }
 }
