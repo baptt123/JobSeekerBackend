@@ -6,6 +6,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
@@ -24,10 +25,9 @@
 
   <div class="flex-1 overflow-y-auto p-8">
     <form id="postJobForm" class="max-w-4xl mx-auto space-y-6">
-
       <div class="flex justify-end">
         <button type="button" onclick="fillSampleData()" class="text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-          ⚡ Điền dữ liệu mẫu (Test)
+          ⚡ Điền dữ liệu mẫu
         </button>
       </div>
 
@@ -40,19 +40,15 @@
             <label class="block text-sm font-medium text-slate-700 mb-1">Tiêu đề công việc <span class="text-red-500">*</span></label>
             <input type="text" name="title" required placeholder="VD: Senior Frontend Developer" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
           </div>
-
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Địa điểm <span class="text-red-500">*</span></label>
             <input type="text" name="location" required placeholder="VD: Hồ Chí Minh" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
           </div>
-
           <div class="md:col-span-2">
             <label class="block text-sm font-medium text-slate-700 mb-1">Kỹ năng yêu cầu <span class="text-red-500">*</span></label>
-            <input type="text" id="skillsInput" placeholder="VD: ReactJS, NodeJS, MySQL"
-                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <input type="text" id="skillsInput" placeholder="VD: ReactJS, NodeJS, MySQL" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
             <p class="text-xs text-slate-500 mt-1">Nhập các kỹ năng phân cách nhau bằng dấu phẩy.</p>
           </div>
-
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">Lương tối thiểu ($)</label>
@@ -60,17 +56,16 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">Lương tối đa ($)</label>
-              <input type="number" name="salary_max" required placeholder="VD: 2000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+              <input type="number" name="salary_max" required placeholder="VD: 3000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
             </div>
           </div>
-
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Loại hình</label>
             <select name="job_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time">Part-time</option>
-              <option value="Remote">Remote</option>
-              <option value="Freelance">Freelance</option>
+              <option value="Full-time">Toàn thời gian</option>
+              <option value="Part-time">Bán thời gian</option>
+              <option value="Remote">Làm từ xa</option>
+              <option value="Freelance">Tự do</option>
             </select>
           </div>
           <div>
@@ -85,25 +80,14 @@
           <span class="material-symbols-outlined text-indigo-500">description</span> Chi tiết
         </h2>
         <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả công việc</label>
-            <textarea name="description" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Yêu cầu</label>
-            <textarea name="requirements" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Quyền lợi</label>
-            <textarea name="benefits" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
-          </div>
+          <div><label class="block text-sm font-medium text-slate-700 mb-1">Mô tả công việc</label><textarea name="description" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea></div>
+          <div><label class="block text-sm font-medium text-slate-700 mb-1">Yêu cầu</label><textarea name="requirements" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea></div>
+          <div><label class="block text-sm font-medium text-slate-700 mb-1">Quyền lợi</label><textarea name="benefits" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea></div>
         </div>
       </div>
 
       <div class="flex justify-end gap-3 pb-8">
-        <button type="button" onclick="window.history.back()" class="px-6 py-2 border border-slate-300 text-slate-600 font-bold rounded-lg hover:bg-slate-50 transition">
-          Hủy bỏ
-        </button>
+        <button type="button" onclick="window.history.back()" class="px-6 py-2 border border-slate-300 text-slate-600 font-bold rounded-lg hover:bg-slate-50 transition">Hủy bỏ</button>
         <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition flex items-center gap-2">
           <span class="material-symbols-outlined text-sm">send</span> Đăng tin ngay
         </button>
@@ -112,89 +96,58 @@
   </div>
 </main>
 
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-  // 1. HÀM ĐIỀN DỮ LIỆU MẪU
   function fillSampleData() {
     const form = document.getElementById('postJobForm');
-
-    // Set giá trị ngẫu nhiên để tránh trùng lặp
     const rand = Math.floor(Math.random() * 1000);
-
     form.elements['title'].value = `Senior Backend Developer (NodeJS) #${rand}`;
     form.elements['location'].value = 'Hà Nội, Việt Nam';
     form.elements['salary_min'].value = 1500;
     form.elements['salary_max'].value = 3000;
     form.elements['job_type'].value = 'Full-time';
-
-    // Set ngày hết hạn (30 ngày sau)
-    const date = new Date();
-    date.setDate(date.getDate() + 30);
+    const date = new Date(); date.setDate(date.getDate() + 30);
     form.elements['deadline'].value = date.toISOString().split('T')[0];
-
-    document.getElementById('skillsInput').value = "NestJS, TypeScript, PostgreSQL, Redis, Docker";
-
-    form.elements['description'].value = "- Thiết kế và phát triển các API RESTful hiệu suất cao.\n- Tối ưu hóa cơ sở dữ liệu và truy vấn.\n- Làm việc với Microservices.";
-    form.elements['requirements'].value = "- Ít nhất 3 năm kinh nghiệm với Node.js (NestJS).\n- Thành thạo TypeScript và SQL.\n- Có kinh nghiệm với AWS là một lợi thế.";
-    form.elements['benefits'].value = "- Lương tháng 13 + Thưởng hiệu suất.\n- Laptop MacBook Pro M3.\n- Bảo hiểm sức khỏe cao cấp.";
+    document.getElementById('skillsInput').value = "NestJS, TypeScript, PostgreSQL";
+    form.elements['description'].value = "- Phát triển API RESTful.\n- Tối ưu hóa Database.";
+    form.elements['requirements'].value = "- 3 năm kinh nghiệm NodeJS.\n- Tiếng Anh đọc hiểu.";
+    form.elements['benefits'].value = "- Lương thưởng hấp dẫn.\n- BHXH đầy đủ.";
   }
 
-  // 2. XỬ LÝ SUBMIT FORM
   document.getElementById('postJobForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-
-    // Xử lý chuỗi kỹ năng
-    const skillsString = document.getElementById('skillsInput').value;
-    const skillsArray = skillsString.split(',')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
+    const skillsArray = document.getElementById('skillsInput').value.split(',').map(s => s.trim()).filter(s => s);
     const payload = {
-      title: formData.get('title'),
-      location: formData.get('location'),
-      salary_min: Number(formData.get('salary_min')),
-      salary_max: Number(formData.get('salary_max')),
-      job_type: formData.get('job_type'),
-      deadline: formData.get('deadline'),
-      description: formData.get('description'),
-      requirements: formData.get('requirements'),
-      benefits: formData.get('benefits'),
-      skills: skillsArray
+      title: formData.get('title'), location: formData.get('location'),
+      salary_min: Number(formData.get('salary_min')), salary_max: Number(formData.get('salary_max')),
+      job_type: formData.get('job_type'), deadline: formData.get('deadline'),
+      description: formData.get('description'), requirements: formData.get('requirements'),
+      benefits: formData.get('benefits'), skills: skillsArray
     };
-
-    const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = 'Đang xử lý...';
-
-    console.log("Payload:", payload);
-
     try {
       await axios.post('/recruiter/jobs', payload);
 
-      alert('✅ Đăng tin thành công!');
-      window.location.href = '/recruiter/jobs';
+      Toastify({
+        text: "✅ Đăng tin thành công!",
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+      }).showToast();
+
+      setTimeout(() => {
+        window.location.href = '/recruiter/jobs';
+      }, 1500);
 
     } catch (error) {
-      console.error(error);
-      let msg = "Lỗi không xác định";
-
-      if (error.response && error.response.data) {
-        const data = error.response.data;
-        if (Array.isArray(data.message)) {
-          msg = data.message.join('\n- ');
-        } else {
-          msg = data.message || JSON.stringify(data);
-        }
-      } else {
-        msg = error.message;
-      }
-
-      alert('⚠️ Lỗi đăng tin:\n- ' + msg);
-
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
+      Toastify({
+        text: '⚠️ Lỗi: ' + (error.response?.data?.message || error.message),
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        style: { background: "#ef4444" }
+      }).showToast();
     }
   });
 </script>

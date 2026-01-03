@@ -6,6 +6,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
@@ -47,7 +48,7 @@
               {{#if this.company}}
                 {{this.company.name}}
               {{else}}
-                <span class="text-slate-400 italic">Freelance</span>
+                <span class="text-slate-400 italic">Tự do</span>
               {{/if}}
             </td>
             <td class="p-5 text-sm text-slate-600">
@@ -99,10 +100,22 @@
   </div>
 </main>
 
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
   async function deleteJob(id) {
-    if(confirm('Bạn có chắc muốn GỠ bài tuyển dụng này không? (Soft Delete)')) {
-      try { await axios.delete(`/admin/jobs/${id}`); window.location.reload(); } catch(e) { alert(e.message); }
+    if(confirm('Bạn có chắc muốn GỠ bài tuyển dụng này không? (Xóa mềm)')) {
+      try {
+        await axios.delete(`/admin/jobs/${id}`);
+        window.location.reload();
+      } catch(e) {
+        Toastify({
+          text: "❌ Lỗi: " + e.message,
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          style: { background: "#ef4444" }
+        }).showToast();
+      }
     }
   }
 </script>

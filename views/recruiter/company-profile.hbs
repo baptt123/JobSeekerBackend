@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Company Profile | TechConnect</title>
+  <title>Hồ sơ công ty | TechConnect</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
@@ -56,7 +56,7 @@
 
             <label for="logoInput" class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-xl">
               <span class="material-symbols-outlined text-white text-3xl mb-1">photo_camera</span>
-              <span class="text-white text-xs font-medium">Change Logo</span>
+              <span class="text-white text-xs font-medium">Đổi Logo</span>
             </label>
             <input type="file" id="logoInput" accept="image/*" class="hidden" onchange="previewLogo(this)">
           </div>
@@ -66,17 +66,17 @@
           <h1 class="text-3xl font-bold text-slate-800">{{company.name}}</h1>
           <p class="text-slate-500 font-medium flex items-center justify-center md:justify-start gap-1">
             <span class="material-symbols-outlined text-lg">verified</span>
-            Verified Company
+            Công ty đã xác minh
           </p>
         </div>
 
         <div class="flex gap-3">
           <button type="button" onclick="window.location.reload()" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition">
-            Cancel
+            Hủy
           </button>
           <button type="submit" id="btnSave" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform hover:-translate-y-0.5 transition-all flex items-center gap-2">
             <span class="material-symbols-outlined text-xl">save</span>
-            Save Changes
+            Lưu thay đổi
           </button>
         </div>
       </div>
@@ -85,7 +85,7 @@
 
         <div class="space-y-6">
           <div>
-            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Company Name</label>
+            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Tên công ty</label>
             <div class="relative">
               <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">domain</span>
               <input type="text" name="name" value="{{company.name}}" required
@@ -103,10 +103,10 @@
           </div>
 
           <div>
-            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Headquarters Address</label>
+            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Địa chỉ trụ sở</label>
             <div class="relative">
               <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">location_on</span>
-              <input type="text" name="address" value="{{company.address}}" placeholder="e.g. 123 Tech Street, Silicon Valley"
+              <input type="text" name="address" value="{{company.address}}" placeholder="VD: 123 Đường ABC, Quận 1, TP.HCM"
                      class="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none font-medium text-slate-700 placeholder-slate-400">
             </div>
           </div>
@@ -114,9 +114,9 @@
 
         <div class="space-y-6">
           <div class="h-full flex flex-col">
-            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">About Company</label>
+            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Giới thiệu công ty</label>
             <div class="relative flex-1">
-                                <textarea name="description" rows="8" placeholder="Tell candidates about your mission, culture, and values..."
+                                <textarea name="description" rows="8" placeholder="Giới thiệu về sứ mệnh, văn hóa và giá trị của công ty bạn..."
                                           class="w-full h-full p-4 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none font-medium text-slate-700 placeholder-slate-400 resize-none">{{company.description}}</textarea>
               <span class="material-symbols-outlined absolute right-4 top-4 text-slate-300">format_quote</span>
             </div>
@@ -127,7 +127,7 @@
     </form>
 
     <div class="mt-8 text-center text-slate-400 text-sm">
-      <p>&copy; 2024 TechConnect. All rights reserved.</p>
+      <p>&copy; 2025 TechConnect. Bảo lưu mọi quyền.</p>
     </div>
   </div>
 </main>
@@ -153,7 +153,7 @@
 
     const btn = document.getElementById('btnSave');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Saving...';
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Đang lưu...';
     btn.disabled = true;
     btn.classList.add('opacity-75', 'cursor-not-allowed');
 
@@ -174,7 +174,7 @@
       }
 
       // Bước 2: Chuẩn bị dữ liệu JSON
-      const formData = new FormData(this); // Lấy text inputs
+      const formData = new FormData(this);
       const payload = {
         name: formData.get('name'),
         website: formData.get('website'),
@@ -182,17 +182,15 @@
         description: formData.get('description'),
         logo_url: logoUrl
       };
-
       // Bước 3: Gửi lên Server
       const response = await fetch('/recruiter/company-profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (response.ok) {
         Toastify({
-          text: "🎉 Company Profile Updated!",
+          text: "🎉 Cập nhật hồ sơ thành công!",
           duration: 3000,
           gravity: "top",
           position: "center",
@@ -205,7 +203,7 @@
     } catch (error) {
       console.error(error);
       Toastify({
-        text: "❌ Error saving profile",
+        text: "❌ Lỗi khi lưu hồ sơ",
         style: { background: "#ef4444" }
       }).showToast();
     } finally {

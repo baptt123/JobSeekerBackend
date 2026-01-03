@@ -12,15 +12,16 @@ import {
   Patch,
 } from '@nestjs/common';
 import { WebAuthGuard } from '../guard/web-auth.guard';
-import { Roles } from '../decorator/role.decorator';
+import { Roles } from '../decorator/role-admin-recruiter.decorator';
 
 import { AdminService } from './admin.service';
 import { JobService } from '../job/job.service';
 import { CommentService } from '../comments/comments.service';
+import { RolesGuard } from '../guard/role-auth.guard.admin.recruiter';
 
 @Controller('admin')
-@UseGuards(WebAuthGuard)
-@Roles('ADMIN')
+@UseGuards(WebAuthGuard, RolesGuard) // Chạy WebAuthGuard trước để lấy user, rồi mới chạy RolesGuard@Roles('ADMIN')
+@Roles(1)
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>My Jobs - Recruiter</title>
+  <title>Việc làm của tôi - TechConnect</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
@@ -14,9 +14,9 @@
 
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
-      <h1 class="text-xl font-bold text-slate-800">Job Listings</h1>
-      <a href="/recruiter/jobs/create" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
-        <span class="material-symbols-outlined text-lg">add</span> Post New Job
+      <h1 class="text-xl font-bold text-slate-800">Danh sách việc làm</h1>
+      <a href="/recruiter/post-job" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+        <span class="material-symbols-outlined text-lg">add</span> Đăng tin mới
       </a>
     </header>
 
@@ -24,19 +24,19 @@
       {{#unless jobs}}
         <div class="text-center py-20 bg-white rounded-xl border border-dashed border-slate-300">
           <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">work_off</span>
-          <p class="text-lg text-slate-500">You haven't posted any jobs yet.</p>
-          <a href="/recruiter/jobs/create" class="text-indigo-600 font-medium mt-2 inline-block">Post your first job</a>
+          <p class="text-lg text-slate-500">Bạn chưa đăng tin tuyển dụng nào.</p>
+          <a href="/recruiter/post-job" class="text-indigo-600 font-medium mt-2 inline-block">Đăng tin đầu tiên</a>
         </div>
       {{else}}
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <table class="w-full text-left border-collapse">
             <thead class="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th class="p-4 text-sm font-semibold text-slate-600">Job Title & Skills</th>
-              <th class="p-4 text-sm font-semibold text-slate-600">Info</th>
-              <th class="p-4 text-sm font-semibold text-slate-600">Salary</th>
-              <th class="p-4 text-sm font-semibold text-slate-600">Applicants</th>
-              <th class="p-4 text-sm font-semibold text-slate-600 text-right">Actions</th>
+              <th class="p-4 text-sm font-semibold text-slate-600">Tiêu đề & Kỹ năng</th>
+              <th class="p-4 text-sm font-semibold text-slate-600">Thông tin</th>
+              <th class="p-4 text-sm font-semibold text-slate-600">Lương</th>
+              <th class="p-4 text-sm font-semibold text-slate-600">Ứng viên</th>
+              <th class="p-4 text-sm font-semibold text-slate-600 text-right">Hành động</th>
             </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -45,11 +45,7 @@
                 <td class="p-4">
                   <p class="font-bold text-slate-800 text-base">{{this.title}}</p>
                   <p class="text-xs text-indigo-600 mt-1 font-medium">
-                    {{#if this.skillNames}}
-                      Skills: {{this.skillNames}}
-                    {{else}}
-                      No skills tags
-                    {{/if}}
+                    {{#if this.skillNames}}Kỹ năng: {{this.skillNames}}{{else}}Không có thẻ kỹ năng{{/if}}
                   </p>
                 </td>
                 <td class="p-4">
@@ -57,16 +53,15 @@
                   <p class="text-xs text-slate-500 mt-1">{{this.location}}</p>
                 </td>
                 <td class="p-4 text-sm text-slate-600 font-medium">
-                  ${{this.salary_min}} - ${{this.salary_max}}
+                  {{formatCurrency this.salary_min}} - {{formatCurrency this.salary_max}}
                 </td>
                 <td class="p-4">
                   <a href="/recruiter/jobs/{{this.job_id}}" class="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold hover:bg-indigo-100 transition">
-                    <span class="material-symbols-outlined text-sm">group</span>
-                    View Applicants
+                    <span class="material-symbols-outlined text-sm">group</span> Xem ứng viên
                   </a>
                 </td>
                 <td class="p-4 text-right">
-                  <a href="/recruiter/jobs/{{this.job_id}}" class="text-slate-400 hover:text-indigo-600 mr-2" title="View Detail">
+                  <a href="/recruiter/jobs/{{this.job_id}}" class="text-slate-400 hover:text-indigo-600 mr-2" title="Xem chi tiết">
                     <span class="material-symbols-outlined">visibility</span>
                   </a>
                 </td>

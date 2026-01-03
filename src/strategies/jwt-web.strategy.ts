@@ -40,7 +40,8 @@ export class JwtWebStrategy extends PassportStrategy(Strategy, 'jwt-web') {
     return {
       userId: user.user_id, // Đảm bảo tên trường là userId
       email: user.email,
-      roleId: user.role_id,
+      roleId: user.role.role_id,
+      roleName:user.role.role_name,
       full_name: user.full_name,
       avatar_url: user.avatar_url,
     };

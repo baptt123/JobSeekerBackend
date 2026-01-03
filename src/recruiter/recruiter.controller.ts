@@ -13,7 +13,7 @@ import {
   ValidationPipe,
   InternalServerErrorException, // Import thêm để throw lỗi nếu cần
 } from '@nestjs/common';
-import { Roles } from '../decorator/role.decorator';
+import { Roles } from '../decorator/role-admin-recruiter.decorator';
 import { RecruiterService } from './recruiter.service';
 import { RecruiterCreateJobDto } from '../recruiter-dto/recruiter-create-job.dto';
 import { UpdateApplicationStatusDto } from '../recruiter-dto/update-application-status.dto';
@@ -21,10 +21,11 @@ import { WebAuthGuard } from '../guard/web-auth.guard';
 import { UpdateCompanyDto } from '../recruiter-dto/update-company.dto';
 import { CommentService } from '../comments/comments.service';
 import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
+import { RolesGuard } from '../guard/role-auth.guard.admin.recruiter';
 
 @Controller('recruiter')
-@UseGuards(WebAuthGuard)
-@Roles('RECRUITER', 'ADMIN')
+@UseGuards(WebAuthGuard, RolesGuard) // Chạy WebAuthGuard trước để lấy user, rồi mới chạy RolesGuard@Roles('ADMIN')
+@Roles(1,3)
 export class RecruiterController {
   constructor(
     private readonly service: RecruiterService,

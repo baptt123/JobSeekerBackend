@@ -8,9 +8,7 @@
         rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }</style>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
 <body class="bg-slate-50 text-slate-900 h-screen flex overflow-hidden">
 
@@ -24,7 +22,7 @@
     </div>
     <div class="flex items-center gap-3">
          <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online
+          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Trực tuyến
         </span>
       <img src="{{user.avatar_url}}" class="w-10 h-10 rounded-full border border-slate-200">
     </div>
@@ -91,15 +89,37 @@
 </main>
 
 <script>
-  // Lấy dữ liệu từ Controller truyền xuống
+  // Lấy dữ liệu từ Controller
   const chartData = {{{chartData}}};
-  console.log('Chart Data:', chartData);
+  console.log('Chart Data (Original):', chartData);
+
+  // --- XỬ LÝ DỊCH THÁNG SANG TIẾNG VIỆT ---
+  const monthMap = {
+    'Jan': 'Thg 1', 'Feb': 'Thg 2', 'Mar': 'Thg 3', 'Apr': 'Thg 4', 'May': 'Thg 5', 'Jun': 'Thg 6',
+    'Jul': 'Thg 7', 'Aug': 'Thg 8', 'Sep': 'Thg 9', 'Oct': 'Thg 10', 'Nov': 'Thg 11', 'Dec': 'Thg 12',
+    'January': 'Tháng 1', 'February': 'Tháng 2', 'March': 'Tháng 3', 'April': 'Tháng 4',
+    'May': 'Tháng 5', 'June': 'Tháng 6', 'July': 'Tháng 7', 'August': 'Tháng 8',
+    'September': 'Tháng 9', 'October': 'Tháng 10', 'November': 'Tháng 11', 'December': 'Tháng 12'
+  };
+
+  // Map labels gốc sang tiếng Việt
+  const translatedLabels = chartData.labels.map(label => {
+    // Tách chuỗi nếu có dạng "Jan 2024" hoặc dùng trực tiếp nếu chỉ có tháng
+    const parts = label.split(' ');
+    const month = parts[0];
+    const year = parts[1] || '';
+
+    if (monthMap[month]) {
+      return year ? `${monthMap[month]} ${year}` : monthMap[month];
+    }
+    return label; // Giữ nguyên nếu không tìm thấy trong map
+  });
 
   const ctx = document.getElementById('growthChart').getContext('2d');
   new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: chartData.labels, // ['Jan', 'Feb', ...]
+      labels: translatedLabels, // Sử dụng nhãn đã dịch
       datasets: [
         {
           label: 'Người dùng mới',

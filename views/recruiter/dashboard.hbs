@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recruiter Dashboard - TechConnect</title>
+  <title>Bảng điều khiển - TechConnect</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
@@ -23,13 +23,13 @@
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
       <div>
-        <h1 class="text-xl font-bold text-slate-800">Company Overview</h1>
-        <p class="text-xs text-slate-500">Welcome back, {{company}}</p>
+        <h1 class="text-xl font-bold text-slate-800">Tổng quan công ty</h1>
+        <p class="text-xs text-slate-500">Chào mừng trở lại, {{company}}</p>
       </div>
       <div class="flex gap-4">
         <a href="/recruiter/post-job" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm shadow-indigo-200">
           <span class="material-symbols-outlined text-lg">add</span>
-          Post New Job
+          Đăng tin mới
         </a>
       </div>
     </header>
@@ -41,9 +41,9 @@
             <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
               <span class="material-symbols-outlined">work</span>
             </div>
-            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">Real-time</span>
+            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">Thời gian thực</span>
           </div>
-          <p class="text-slate-500 text-sm font-medium">Active Jobs</p>
+          <p class="text-slate-500 text-sm font-medium">Tin đang hoạt động</p>
           <h3 class="text-3xl font-bold text-slate-800">{{stats.activeJobs}}</h3>
         </div>
 
@@ -52,9 +52,9 @@
             <div class="p-3 bg-purple-50 text-purple-600 rounded-lg">
               <span class="material-symbols-outlined">description</span>
             </div>
-            <span class="text-xs font-medium text-slate-500">All time</span>
+            <span class="text-xs font-medium text-slate-500">Tất cả</span>
           </div>
-          <p class="text-slate-500 text-sm font-medium">Total Applications</p>
+          <p class="text-slate-500 text-sm font-medium">Tổng đơn ứng tuyển</p>
           <h3 class="text-3xl font-bold text-slate-800">{{stats.totalApplications}}</h3>
         </div>
 
@@ -64,29 +64,29 @@
               <span class="material-symbols-outlined">post_add</span>
             </div>
           </div>
-          <p class="text-slate-500 text-sm font-medium">Total Jobs Posted</p>
+          <p class="text-slate-500 text-sm font-medium">Tổng tin đã đăng</p>
           <h3 class="text-3xl font-bold text-slate-800">{{stats.totalJobs}}</h3>
         </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-          <h3 class="text-lg font-bold text-slate-800 mb-6">Application Trends (6 Months)</h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-6">Xu hướng ứng tuyển (6 tháng gần đây)</h3>
           <div class="flex-1 flex items-center justify-center relative min-h-[300px]">
             <canvas id="applicationChart"></canvas>
           </div>
         </div>
 
         <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h3 class="text-lg font-bold text-slate-800 mb-6">Quick Actions</h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-6">Thao tác nhanh</h3>
           <div class="space-y-4">
-            <a href="/recruiter/jobs/create" class="block p-4 border border-slate-100 rounded-lg hover:bg-slate-50 transition">
-              <div class="font-semibold text-slate-700">Post a Job</div>
-              <div class="text-xs text-slate-500">Create a new opening</div>
+            <a href="/recruiter/post-job" class="block p-4 border border-slate-100 rounded-lg hover:bg-slate-50 transition">
+              <div class="font-semibold text-slate-700">Đăng tuyển dụng</div>
+              <div class="text-xs text-slate-500">Tạo cơ hội việc làm mới</div>
             </a>
             <a href="/recruiter/jobs" class="block p-4 border border-slate-100 rounded-lg hover:bg-slate-50 transition">
-              <div class="font-semibold text-slate-700">Manage Jobs</div>
-              <div class="text-xs text-slate-500">View and edit your listings</div>
+              <div class="font-semibold text-slate-700">Quản lý việc làm</div>
+              <div class="text-xs text-slate-500">Xem và chỉnh sửa danh sách</div>
             </a>
           </div>
         </div>
@@ -103,11 +103,11 @@
   const ctx = document.getElementById('applicationChart').getContext('2d');
 
   new Chart(ctx, {
-    type: 'bar', // Đổi sang biểu đồ cột cho dễ nhìn xu hướng
+    type: 'bar',
     data: {
       labels: rawData.labels, // ['Tháng 7', 'Tháng 8'...]
       datasets: [{
-        label: 'Applications',
+        label: 'Số lượng ứng tuyển',
         data: rawData.data,   // [10, 15...]
         backgroundColor: '#6366f1',
         borderRadius: 6,

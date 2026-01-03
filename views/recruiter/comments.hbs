@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Manage Comments | TechConnect</title>
+  <title>Quản lý Bình luận | TechConnect</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script>tailwind.config = { theme: { extend: { colors: { primary: '#6b26d9' } } } }</script>
   <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
@@ -15,8 +16,8 @@
 
 <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
   <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-    <h1 class="text-xl font-bold text-slate-800">Job Comments</h1>
-    <span class="text-sm text-slate-500">Manage interactions on your job posts</span>
+    <h1 class="text-xl font-bold text-slate-800">Bình luận công việc</h1>
+    <span class="text-sm text-slate-500">Quản lý tương tác trên các bài đăng của bạn</span>
   </header>
 
   <div class="flex-1 overflow-y-auto p-8">
@@ -24,11 +25,11 @@
       <table class="w-full text-left border-collapse">
         <thead class="bg-slate-50 border-b border-slate-200">
         <tr>
-          <th class="p-4 text-sm font-semibold text-slate-600">Candidate</th>
-          <th class="p-4 text-sm font-semibold text-slate-600">Comment</th>
-          <th class="p-4 text-sm font-semibold text-slate-600">Job Post</th>
-          <th class="p-4 text-sm font-semibold text-slate-600">Date</th>
-          <th class="p-4 text-sm font-semibold text-slate-600 text-right">Action</th>
+          <th class="p-4 text-sm font-semibold text-slate-600">Ứng viên</th>
+          <th class="p-4 text-sm font-semibold text-slate-600">Bình luận</th>
+          <th class="p-4 text-sm font-semibold text-slate-600">Bài đăng</th>
+          <th class="p-4 text-sm font-semibold text-slate-600">Ngày</th>
+          <th class="p-4 text-sm font-semibold text-slate-600 text-right">Hành động</th>
         </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -61,7 +62,7 @@
             </td>
 
             <td class="p-4 text-right">
-              <button onclick="deleteComment({{this.id}})" class="text-slate-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition" title="Delete Comment">
+              <button onclick="deleteComment({{this.id}})" class="text-slate-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition" title="Xóa bình luận">
                 <span class="material-symbols-outlined text-xl">delete</span>
               </button>
             </td>
@@ -72,7 +73,7 @@
           <tr>
             <td colspan="5" class="p-10 text-center text-slate-400">
               <span class="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
-              <p>No comments found on your jobs yet.</p>
+              <p>Chưa có bình luận nào trên các bài đăng của bạn.</p>
             </td>
           </tr>
         {{/unless}}
@@ -83,14 +84,21 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
   async function deleteComment(id) {
-    if(!confirm('Are you sure you want to delete this comment?')) return;
+    if(!confirm('Bạn có chắc muốn xóa bình luận này?')) return;
     try {
       await axios.delete(`/recruiter/comments/${id}`);
       window.location.reload();
     } catch (e) {
-      alert('Error deleting comment');
+      Toastify({
+        text: "❌ Lỗi khi xóa bình luận",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        style: { background: "#ef4444" }
+      }).showToast();
       console.error(e);
     }
   }

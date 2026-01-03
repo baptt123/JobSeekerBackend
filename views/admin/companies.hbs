@@ -6,6 +6,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
@@ -56,7 +57,7 @@
             <td class="p-5 text-sm">
               {{#if this.website}}
                 <a href="{{this.website}}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[16px]">link</span> Link
+                  <span class="material-symbols-outlined text-[16px]">link</span> Truy cập
                 </a>
               {{else}}
                 <span class="text-slate-400">--</span>
@@ -64,7 +65,7 @@
             </td>
             <td class="p-5">
                  <span class="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium border border-slate-200">
-                    <span class="material-symbols-outlined text-[14px]">work</span> {{this.jobs.length}} Jobs
+                      <span class="material-symbols-outlined text-[14px]">work</span> {{this.jobs.length}} tin
                  </span>
             </td>
             <td class="p-5 text-right">
@@ -110,10 +111,22 @@
   </div>
 </main>
 
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
   async function deleteCompany(id) {
     if(confirm('CẢNH BÁO: Xóa công ty sẽ xóa tất cả tin tuyển dụng liên quan. Tiếp tục?')) {
-      try { await axios.delete(`/admin/companies/${id}`); window.location.reload(); } catch(e) { alert(e.message); }
+      try {
+        await axios.delete(`/admin/companies/${id}`);
+        window.location.reload();
+      } catch(e) {
+        Toastify({
+          text: "❌ " + e.message,
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          style: { background: "#ef4444" }
+        }).showToast();
+      }
     }
   }
 </script>

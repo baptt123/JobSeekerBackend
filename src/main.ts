@@ -26,20 +26,32 @@ async function bootstrap() {
   app.use(cookieParser());
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  // Đăng ký Partials (nếu dùng)
-  // Lưu ý: Chỉ cần trỏ đến thư mục cha chứa partials
+  // Đăng ký Partials
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerPartials(join(__dirname, '..', 'views', 'partials'));
 
   // ======================================================
-  // 👇 QUAN TRỌNG: ĐĂNG KÝ CÁC HELPER CHO HANDLEBARS 👇
+  // 👇 QUAN TRỌNG: HELPER HANDLEBARS ĐÃ CẬP NHẬT 👇
   // ======================================================
-  // --- 👇 THÊM ĐOẠN NÀY ĐỂ FIX LỖI 👇 ---
-  // Helper để so sánh Role ID và in ra chữ "selected"
+
+  // --- CẬP NHẬT HELPER FORMAT TIỀN TỆ (USD, Không thập phân) ---
+  hbs.registerHelper('formatCurrency', function (value) {
+    if (value === undefined || value === null) return '$0';
+    // style: 'currency', currency: 'USD' -> mặc định có .00
+    // Thêm maximumFractionDigits: 0 để bỏ số thập phân
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  });
+  // Helper: So sánh Role ID và in ra chữ "selected"
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerHelper('isSelected', function (currentValue, targetValue) {
     return currentValue == targetValue ? 'selected' : '';
   });
+
   // Helper so sánh bằng
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerHelper('eq', (a, b) => a === b);
@@ -48,17 +60,17 @@ async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerHelper('gt', (a, b) => a > b);
 
-  // Helper phép cộng (Dùng cho phân trang: Next Page)
+  // Helper phép cộng
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerHelper('add', (a, b) => Number(a) + Number(b));
 
-  // Helper phép trừ (Dùng cho phân trang: Prev Page)
+  // Helper phép trừ
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerHelper('subtract', (a, b) => Number(a) - Number(b));
+
+  // Helper OR
   hbs.registerHelper('or', function (...args: any[]) {
-    // Loại bỏ tham số cuối cùng (là options object của Handlebars)
     args.pop();
-    // Trả về true nếu có bất kỳ tham số nào là true
     return args.some(Boolean);
   });
   // ======================================================

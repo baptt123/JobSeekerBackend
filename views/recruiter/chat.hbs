@@ -58,7 +58,6 @@
 
   // 1. Kết nối Socket
   socket = io('/', { query: { userId: myUserId } });
-
   socket.on('receive_message', (data) => {
     // Chỉ hiện tin nhắn nếu đang mở chat với người gửi
     if (data.senderId == currentReceiverId) {
@@ -75,12 +74,17 @@
       const list = document.getElementById('conversationList');
       list.innerHTML = '';
 
+      if (res.data.length === 0) {
+        list.innerHTML = '<div class="p-4 text-center text-slate-400 text-sm">Chưa có tin nhắn nào.</div>';
+        return;
+      }
+
       res.data.forEach(user => {
         const isActive = user.id === currentReceiverId ? 'bg-indigo-50 border-r-4 border-indigo-500' : 'hover:bg-slate-100';
         list.innerHTML += `
                     <div onclick="selectUser(${user.id}, '${user.name}', '${user.avatar}')"
                          class="p-4 cursor-pointer border-b border-slate-100 transition flex items-center gap-3 ${isActive}">
-                        <img src="${user.avatar}" class="w-10 h-10 rounded-full object-cover">
+                       <img src="${user.avatar}" class="w-10 h-10 rounded-full object-cover">
                         <div>
                             <p class="font-bold text-slate-800 text-sm">${user.name}</p>
                             <p class="text-xs text-slate-500 truncate w-40">Bấm để chat...</p>
@@ -89,10 +93,12 @@
                 `;
       });
     } catch(e) {
-      console.error("Cần tạo API conversations", e);
+      console.error("Lỗi tải danh sách hội thoại", e);
+      document.getElementById('conversationList').innerHTML = '<div class="p-4 text-center text-red-400 text-sm">Lỗi tải danh sách.</div>';
     }
   }
-  // loadConversations(); // Uncomment khi đã có API
+  // loadConversations();
+  // Uncomment khi đã có API
 
   // 3. Chọn User
   window.selectUser = async (id, name, avatar) => {
@@ -101,16 +107,19 @@
     document.getElementById('headerAvatar').innerHTML = `<img src="${avatar}" class="w-full h-full rounded-full object-cover">`;
     document.getElementById('msgInput').disabled = false;
     document.getElementById('sendBtn').disabled = false;
-
     // Load lịch sử chat
-    const res = await axios.get(`/recruiter/messages/${id}`);
-    const container = document.getElementById('messageContainer');
-    container.innerHTML = '';
-    res.data.forEach(msg => {
-      const side = msg.sender_id === myUserId ? 'right' : 'left';
-      appendMessage(msg.content, side);
-    });
-    scrollToBottom();
+    try {
+      const res = await axios.get(`/recruiter/messages/${id}`);
+      const container = document.getElementById('messageContainer');
+      container.innerHTML = '';
+      res.data.forEach(msg => {
+        const side = msg.sender_id === myUserId ? 'right' : 'left';
+        appendMessage(msg.content, side);
+      });
+      scrollToBottom();
+    } catch (e) {
+      console.error("Lỗi tải tin nhắn", e);
+    }
   }
 
   // 4. Gửi tin
@@ -136,7 +145,6 @@
     const container = document.getElementById('messageContainer');
     const align = side === 'right' ? 'justify-end' : 'justify-start';
     const bg = side === 'right' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none';
-
     container.innerHTML += `
             <div class="flex ${align}">
                 <div class="max-w-[70%] px-4 py-2 rounded-2xl shadow-sm text-sm ${bg}">
@@ -145,6 +153,7 @@
             </div>
         `;
   }
+
   function scrollToBottom() {
     const c = document.getElementById('messageContainer');
     c.scrollTop = c.scrollHeight;
