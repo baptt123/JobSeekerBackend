@@ -7,6 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
@@ -65,7 +67,7 @@
             </td>
             <td class="p-5">
                  <span class="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium border border-slate-200">
-                      <span class="material-symbols-outlined text-[14px]">work</span> {{this.jobs.length}} tin
+                       <span class="material-symbols-outlined text-[14px]">work</span> {{this.jobs.length}} tin
                  </span>
             </td>
             <td class="p-5 text-right">
@@ -114,10 +116,31 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
   async function deleteCompany(id) {
-    if(confirm('CẢNH BÁO: Xóa công ty sẽ xóa tất cả tin tuyển dụng liên quan. Tiếp tục?')) {
+    // Thay thế confirm mặc định bằng SweetAlert2
+    const result = await Swal.fire({
+      title: 'CẢNH BÁO XÓA!',
+      text: "Xóa công ty sẽ xóa TẤT CẢ tin tuyển dụng liên quan. Bạn có chắc chắn muốn tiếp tục?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444', // Màu đỏ
+      cancelButtonColor: '#64748b',  // Màu xám
+      confirmButtonText: 'Xóa ngay',
+      cancelButtonText: 'Hủy bỏ'
+    });
+
+    if (result.isConfirmed) {
       try {
         await axios.delete(`/admin/companies/${id}`);
-        window.location.reload();
+
+        Toastify({
+          text: "✅ Đã xóa công ty thành công",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+        }).showToast();
+
+        setTimeout(() => window.location.reload(), 1500);
       } catch(e) {
         Toastify({
           text: "❌ " + e.message,

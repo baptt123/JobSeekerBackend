@@ -7,6 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
@@ -103,10 +105,29 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
   async function deleteJob(id) {
-    if(confirm('Bạn có chắc muốn GỠ bài tuyển dụng này không? (Xóa mềm)')) {
+    const result = await Swal.fire({
+      title: 'Gỡ bài tuyển dụng?',
+      text: "Bạn có chắc muốn GỠ bài tuyển dụng này không? (Xóa mềm)",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Gỡ bài',
+      cancelButtonText: 'Hủy'
+    });
+
+    if (result.isConfirmed) {
       try {
         await axios.delete(`/admin/jobs/${id}`);
-        window.location.reload();
+        Toastify({
+          text: "✅ Đã gỡ bài đăng thành công",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+        }).showToast();
+
+        setTimeout(() => window.location.reload(), 1500);
       } catch(e) {
         Toastify({
           text: "❌ Lỗi: " + e.message,

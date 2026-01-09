@@ -7,6 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
@@ -42,7 +44,6 @@
         <tbody class="divide-y divide-slate-100">
         {{#each users}}
           <tr class="hover:bg-slate-50 transition group">
-
             <td class="p-5">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full border border-slate-200 overflow-hidden flex-shrink-0 bg-slate-100">
@@ -167,8 +168,19 @@
 
   // 1. Thay đổi quyền (Role)
   async function changeRole(userId, newRoleId) {
-    if(!confirm('Bạn có chắc chắn muốn thay đổi quyền hạn của người dùng này?')) {
-      window.location.reload();
+    const result = await Swal.fire({
+      title: 'Xác nhận thay đổi?',
+      text: "Bạn có chắc chắn muốn thay đổi quyền hạn của người dùng này?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Xác nhận',
+      cancelButtonText: 'Hủy'
+    });
+
+    if (!result.isConfirmed) {
+      window.location.reload(); // Reset select box
       return;
     }
 
@@ -189,7 +201,17 @@
 
   // 2. Khóa tài khoản (Ban)
   async function deleteUser(id) {
-    if(confirm('⚠️ CẢNH BÁO: Người dùng này sẽ không thể đăng nhập được nữa. Bạn có chắc muốn KHÓA tài khoản?')) {
+    const result = await Swal.fire({
+      title: 'Khóa tài khoản?',
+      text: "Người dùng này sẽ không thể đăng nhập được nữa. Bạn có chắc muốn KHÓA tài khoản?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Khóa ngay'
+    });
+
+    if (result.isConfirmed) {
       try {
         await axios.delete(`/admin/users/${id}`);
         showToast('Đã khóa tài khoản thành công');
@@ -202,7 +224,16 @@
 
   // 3. Mở khóa tài khoản (Restore)
   async function restoreUser(id) {
-    if(confirm('Bạn có chắc muốn MỞ KHÓA cho tài khoản này?')) {
+    const result = await Swal.fire({
+      title: 'Mở khóa tài khoản?',
+      text: "Bạn có chắc muốn MỞ KHÓA cho tài khoản này?",
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonColor: '#22c55e',
+      confirmButtonText: 'Mở khóa'
+    });
+
+    if (result.isConfirmed) {
       try {
         await axios.post(`/admin/users/${id}/restore`);
         showToast('Đã mở khóa tài khoản');

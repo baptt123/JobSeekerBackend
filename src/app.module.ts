@@ -27,9 +27,7 @@ import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { GenAIModule } from 'nestjs-genai';
 import { CallHistoryEntity } from './entity/call-history.entity';
 import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
-import { MessageEntity } from './entity/messages.entity';
 import { JobApplicationModule } from './job-application/job-application.module';
-import { MessageModule } from './message/message.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AdminModule } from './admin/admin.module';
@@ -66,7 +64,6 @@ import { CommentEntity } from './entity/comment.entity';
         SkillEntity,
         UserCVEntity,
         CallHistoryEntity,
-        MessageEntity,
         CommentEntity,
       ],
       autoLoadEntities: true,
@@ -103,7 +100,6 @@ import { CommentEntity } from './entity/comment.entity';
     CloudinaryCustomModule,
     FirebaseModuleModule,
     JobApplicationModule,
-    MessageModule,
     AdminModule,
     RecruiterModule,
     CommentsModule,

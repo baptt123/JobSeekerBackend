@@ -6,6 +6,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>tailwind.config = { theme: { extend: { colors: { primary: '#6b26d9' } } } };</script>
 </head>
 <body class="bg-gray-50 font-sans relative">
@@ -108,14 +110,28 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
   async function updateStatus(appId, newStatus) {
-    if (!confirm(`Bạn có chắc chắn muốn ${newStatus === 'Accepted' ? 'Xác nhận' : 'Từ chối'} hồ sơ này không?`)) return;
+    const actionText = newStatus === 'Accepted' ? 'Xác nhận' : 'Từ chối';
+    const confirmColor = newStatus === 'Accepted' ? '#22c55e' : '#ef4444';
+
+    const result = await Swal.fire({
+      title: `${actionText} hồ sơ?`,
+      text: `Bạn có chắc chắn muốn ${actionText.toLowerCase()} hồ sơ này không?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: confirmColor,
+      confirmButtonText: `Vâng, ${actionText}`,
+      cancelButtonText: 'Đóng'
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       const response = await fetch(`/recruiter/applications/${appId}/status`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }),
       });
       if (response.ok) {
         Toastify({
-          text: "Cập nhật trạng thái thành công!",
+          text: `✅ ${actionText} thành công!`,
           duration: 2000,
           gravity: "top",
           position: "right",
@@ -143,8 +159,10 @@
       }).showToast();
     }
   }
+
   function openCvModal(url) { document.getElementById('cvFrame').src = url; document.getElementById('cvModal').classList.remove('hidden'); }
-  function closeCvModal() { document.getElementById('cvFrame').src = ''; document.getElementById('cvModal').classList.add('hidden'); }
+  function closeCvModal() { document.getElementById('cvFrame').src = ''; document.getElementById('cvModal').classList.add('hidden');
+  }
 </script>
 </body>
 </html>

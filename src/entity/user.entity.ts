@@ -15,7 +15,6 @@ import { UserCVEntity } from './user-cv.entity';
 import { JobEntity } from './job.entity';
 import { JobApplicationEntity } from './job-application.entity';
 import { SavedJobEntity } from './save_job.entity';
-import { MessageEntity } from './messages.entity';
 import { NotificationEntity } from './notification.entity';
 import { CommentEntity } from './comment.entity';
 
@@ -85,14 +84,6 @@ export class UserEntity {
   @OneToMany(() => SavedJobEntity, (saved) => saved.user)
   @ApiProperty({ type: () => SavedJobEntity, isArray: true }) // <--- FIX CIRCULAR
   savedJobs: SavedJobEntity[];
-
-  @OneToMany(() => MessageEntity, (message) => message.sender)
-  @ApiProperty({ type: () => MessageEntity, isArray: true }) // <--- FIX CIRCULAR
-  sentMessages: MessageEntity[];
-
-  @OneToMany(() => MessageEntity, (message) => message.receiver)
-  @ApiProperty({ type: () => MessageEntity, isArray: true }) // <--- FIX CIRCULAR
-  receivedMessages: MessageEntity[];
 
   @OneToMany(() => NotificationEntity, (notification) => notification.user)
   @ApiProperty({ type: () => NotificationEntity, isArray: true }) // <--- FIX CIRCULAR
