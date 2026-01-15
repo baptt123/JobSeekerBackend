@@ -1,6 +1,5 @@
 import {
   Injectable,
-  InternalServerErrorException,
   Logger,
   OnModuleInit,
 } from '@nestjs/common';
@@ -27,8 +26,6 @@ export class FirebaseModuleService implements OnModuleInit {
     private readonly notificationRepository: Repository<NotificationEntity>,
     private moduleRef: ModuleRef,
   ) {}
-
-  // ... (Các hàm init, sendPushNotification, sendNotificationToUser, sendNotificationToTopic giữ nguyên)
 
   onModuleInit() {
     const privateKey = this.configService.get<string>('FIREBASE_PRIVATE_KEY');
@@ -60,6 +57,10 @@ export class FirebaseModuleService implements OnModuleInit {
     return admin.messaging();
   }
 
+  /**
+   * Gửi thông báo Push Notification (Core function)
+   * Không catch lỗi 500 ở đây để hàm gọi bên ngoài có thể xử lý logic (ví dụ xóa token)
+   */
   async sendPushNotification(dto: SendNotificationDto): Promise<string> {
     const { token, title, body, userId, data, type } = dto;
 
@@ -79,28 +80,27 @@ export class FirebaseModuleService implements OnModuleInit {
       apns: { payload: { aps: { sound: 'default' } } },
     };
 
-    try {
-      const response = await this.getMessaging().send(message);
-      this.logger.log(`Thành công gửi thông báo: ${response}`);
+    // Chỉ thực hiện gửi, nếu lỗi sẽ ném ra để sendNotificationToUser xử lý
+    const response = await this.getMessaging().send(message);
+    this.logger.log(`Thành công gửi thông báo tới token ${token.substring(0, 10)}...`);
 
-      if (userId) {
-        await this.saveNotificationToDb(
-          userId,
-          title,
-          body,
-          type ?? NotificationType.SYSTEM,
-          data,
-        );
-      }
-      return response;
-    } catch (error) {
-      this.logger.error('Lỗi khi gửi thông báo:', error);
-      throw new InternalServerErrorException(
-        'Lỗi gửi thông báo.',
+    // Nếu gửi thành công và có userId, lưu vào DB (Optional: có thể lưu ở ngoài)
+    if (userId) {
+      await this.saveNotificationToDb(
+        userId,
+        title,
+        body,
+        type ?? NotificationType.SYSTEM,
+        data,
       );
     }
+    return response;
   }
 
+  /**
+   * Gửi thông báo cho 1 User cụ thể theo User ID
+   * Tự động xử lý xóa Token nếu Token không hợp lệ
+   */
   async sendNotificationToUser(
     userId: number,
     title: string,
@@ -111,29 +111,49 @@ export class FirebaseModuleService implements OnModuleInit {
     const userService = this.getUserService();
     if (!userService) return null;
 
+    // 1. Lấy thông tin User và Token
     const user = await userService.userRepo.findOne({
       where: { user_id: userId },
       select: ['user_id', 'fcm_token'],
     });
 
+    // 2. [QUAN TRỌNG] Luôn lưu thông báo vào DB trước hoặc song song
+    // Để kể cả khi gửi Push thất bại, User vào app vẫn thấy thông báo
+    await this.saveNotificationToDb(userId, title, body, type, metadata);
+
+    // 3. Nếu không có token thì dừng (nhưng đã lưu DB rồi)
     if (!user || !user.fcm_token) {
-      this.logger.warn(`User ${userId} không có FCM token. Chỉ lưu xuống DB.`);
-      await this.saveNotificationToDb(userId, title, body, type, metadata);
+      this.logger.debug(`User ${userId} không có FCM token. Chỉ lưu xuống DB.`);
       return null;
     }
 
     try {
+      // 4. Cố gắng gửi Push Notification
       return await this.sendPushNotification({
         token: user.fcm_token,
         title,
         body,
-        userId,
+        // Không truyền userId vào đây nữa để tránh lưu DB 2 lần (vì đã lưu ở bước 2)
+        // Hoặc nếu hàm sendPushNotification logic cũ có check userId để lưu thì bỏ userId ở dòng này
+        // userId: userId,
         type,
         data: metadata,
       });
-    } catch (error) {
-      this.logger.error(`Lỗi khi gửi thông báo ${userId}`, error);
-      await this.saveNotificationToDb(userId, title, body, type, metadata);
+    } catch (error: any) {
+      // 5. [FIX LỖI] Xử lý token chết/không hợp lệ
+      if (
+        error.code === 'messaging/registration-token-not-registered' ||
+        error.code === 'messaging/invalid-argument'
+      ) {
+        this.logger.warn(`FCM Token của user ${userId} không hợp lệ hoặc đã hết hạn. Đang xóa token...`);
+
+        // Xóa token trong DB để lần sau không gửi lỗi nữa
+        // @ts-ignore
+        await userService.userRepo.update({ user_id: userId }, { fcm_token: null });
+      } else {
+        // Log các lỗi khác (ví dụ lỗi mạng, lỗi server Firebase) nhưng không throw 500
+        this.logger.error(`Lỗi khi gửi Push cho user ${userId}: ${error.message}`);
+      }
       return null;
     }
   }
@@ -162,11 +182,11 @@ export class FirebaseModuleService implements OnModuleInit {
     try {
       const response = await this.getMessaging().send(message);
       this.logger.log(
-        `Gửi thông báo thành công  ${topic}: ${response}`,
+        `Gửi thông báo thành công topic ${topic}: ${response}`,
       );
       return response;
     } catch (error) {
-      this.logger.error(`Lỗi khi gửi thông báo ${topic}:`, error);
+      this.logger.error(`Lỗi khi gửi thông báo topic ${topic}:`, error);
       return null;
     }
   }
@@ -190,7 +210,7 @@ export class FirebaseModuleService implements OnModuleInit {
       await this.notificationRepository.save(newNotification);
     } catch (error) {
       this.logger.error(
-        `Lỗi khi lưu thông báo: ${userId}`,
+        `Lỗi khi lưu thông báo vào DB cho user ${userId}`,
         error,
       );
     }
@@ -198,12 +218,13 @@ export class FirebaseModuleService implements OnModuleInit {
 
   private getUserService(): UserService {
     if (!this.userService) {
+      // Dùng ModuleRef để lấy Service nhằm tránh Circular Dependency
       this.userService = this.moduleRef.get(UserService, { strict: false });
     }
     return this.userService;
   }
 
-  // --- [NEW] CÁC HÀM BỔ SUNG ĐỂ CONTROLLER GỌI ---
+  // --- CÁC HÀM API CHO CONTROLLER ---
 
   /**
    * 1. Lấy danh sách thông báo của User
@@ -215,27 +236,4 @@ export class FirebaseModuleService implements OnModuleInit {
     });
   }
 
-  /**
-   * 2. Đánh dấu 1 thông báo là đã đọc
-   */
-  async markAsRead(notificationId: number, userId: number): Promise<void> {
-    const notification = await this.notificationRepository.findOne({
-      where: { notification_id: notificationId, user_id: userId },
-    });
-
-    if (notification) {
-      notification.is_read = true;
-      await this.notificationRepository.save(notification);
-    }
-  }
-
-  /**
-   * 3. Đánh dấu tất cả thông báo là đã đọc
-   */
-  async markAllAsRead(userId: number): Promise<void> {
-    await this.notificationRepository.update(
-      { user_id: userId, is_read: false },
-      { is_read: true },
-    );
-  }
 }

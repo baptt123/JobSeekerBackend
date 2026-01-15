@@ -1,20 +1,21 @@
-import { Type } from 'class-transformer';
 import { IsOptional, IsString, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class FilterJobDto {
   @IsOptional()
   @IsString()
   location?: string;
 
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  salary_min?: number;
+  // [REMOVED] Bỏ lọc theo lương
+  // @IsOptional()
+  // @IsNumber()
+  // @Type(() => Number)
+  // salary_min?: number;
 
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  salary_max?: number;
+  // @IsOptional()
+  // @IsNumber()
+  // @Type(() => Number)
+  // salary_max?: number;
 
   @IsOptional()
   @IsString()

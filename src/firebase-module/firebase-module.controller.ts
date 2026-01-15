@@ -5,15 +5,12 @@ import {
   ValidationPipe,
   Get,
   UseGuards,
-  Patch,
-  Param,
   Req,
 } from '@nestjs/common';
 import { FirebaseModuleService } from './firebase-module.service';
 import { SendNotificationDto } from '../dto/send-notification.dto';
 import { OrAuthGuard } from '../guard/or-auth.guard';
 import { Roles } from '../decorator/role.decorator';
-import { GetUser } from '../decorator/get-user.decorator';
 
 @Controller('firebase')
 export class FirebaseModuleController {
@@ -45,22 +42,12 @@ export class FirebaseModuleController {
   async getNotifications(@Req() req: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId;
-    // 🔥 DEBUG: Xem Backend đang nhận ID là bao nhiêu
-    console.log(
-      '>>> API getNotifications CALLED by User ID:',
-      userId,
-      typeof userId,
-    );
+    console.log('>>> API getNotifications CALLED by User ID:', userId);
 
     try {
-      const notifications = await this.firebaseService.getNotifications(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        userId,
-      );
-      console.log(
-        `>>> Tìm thấy ${notifications.length} thông báo cho user ${userId}`,
-      );
+      const notifications = await this.firebaseService.getNotifications(userId);
 
+      // Vẫn tính toán số lượng chưa đọc để hiển thị badge nếu cần (tùy chọn)
       const unreadCount = notifications.filter((n) => !n.is_read).length;
 
       return {
@@ -74,21 +61,5 @@ export class FirebaseModuleController {
     }
   }
 
-  // [NEW] API Đánh dấu 1 thông báo đã đọc
-  @Patch('notifications/:id/read')
-  @UseGuards(OrAuthGuard)
-  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  async markAsRead(@Param('id') id: string, @GetUser('userId') userId: number) {
-    await this.firebaseService.markAsRead(+id, userId);
-    return { success: true, message: 'Đã đánh dấu đã đọc' };
-  }
-
-  // [NEW] API Đánh dấu tất cả đã đọc
-  @Patch('notifications/read-all')
-  @UseGuards(OrAuthGuard)
-  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  async markAllAsRead(@GetUser('userId') userId: number) {
-    await this.firebaseService.markAllAsRead(userId);
-    return { success: true, message: 'Đã đánh dấu tất cả là đã đọc' };
-  }
+  // [REMOVED] Các API markAsRead và markAllAsRead đã bị loại bỏ theo yêu cầu.
 }

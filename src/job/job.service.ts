@@ -157,47 +157,55 @@ export class JobService {
   }
 
   async filterJobs(dto: FilterJobDto) {
-    // ... (Giữ nguyên logic cũ)
-    const { location, salary_min, salary_max, job_type, size = 20 } = dto;
+    // 1. Bỏ salary_min, salary_max khỏi destructuring
+    const { location, job_type, size = 20 } = dto;
 
     try {
-      const filter: any[] = [];
+      const mustQuery: any[] = [];
+
+      // --- ÁP DỤNG GIẢI PHÁP 3: MULTI_MATCH ---
+
+      // 2. Xử lý Location
       if (location) {
-        filter.push({
-          term: { 'location.keyword': location },
-        });
-      }
-      if (job_type) {
-        filter.push({
-          term: { 'job_type.keyword': job_type },
-        });
-      }
-      if (salary_max != null) {
-        filter.push({
-          range: { salary_min: { lte: salary_max } },
-        });
-      }
-      if (salary_min != null) {
-        filter.push({
-          bool: {
-            should: [
-              { range: { salary_max: { gte: salary_min } } },
-              { term: { salary_max: 0 } },
-            ],
-            minimum_should_match: 1,
+        mustQuery.push({
+          multi_match: {
+            query: location,
+            // Tìm ưu tiên trong location (nhân 3 điểm), sau đó tìm trong title, requirements, description
+            fields: ['location^3', 'title', 'requirements', 'description'],
+            fuzziness: 'AUTO', // Chấp nhận sai chính tả
+            operator: 'or',    // 'or': Chỉ cần khớp 1 từ là lấy -> Tăng số lượng kết quả
           },
         });
       }
 
+      // 3. Xử lý Job Type
+      if (job_type) {
+        mustQuery.push({
+          multi_match: {
+            query: job_type,
+            // Tìm ưu tiên trong job_type, nhưng quét cả title
+            fields: ['job_type^3', 'title', 'description'],
+            fuzziness: 'AUTO',
+          },
+        });
+      }
+
+      // 4. Thực thi Query
       const result = await this.esClient.search({
         index: 'jobs',
         size: size,
-        query: {
-          bool: {
-            filter: filter,
+        body: {
+          query: {
+            bool: {
+              must: mustQuery, // Dùng 'must' thay vì 'filter' để tính điểm relevance
+            },
           },
+          // Sắp xếp: Ưu tiên độ khớp (_score) cao nhất, nếu bằng nhau thì lấy mới nhất
+          sort: [
+            { _score: { order: 'desc' } },
+            { created_at: { order: 'desc' } },
+          ],
         },
-        sort: [{ salary_min: { order: 'desc' } }],
       });
 
       const hits = result.hits?.hits || [];
@@ -207,7 +215,6 @@ export class JobService {
       }));
     } catch (error: any) {
       console.error('🔴 Elasticsearch filter lỗi:', error);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       throw new Error(error.message);
     }
   }

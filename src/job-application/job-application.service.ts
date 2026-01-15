@@ -62,12 +62,8 @@ export class JobApplicationsService {
       user_id: userId,
     });
 
-    // Nếu đã từng hủy (Cancelled), cho phép ứng tuyển lại (Tùy chọn logic)
-    // Nếu muốn chặn tuyệt đối thì giữ nguyên code cũ.
-    // Ở đây tôi giữ nguyên logic cũ: Nếu có record bất kể trạng thái nào -> Báo lỗi.
     if (existingApplication) {
-      // Nếu trạng thái là Cancelled thì có thể xóa record cũ hoặc update lại
-      // Nhưng để an toàn và đơn giản, ta báo lỗi conflict
+      // Nếu trạng thái là Cancelled thì có thể update lại, nhưng ở đây báo lỗi conflict theo logic cũ
       throw new ConflictException('Bạn đã ứng tuyển công việc này rồi.');
     }
 
@@ -102,7 +98,7 @@ export class JobApplicationsService {
       user_id: userId,
       cv_id: selectedCv.cv_id,
       cover_letter: coverLetter,
-      status: 'Applied', // Trạng thái khởi tạo chuẩn trong Entity
+      status: 'Applied', // Trạng thái khởi tạo chuẩn
       applied_at: new Date(),
     });
 
@@ -126,6 +122,7 @@ export class JobApplicationsService {
             click_action: 'RECRUITER_VIEW_APPLICATION',
             job_id: job.job_id,
             application_id: savedApp.application_id,
+            type: 'APPLY'
           },
         )
         .catch((err) => console.error('Lỗi gửi thông báo tuyển dụng:', err));
@@ -134,28 +131,53 @@ export class JobApplicationsService {
     return savedApp;
   }
 
-  // [HÀM MỚI] Xử lý hủy ứng tuyển
+  // [UPDATED] Xử lý hủy ứng tuyển và Gửi thông báo
   async cancelJobApplication(userId: number, jobId: number) {
+    // 1. Tìm application kèm thông tin Job và Recruiter (postedBy)
     const application = await this.appRepo.findOne({
       where: { job_id: jobId, user_id: userId },
+      relations: ['job', 'job.postedBy'], // Load relation để lấy ID recruiter
     });
 
     if (!application) {
       throw new NotFoundException('Bạn chưa ứng tuyển công việc này.');
     }
 
-    // [FIX] Sửa logic so sánh: Dùng 'Applied' thay vì 'Pending'
-    // 'Applied' là trạng thái mặc định khi vừa nộp đơn trong Entity của bạn.
     if (application.status !== 'Applied') {
       throw new BadRequestException(
         'Không thể hủy đơn khi hồ sơ đã được duyệt hoặc từ chối.',
       );
     }
 
-    // [FIX] Gán trạng thái 'Cancelled'.
-    // Bây giờ hợp lệ vì đã update Entity.
+    // 2. Cập nhật trạng thái thành Cancelled
     application.status = 'Cancelled';
+    const savedApp = await this.appRepo.save(application);
 
-    return await this.appRepo.save(application);
+    // 3. Gửi Notification cho Recruiter
+    if (application.job && application.job.postedBy) {
+      const applicant = await this.userRepo.findOneBy({ user_id: userId });
+      const applicantName = applicant ? applicant.full_name : 'Một ứng viên';
+
+      const notiTitle = 'Ứng viên hủy ứng tuyển ❌';
+      const notiBody = `${applicantName} đã hủy ứng tuyển vào vị trí ${application.job.title}`;
+
+      this.firebaseService
+        .sendNotificationToUser(
+          application.job.postedBy.user_id,
+          notiTitle,
+          notiBody,
+          NotificationType.APPLICATION_UPDATE,
+          {
+            click_action: 'RECRUITER_VIEW_APPLICATION',
+            job_id: application.job.job_id,
+            application_id: savedApp.application_id,
+            type: 'CANCEL',
+            status: 'Cancelled'
+          },
+        )
+        .catch((err) => console.error('Lỗi gửi thông báo hủy tuyển dụng:', err));
+    }
+
+    return savedApp;
   }
 }
