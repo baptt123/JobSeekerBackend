@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
@@ -47,9 +46,7 @@
             <td class="p-5">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full border border-slate-200 overflow-hidden flex-shrink-0 bg-slate-100">
-                  <img src="{{this.avatar_url}}"
-                       onerror="this.src='https://ui-avatars.com/api/?name={{this.full_name}}&background=random'"
-                  class="w-full h-full object-cover">
+                  <img src="{{this.avatar_url}}" onerror="this.src='https://ui-avatars.com/api/?name={{this.full_name}}&background=random'" class="w-full h-full object-cover">
                 </div>
                 <div>
                   <p class="font-bold text-slate-800 text-sm">{{this.full_name}}</p>
@@ -60,9 +57,9 @@
 
             <td class="p-5 text-sm text-slate-600">
               <div class="flex flex-col gap-1">
-                    <span class="flex items-center gap-1">
-                       <span class="material-symbols-outlined text-[14px] text-slate-400">mail</span> {{this.email}}
-                    </span>
+                <span class="flex items-center gap-1">
+                   <span class="material-symbols-outlined text-[14px] text-slate-400">mail</span> {{this.email}}
+                </span>
                 {{#if this.phone}}
                   <span class="flex items-center gap-1 text-xs text-slate-500">
                         <span class="material-symbols-outlined text-[14px] text-slate-400">call</span> {{this.phone}}
@@ -73,9 +70,8 @@
 
             <td class="p-5">
               <div class="relative w-40">
-                <select onchange="changeRole({{this.user_id}}, this.value)"
-                        class="w-full text-xs font-medium border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-slate-700 cursor-pointer hover:border-blue-400 transition shadow-sm appearance-none pr-8">
-                  <option value="2" {{#if (eq this.role.role_id 2)}}selected{{/if}}>Ứng viên (Candidate)</option>
+                <select onchange="changeRole({{this.user_id}}, this.value)" class="w-full text-xs font-medium border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-slate-700 cursor-pointer hover:border-blue-400 transition shadow-sm appearance-none pr-8">
+                  <option value="2" {{#if (eq this.role.role_id 2)}}selected{{/if}}>Ứng viên</option>
                   <option value="3" {{#if (eq this.role.role_id 3)}}selected{{/if}}>Nhà tuyển dụng</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
@@ -99,15 +95,11 @@
             <td class="p-5 text-right">
               <div class="flex justify-end gap-2">
                 {{#if this.deleted_at}}
-                  <button onclick="restoreUser({{this.user_id}})"
-                          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition"
-                          title="Mở khóa tài khoản">
+                  <button onclick="restoreUser({{this.user_id}})" class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition" title="Mở khóa tài khoản">
                     <span class="material-symbols-outlined text-[16px]">lock_open</span> Mở khóa
                   </button>
                 {{else}}
-                  <button onclick="deleteUser({{this.user_id}})"
-                          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition"
-                          title="Khóa tài khoản">
+                  <button onclick="deleteUser({{this.user_id}})" class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition" title="Khóa tài khoản">
                     <span class="material-symbols-outlined text-[16px]">lock</span> Khóa
                   </button>
                 {{/if}}
@@ -122,35 +114,28 @@
     {{#if (gt pagination.totalPages 1)}}
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 border-t border-slate-200 pt-4">
         <p class="text-sm text-slate-500">
-          Đang hiển thị trang <span class="font-bold text-slate-900">{{pagination.currentPage}}</span> trên tổng số <span class="font-bold text-slate-900">{{pagination.totalPages}}</span>
+          Trang <span class="font-bold text-slate-900">{{pagination.currentPage}}</span> / <span class="font-bold text-slate-900">{{pagination.totalPages}}</span>
         </p>
 
         <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-        <a href="{{#if pagination.hasPrev}}?page={{pagination.prevPage}}{{else}}#{{/if}}"
-          class="relative inline-flex items-center rounded-l-md px-3 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 {{#unless pagination.hasPrev}}opacity-50 cursor-not-allowed{{/unless}}">
+        <a href="{{#if pagination.hasPrev}}?page={{pagination.prevPage}}{{else}}#{{/if}}" class="relative inline-flex items-center rounded-l-md px-3 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 {{#unless pagination.hasPrev}}opacity-50 cursor-not-allowed{{/unless}}">
           <span class="material-symbols-outlined text-sm">chevron_left</span>
-          <span class="sr-only">Trước</span>
           </a>
 
           <div class="flex overflow-x-auto max-w-[200px] sm:max-w-xs scrollbar-hide border-y border-gray-300">
             {{#each pagination.pages}}
-              <a href="?page={{this}}"
-              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0 border-x border-gray-300
-              {{#if (eq this ../pagination.currentPage)}} z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 {{else}} text-gray-900 hover:bg-gray-50 {{/if}}">
+              <a href="?page={{this}}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0 border-x border-gray-300 {{#if (eq this ../pagination.currentPage)}} z-10 bg-blue-600 text-white {{else}} text-gray-900 hover:bg-gray-50 {{/if}}">
               {{this}}
               </a>
             {{/each}}
           </div>
 
-          <a href="{{#if pagination.hasNext}}?page={{pagination.nextPage}}{{else}}#{{/if}}"
-          class="relative inline-flex items-center rounded-r-md px-3 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 {{#unless pagination.hasNext}}opacity-50 cursor-not-allowed{{/unless}}">
+          <a href="{{#if pagination.hasNext}}?page={{pagination.nextPage}}{{else}}#{{/if}}" class="relative inline-flex items-center rounded-r-md px-3 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 {{#unless pagination.hasNext}}opacity-50 cursor-not-allowed{{/unless}}">
           <span class="material-symbols-outlined text-sm">chevron_right</span>
-          <span class="sr-only">Sau</span>
           </a>
         </nav>
       </div>
     {{/if}}
-
   </div>
 </main>
 
@@ -166,7 +151,6 @@
     }).showToast();
   }
 
-  // 1. Thay đổi quyền (Role)
   async function changeRole(userId, newRoleId) {
     const result = await Swal.fire({
       title: 'Xác nhận thay đổi?',
@@ -178,39 +162,33 @@
       confirmButtonText: 'Xác nhận',
       cancelButtonText: 'Hủy'
     });
-
     if (!result.isConfirmed) {
-      window.location.reload(); // Reset select box
+      window.location.reload();
       return;
     }
 
     try {
-      const response = await axios.patch(`/admin/users/${userId}/role`, {
-        roleId: Number(newRoleId)
-      });
+      const response = await axios.patch(`/admin/users/${userId}/role`, { roleId: Number(newRoleId) });
       if (response.status === 200 || response.status === 201) {
         showToast('✅ Cập nhật quyền thành công!');
         setTimeout(() => window.location.reload(), 1000);
       }
     } catch (error) {
-      console.error(error);
-      const msg = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật quyền';
+      const msg = error.response?.data?.message || 'Có lỗi xảy ra';
       showToast('❌ Lỗi: ' + msg, 'error');
     }
   }
 
-  // 2. Khóa tài khoản (Ban)
   async function deleteUser(id) {
     const result = await Swal.fire({
       title: 'Khóa tài khoản?',
-      text: "Người dùng này sẽ không thể đăng nhập được nữa. Bạn có chắc muốn KHÓA tài khoản?",
+      text: "Người dùng này sẽ bị KHÓA (Soft Delete) và không thể đăng nhập.",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#64748b',
       confirmButtonText: 'Khóa ngay'
     });
-
     if (result.isConfirmed) {
       try {
         await axios.delete(`/admin/users/${id}`);
@@ -222,7 +200,6 @@
     }
   }
 
-  // 3. Mở khóa tài khoản (Restore)
   async function restoreUser(id) {
     const result = await Swal.fire({
       title: 'Mở khóa tài khoản?',
@@ -232,7 +209,6 @@
       confirmButtonColor: '#22c55e',
       confirmButtonText: 'Mở khóa'
     });
-
     if (result.isConfirmed) {
       try {
         await axios.post(`/admin/users/${id}/restore`);

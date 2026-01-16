@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
@@ -89,23 +88,17 @@
           Trang <span class="font-bold text-slate-800">{{pagination.currentPage}}</span> / {{pagination.totalPages}}
         </p>
         <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm bg-white">
-        <a href="{{#if pagination.hasPrev}}?page={{pagination.prevPage}}{{else}}#{{/if}}"
-          class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 {{#unless pagination.hasPrev}}opacity-50 cursor-not-allowed{{/unless}}">
+        <a href="{{#if pagination.hasPrev}}?page={{pagination.prevPage}}{{else}}#{{/if}}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 {{#unless pagination.hasPrev}}opacity-50 cursor-not-allowed{{/unless}}">
           <span class="material-symbols-outlined text-sm">chevron_left</span>
           </a>
-
           <div class="flex overflow-x-auto max-w-[200px] sm:max-w-xs scrollbar-hide">
             {{#each pagination.pages}}
-              <a href="?page={{this}}"
-              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300
-              {{#if (eq this ../pagination.currentPage)}} z-10 bg-blue-600 text-white {{else}} text-gray-900 hover:bg-gray-50 {{/if}}">
+              <a href="?page={{this}}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 {{#if (eq this ../pagination.currentPage)}} z-10 bg-blue-600 text-white {{else}} text-gray-900 hover:bg-gray-50 {{/if}}">
               {{this}}
               </a>
             {{/each}}
           </div>
-
-          <a href="{{#if pagination.hasNext}}?page={{pagination.nextPage}}{{else}}#{{/if}}"
-          class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 {{#unless pagination.hasNext}}opacity-50 cursor-not-allowed{{/unless}}">
+          <a href="{{#if pagination.hasNext}}?page={{pagination.nextPage}}{{else}}#{{/if}}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 {{#unless pagination.hasNext}}opacity-50 cursor-not-allowed{{/unless}}">
           <span class="material-symbols-outlined text-sm">chevron_right</span>
           </a>
         </nav>
@@ -119,7 +112,7 @@
   async function deleteComment(id) {
     const result = await Swal.fire({
       title: 'CẢNH BÁO ADMIN',
-      text: "Bạn có chắc muốn xóa bình luận này?",
+      text: "Bạn có chắc muốn xóa bình luận này? (Soft Delete)",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
@@ -127,7 +120,6 @@
       confirmButtonText: 'Xóa ngay',
       cancelButtonText: 'Hủy'
     });
-
     if (result.isConfirmed) {
       try {
         await axios.delete(`/admin/comments/${id}`);

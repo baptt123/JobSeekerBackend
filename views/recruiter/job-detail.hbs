@@ -77,7 +77,10 @@
             </td>
             <td class="p-4 text-sm text-gray-600"><script>document.write(new Date("{{this.applied_at}}").toLocaleDateString('vi-VN'))</script></td>
             <td class="p-4">
-               <span class="px-2 py-1 rounded text-xs font-bold border {{#if (eq this.status 'Applied')}}bg-gray-50 border-gray-200 text-gray-600{{/if}} {{#if (eq this.status 'Accepted')}}bg-green-50 border-green-200 text-green-600{{/if}} {{#if (eq this.status 'Rejected')}}bg-red-50 border-red-200 text-red-600{{/if}}">
+               <span class="px-2 py-1 rounded text-xs font-bold border
+                 {{#if (eq this.status 'Applied')}}bg-gray-50 border-gray-200 text-gray-600{{/if}}
+                 {{#if (eq this.status 'Accepted')}}bg-green-50 border-green-200 text-green-600{{/if}}
+                 {{#if (eq this.status 'Rejected')}}bg-red-50 border-red-200 text-red-600{{/if}}">
                  {{#if (eq this.status 'Applied')}}Chờ duyệt{{/if}}
                  {{#if (eq this.status 'Accepted')}}Đã xác nhận{{/if}}
                  {{#if (eq this.status 'Rejected')}}Đã từ chối{{/if}}
@@ -109,13 +112,14 @@
 </div>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
+  // [UPDATED] Hàm cập nhật trạng thái
   async function updateStatus(appId, newStatus) {
     const actionText = newStatus === 'Accepted' ? 'Xác nhận' : 'Từ chối';
     const confirmColor = newStatus === 'Accepted' ? '#22c55e' : '#ef4444';
 
     const result = await Swal.fire({
       title: `${actionText} hồ sơ?`,
-      text: `Bạn có chắc chắn muốn ${actionText.toLowerCase()} hồ sơ này không?`,
+      text: `Bạn có chắc chắn muốn ${actionText.toLowerCase()} hồ sơ này không? Ứng viên sẽ nhận được thông báo ngay lập tức.`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: confirmColor,
@@ -126,18 +130,23 @@
     if (!result.isConfirmed) return;
 
     try {
+      Swal.showLoading(); // Hiển thị loading khi đang gọi API & gửi Notification
+
       const response = await fetch(`/recruiter/applications/${appId}/status`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }),
       });
+
+      Swal.close();
+
       if (response.ok) {
         Toastify({
-          text: `✅ ${actionText} thành công!`,
-          duration: 2000,
+          text: `✅ ${actionText} thành công! Đã gửi thông báo cho ứng viên.`,
+          duration: 3000,
           gravity: "top",
           position: "right",
           style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
         }).showToast();
-        setTimeout(() => window.location.reload(), 1500);
+        setTimeout(() => window.location.reload(), 2000);
       }
       else {
         const err = await response.json();
@@ -161,8 +170,7 @@
   }
 
   function openCvModal(url) { document.getElementById('cvFrame').src = url; document.getElementById('cvModal').classList.remove('hidden'); }
-  function closeCvModal() { document.getElementById('cvFrame').src = ''; document.getElementById('cvModal').classList.add('hidden');
-  }
+  function closeCvModal() { document.getElementById('cvFrame').src = ''; document.getElementById('cvModal').classList.add('hidden'); }
 </script>
 </body>
 </html>

@@ -20,7 +20,7 @@ import { CommentService } from '../comments/comments.service';
 import { RolesGuard } from '../guard/role-auth.guard.admin.recruiter';
 
 @Controller('admin')
-@UseGuards(WebAuthGuard, RolesGuard) // Chạy WebAuthGuard trước để lấy user, rồi mới chạy RolesGuard@Roles('ADMIN')
+@UseGuards(WebAuthGuard, RolesGuard)
 @Roles(1)
 export class AdminController {
   constructor(
@@ -37,7 +37,6 @@ export class AdminController {
     const chartData = await this.adminService.getChartData();
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       user: req.user,
       stats,
       chartData: JSON.stringify(chartData),
@@ -45,22 +44,18 @@ export class AdminController {
     };
   }
 
-  // 2. USERS
+  // 2. USERS (Hỗ trợ hiển thị cả user đã xóa mềm để Admin có thể restore)
   @Get('users')
   @Render('admin/users')
   async getUsersPage(@Req() req: any, @Query('page') page: string) {
     const pageNum = page ? parseInt(page) : 1;
-
-    // [FIX LỖI 1] Chỉ truyền 1 tham số (pageNum), bỏ số 10 đi
     const result = await this.adminService.getAllUsers(pageNum);
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       user: req.user,
       users: result.data,
       pagination: {
         ...result,
-        // [FIX LỖI 2] Dùng 'currentPage' thay vì 'page'
         currentPage: result.currentPage,
         hasNext: result.hasNext,
         hasPrev: result.hasPrev,
@@ -84,33 +79,28 @@ export class AdminController {
     return { message: 'Đã mở khóa tài khoản' };
   }
 
-// [SỬA LẠI HÀM NÀY] Thay vì @Post('users/assign-role')
   @Patch('users/:id/role')
   async changeUserRole(
     @Param('id') id: string,
-    @Body('roleId') roleId: number // Nhận roleId từ body
+    @Body('roleId') roleId: number
   ) {
-    // Gọi service
     await this.adminService.changeUserRole(+id, roleId);
     return { message: 'Cập nhật quyền thành công' };
   }
 
-  // 3. COMPANIES
+  // 3. COMPANIES (Xóa mềm -> Ẩn khỏi danh sách)
   @Get('companies')
   @Render('admin/companies')
   async getCompaniesPage(@Req() req: any, @Query('page') page: string) {
     const pageNum = page ? parseInt(page) : 1;
-
-    // [FIX LỖI TƯƠNG TỰ] Chỉ truyền 1 tham số
     const result = await this.adminService.getAllCompanies(pageNum);
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       user: req.user,
       companies: result.data,
       pagination: {
         ...result,
-        currentPage: result.currentPage, // Dùng currentPage
+        currentPage: result.currentPage,
         hasNext: result.hasNext,
         hasPrev: result.hasPrev,
         nextPage: result.nextPage,
@@ -127,7 +117,7 @@ export class AdminController {
     return { message: 'Đã xóa công ty thành công' };
   }
 
-  // 4. JOBS (Giữ nguyên vì JobService của bạn trả về 'page')
+  // 4. JOBS (Xóa mềm -> Ẩn khỏi danh sách)
   @Get('jobs')
   @Render('admin/jobs')
   async getJobsPage(@Req() req: any, @Query('page') page: string) {
@@ -135,12 +125,11 @@ export class AdminController {
     const result = await this.jobService.getAllJobsForAdmin(pageNum);
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       user: req.user,
       jobs: result.data,
       pagination: {
         total: result.total,
-        currentPage: result.page, // JobService trả về 'page'
+        currentPage: result.page,
         totalPages: result.totalPages,
         hasNext: result.page < result.totalPages,
         hasPrev: result.page > 1,
@@ -158,7 +147,7 @@ export class AdminController {
     return { message: 'Đã gỡ bài đăng thành công' };
   }
 
-  // 5. COMMENTS
+  // 5. COMMENTS (Xóa mềm -> Ẩn khỏi danh sách)
   @Get('comments')
   @Render('admin/comments')
   async getCommentsPage(@Req() req: any, @Query('page') page: string) {
@@ -166,12 +155,11 @@ export class AdminController {
     const result = await this.commentService.getAllComments(pageNum);
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       user: req.user,
       comments: result.data,
       pagination: {
         total: result.total,
-        currentPage: result.page, // CommentService trả về 'page'
+        currentPage: result.page,
         totalPages: result.totalPages,
         hasNext: result.page < result.totalPages,
         hasPrev: result.page > 1,

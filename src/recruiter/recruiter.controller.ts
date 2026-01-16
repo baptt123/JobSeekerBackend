@@ -11,7 +11,6 @@ import {
   Req,
   UseGuards,
   ValidationPipe,
-  InternalServerErrorException, // Import thêm để throw lỗi nếu cần
 } from '@nestjs/common';
 import { Roles } from '../decorator/role-admin-recruiter.decorator';
 import { RecruiterService } from './recruiter.service';
@@ -24,8 +23,8 @@ import { FirebaseModuleService } from '../firebase-module/firebase-module.servic
 import { RolesGuard } from '../guard/role-auth.guard.admin.recruiter';
 
 @Controller('recruiter')
-@UseGuards(WebAuthGuard, RolesGuard) // Chạy WebAuthGuard trước để lấy user, rồi mới chạy RolesGuard@Roles('ADMIN')
-@Roles(1,3)
+@UseGuards(WebAuthGuard, RolesGuard)
+@Roles(1, 3)
 export class RecruiterController {
   constructor(
     private readonly service: RecruiterService,
@@ -49,9 +48,7 @@ export class RecruiterController {
     };
   }
 
-  // ==================================================================
-  // KHU VỰC QUẢN LÝ VIỆC LÀM (JOBS)
-  // ==================================================================
+  // --- QUẢN LÝ VIỆC LÀM ---
 
   @Get('jobs/create')
   @Render('recruiter/post-job')
@@ -62,49 +59,40 @@ export class RecruiterController {
     };
   }
 
+  @Post('jobs/generate-ai')
+  async generateJobAI(@Body('prompt') prompt: string) {
+    if (!prompt) return { success: false, message: 'Vui lòng nhập mô tả' };
+    try {
+      const data = await this.service.generateJobContentWithAI(prompt);
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  }
+
   @Get('jobs')
   @Render('recruiter/my-jobs')
   async getMyJobs(@Req() req: any) {
-    try {
-      const userId = req.user.userId;
-      const jobs = await this.service.getMyJobs(userId);
+    const userId = req.user.userId;
+    const jobs = await this.service.getMyJobs(userId);
 
-      // [DEBUG LOG] Kiểm tra danh sách job lấy về
-      // console.log(`[DEBUG] getMyJobs - User ${userId} has ${jobs.length} jobs`);
+    const jobsWithSkills = jobs.map((job) => {
+      const safeSkillNames =
+        job.jobSkills && Array.isArray(job.jobSkills)
+          ? job.jobSkills
+            .filter((js) => js && js.skill)
+            .map((js) => js.skill.skill_name)
+            .join(', ')
+          : '';
 
-      const jobsWithSkills = jobs.map((job) => {
-        // [SAFETY CHECK] Kiểm tra kỹ năng null
-        const safeSkillNames =
-          job.jobSkills && Array.isArray(job.jobSkills)
-            ? job.jobSkills
-              .filter((js) => {
-                if (!js || !js.skill) {
-                  console.error(
-                    `[WARN] Job ID ${job.job_id} có JobSkill bị lỗi (null data)`,
-                  );
-                  return false;
-                }
-                return true;
-              })
-              .map((js) => js.skill.skill_name)
-              .join(', ')
-            : '';
+      return { ...job, skillNames: safeSkillNames };
+    });
 
-        return {
-          ...job,
-          skillNames: safeSkillNames,
-        };
-      });
-
-      return {
-        jobs: jobsWithSkills,
-        user: req.user,
-        activePage: 'jobs',
-      };
-    } catch (error) {
-      console.error('[ERROR] getMyJobs failed:', error);
-      throw error;
-    }
+    return {
+      jobs: jobsWithSkills,
+      user: req.user,
+      activePage: 'jobs',
+    };
   }
 
   @Post('jobs')
@@ -114,73 +102,44 @@ export class RecruiterController {
     dto: RecruiterCreateJobDto,
   ) {
     const userId = req.user.userId;
-    console.log(`Recruiter ID ${userId} đang tạo job mới...`);
-
-    const job = await this.service.createJob(userId, dto);
-
-    await this.firebaseService.sendNotificationToTopic(
-      'job_alerts',
-      '🔥 Việc làm mới!',
-      `${job.title} tại ${job.location}`,
-      { jobId: job.job_id.toString(), type: 'NEW_JOB_POST' },
-    );
-
-    return job;
+    return await this.service.createJob(userId, dto);
   }
 
-// [SỬA LẠI HÀM NÀY ĐỂ XỬ LÝ DỮ LIỆU AN TOÀN TUYỆT ĐỐI]
   @Get('jobs/:id')
   @Render('recruiter/job-detail')
   async getJobDetail(@Req() req: any, @Param('id') id: string) {
-    try {
-      const userId = req.user.userId;
-      const jobId = +id;
+    const userId = req.user.userId;
+    const jobId = +id;
 
-      const job = await this.service.getJobDetail(userId, jobId);
-      if (!job) {
-        throw new NotFoundException('Job không tìm thấy');
-      }
-
-      const applications = await this.service.getJobApplications(userId, jobId);
-
-      // 1. Xử lý an toàn danh sách Kỹ năng (Skills)
-      const safeSkillList =
-        job.jobSkills && Array.isArray(job.jobSkills)
-          ? job.jobSkills
-            .filter((js) => js && js.skill)
-            .map((js) => js.skill.skill_name)
-          : [];
-
-      // 2. Xử lý an toàn danh sách Ứng viên (Applications)
-      // Tránh lỗi khi 'user' bị null (orphan data) gây crash View
-      const safeApplications = applications.map((app) => ({
-        ...app,
-        user: app.user || {
-          full_name: 'Người dùng không xác định',
-          email: '',
-          avatar_url: null,
-        },
-        cv: app.cv || null,
-      }));
-
-      return {
-        job: {
-          ...job,
-          skillList: safeSkillList,
-        },
-        applications: safeApplications, // Dùng danh sách đã làm sạch
-        user: req.user,
-        activePage: 'jobs',
-      };
-    } catch (error) {
-      console.error(`[ERROR] Xem chi tiết Job ID ${id} thất bại:`, error);
-      throw error; // Để NestJS tự xử lý hiển thị trang lỗi 500 nếu cần
+    const job = await this.service.getJobDetail(userId, jobId);
+    if (!job) {
+      throw new NotFoundException('Job không tìm thấy');
     }
-  }
 
-  // ==================================================================
-  // CÁC CHỨC NĂNG KHÁC
-  // ==================================================================
+    const applications = await this.service.getJobApplications(userId, jobId);
+
+    const safeSkillList =
+      job.jobSkills && Array.isArray(job.jobSkills)
+        ? job.jobSkills.filter((js) => js && js.skill).map((js) => js.skill.skill_name)
+        : [];
+
+    const safeApplications = applications.map((app) => ({
+      ...app,
+      user: app.user || {
+        full_name: 'Người dùng không xác định',
+        email: '',
+        avatar_url: null,
+      },
+      cv: app.cv || null,
+    }));
+
+    return {
+      job: { ...job, skillList: safeSkillList },
+      applications: safeApplications,
+      user: req.user,
+      activePage: 'jobs',
+    };
+  }
 
   @Get('jobs/:jobId/applications')
   async getJobApplications(@Req() req: any, @Param('jobId') jobId: string) {
@@ -196,14 +155,7 @@ export class RecruiterController {
     return this.service.updateApplicationStatus(req.user.userId, +id, dto);
   }
 
-  @Get('chat')
-  @Render('recruiter/chat')
-  getChatPage(@Req() req: any) {
-    return {
-      user: req.user,
-      activePage: 'chat',
-    };
-  }
+  // --- CÁC CHỨC NĂNG KHÁC (ĐÃ XÓA CHAT) ---
 
   @Get('company-profile')
   @Render('recruiter/company-profile')

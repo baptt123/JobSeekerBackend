@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   OneToMany,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
 import { UserEntity } from './user.entity';
@@ -44,4 +45,7 @@ export class CompanyEntity {
   @OneToMany(() => JobEntity, (job) => job.company)
   @ApiProperty({ type: () => JobEntity, isArray: true }) // <--- THÊM
   jobs: JobEntity[];
+  // [THÊM MỚI] Cột này bắt buộc để dùng softDelete
+  @DeleteDateColumn()
+  deleted_at: Date;
 }
