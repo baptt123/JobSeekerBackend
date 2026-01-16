@@ -21,6 +21,9 @@ import { UpdateCompanyDto } from '../recruiter-dto/update-company.dto';
 import { CommentService } from '../comments/comments.service';
 import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
 import { RolesGuard } from '../guard/role-auth.guard.admin.recruiter';
+import { NotificationEntity } from '../entity/notification.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Controller('recruiter')
 @UseGuards(WebAuthGuard, RolesGuard)
@@ -30,6 +33,8 @@ export class RecruiterController {
     private readonly service: RecruiterService,
     private readonly commentService: CommentService,
     private readonly firebaseService: FirebaseModuleService,
+    @InjectRepository(NotificationEntity)
+    private readonly notiRepo: Repository<NotificationEntity>
   ) {}
 
   @Get('dashboard')
@@ -193,5 +198,26 @@ export class RecruiterController {
   async deleteComment(@Req() req: any, @Param('id') id: string) {
     await this.commentService.deleteComment(+id, req.user.userId, 'RECRUITER');
     return { message: 'Xoá thành công' };
+  }
+  @Get('notifications')
+  @Render('recruiter/notifications')
+  async viewNotifications(@Req() req: any) {
+    const notifications = await this.notiRepo.find({
+      where: { user: { user_id: req.user.userId } },
+      order: { created_at: 'DESC' },
+      take: 20
+    });
+
+    // Format ngày giờ Việt Nam
+    const formattedNotis = notifications.map(n => ({
+      ...n,
+      timeDisplay: new Date(n.created_at).toLocaleString('vi-VN')
+    }));
+
+    return {
+      notifications: formattedNotis,
+      user: req.user,
+      activeNoti: true // Active menu sidebar
+    };
   }
 }

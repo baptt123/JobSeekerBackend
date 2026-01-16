@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Thông báo tuyển dụng</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .unread { background-color: #eef2ff; border-left: 4px solid #4338CA; }
+  </style>
+  <script>
+    setTimeout(() => window.location.reload(), 30000);
+  </script>
+</head>
+<body class="bg-gray-100">
+<div class="flex h-screen overflow-hidden">
+  {{> recruiter_sidebar }}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header class="bg-white shadow p-4 flex justify-between">
+      <h2 class="text-xl font-bold text-gray-800">🔔 Thông báo hoạt động</h2>
+      <span class="text-sm text-gray-500 italic">Cập nhật thời gian thực (30s)</span>
+    </header>
+    <main class="flex-1 overflow-y-auto p-6">
+      <div class="bg-white shadow rounded-lg">
+        {{#if notifications.length}}
+          <ul>
+            {{#each notifications}}
+              <li class="p-4 border-b hover:bg-gray-50 {{#unless this.is_read}}unread{{/unless}}">
+                <div class="flex">
+                  <div class="flex-shrink-0 pt-1">
+                    <i class="fas fa-envelope-open-text text-indigo-600 text-xl"></i>
+                  </div>
+                  <div class="ml-4">
+                    <div class="flex justify-between w-full">
+                      <p class="text-sm font-bold text-gray-900">{{this.title}}</p>
+                      <p class="text-xs text-gray-500">{{this.timeDisplay}}</p>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">{{this.message}}</p>
+                  </div>
+                </div>
+              </li>
+            {{/each}}
+          </ul>
+        {{else}}
+          <div class="p-10 text-center text-gray-500">Chưa có thông báo nào.</div>
+        {{/if}}
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>
