@@ -6,7 +6,7 @@ import {
   JoinColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger'; // <--- IMPORT
+import { ApiProperty } from '@nestjs/swagger';
 import { JobEntity } from './job.entity';
 import { UserEntity } from './user.entity';
 import { UserCVEntity } from './user-cv.entity';
@@ -23,7 +23,7 @@ export class JobApplicationEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'job_id' })
-  @ApiProperty({ type: () => JobEntity }) // <--- THÊM
+  @ApiProperty({ type: () => JobEntity })
   job: JobEntity;
 
   @Column()
@@ -33,7 +33,7 @@ export class JobApplicationEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
-  @ApiProperty({ type: () => UserEntity }) // <--- THÊM
+  @ApiProperty({ type: () => UserEntity })
   user: UserEntity;
 
   @Column({ nullable: true })
@@ -41,44 +41,32 @@ export class JobApplicationEntity {
 
   @ManyToOne(() => UserCVEntity, (cv) => cv, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'cv_id' })
-  @ApiProperty({ type: () => UserCVEntity, required: false }) // <--- THÊM
+  @ApiProperty({ type: () => UserCVEntity, required: false })
   cv: UserCVEntity;
 
   @Column('text', { nullable: true })
-  @ApiProperty({ required: false }) // Thêm để hiện trong Swagger
+  @ApiProperty({ required: false })
   cover_letter: string;
 
+  // Cột lưu kết quả phân tích AI
+  @Column('text', { nullable: true })
+  @ApiProperty({ required: false })
+  ai_match_analysis: string;
+
+  // [UPDATED] Chỉ giữ lại các trạng thái thực tế sử dụng
   @Column({
     type: 'enum',
     enum: [
-      'Applied',
-      'Screening',
-      'Interview',
-      'Offer',
-      'Accepted',
-      'Rejected',
-      'Cancelled', // [FIX] Thêm trạng thái Cancelled vào đây
+      'Applied',  // Chờ duyệt (Mặc định)
+      'Accepted', // Đã chấp nhận
+      'Rejected', // Đã từ chối
     ],
     default: 'Applied',
   })
   @ApiProperty({
-    enum: [
-      'Applied',
-      'Screening',
-      'Interview',
-      'Offer',
-      'Accepted',
-      'Rejected',
-    ],
+    enum: ['Applied', 'Accepted', 'Rejected'],
   })
-  status:
-    | 'Applied'
-    | 'Screening'
-    | 'Interview'
-    | 'Offer'
-    | 'Accepted'
-    | 'Rejected'
-    | 'Cancelled'; // [FIX] Thêm trạng thái Cancelled vào TypeScript Type
+  status: 'Applied' | 'Accepted' | 'Rejected';
 
   @CreateDateColumn()
   applied_at: Date;

@@ -65,7 +65,8 @@ export class JobApplicationsService {
     });
 
     if (application) {
-      if (application.status === 'Cancelled') {
+      // @ts-ignore
+      if (application.status === 'Rejected') {
         // Cho phép ứng tuyển lại nếu đã hủy trước đó
         application.status = 'Applied';
         application.applied_at = new Date();
@@ -116,13 +117,13 @@ export class JobApplicationsService {
 
     // Chỉ cho phép hủy khi trạng thái là 'Applied'
     if (application.status !== 'Applied') {
-      if (application.status === 'Cancelled') {
+      if (application.status === 'Rejected') {
         throw new BadRequestException('Bạn đã hủy ứng tuyển công việc này rồi.');
       }
       throw new BadRequestException('Hồ sơ đang được xử lý hoặc đã có kết quả, không thể hủy lúc này.');
     }
 
-    application.status = 'Cancelled';
+    application.status = 'Rejected';
     const savedApp = await this.appRepo.save(application);
 
     // Gửi thông báo hủy

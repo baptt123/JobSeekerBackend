@@ -17,7 +17,15 @@
 
 <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
   <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-    <h1 class="text-xl font-bold text-slate-800">Tin tuyển dụng</h1>
+    <div class="flex items-center gap-3">
+      <h1 class="text-xl font-bold text-slate-800">Tin tuyển dụng</h1>
+      {{#if pagination.companyId}}
+        <span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded border border-indigo-100 flex items-center gap-1">
+           <span class="material-symbols-outlined text-[12px]">filter_alt</span> Đang lọc theo công ty
+           <a href="/admin/jobs" class="ml-1 hover:text-red-500"><span class="material-symbols-outlined text-[12px]">close</span></a>
+         </span>
+      {{/if}}
+    </div>
     <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold">Tổng: {{pagination.total}}</span>
   </header>
 
@@ -37,12 +45,12 @@
         {{#each jobs}}
           <tr class="hover:bg-slate-50 transition group">
             <td class="p-5">
-              <a href="/jobs/{{this.job_id}}" target="_blank" class="font-bold text-slate-800 hover:text-blue-600 mb-1 block">
+              <a href="/admin/jobs/{{this.job_id}}" class="font-bold text-slate-800 hover:text-blue-600 mb-1 block transition">
                 {{this.title}}
               </a>
               <div class="flex items-center gap-2">
                 <span class="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[11px] uppercase font-semibold">{{this.job_type}}</span>
-                <span class="text-xs text-slate-500">{{this.location}}</span>
+                <span class="text-xs text-slate-500 truncate max-w-[150px]">{{this.location}}</span>
               </div>
             </td>
             <td class="p-5 text-sm font-medium text-slate-700">
@@ -52,7 +60,7 @@
               {{this.postedBy.full_name}}
             </td>
             <td class="p-5 text-sm text-slate-500 whitespace-nowrap">
-              {{this.created_at}}
+              {{formatDate this.created_at}}
             </td>
             <td class="p-5 text-right">
               <button onclick="deleteJob({{this.job_id}})" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Gỡ bài đăng">
@@ -71,17 +79,17 @@
           Trang <span class="font-bold text-slate-800">{{pagination.currentPage}}</span> / {{pagination.totalPages}}
         </p>
         <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm bg-white">
-        <a href="{{#if pagination.hasPrev}}?page={{pagination.prevPage}}{{else}}#{{/if}}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 {{#unless pagination.hasPrev}}opacity-50 cursor-not-allowed{{/unless}}">
+        <a href="{{#if pagination.hasPrev}}?page={{pagination.prevPage}}{{#if ../pagination.companyId}}&companyId={{../pagination.companyId}}{{/if}}{{else}}#{{/if}}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 {{#unless pagination.hasPrev}}opacity-50 cursor-not-allowed{{/unless}}">
           <span class="material-symbols-outlined text-sm">chevron_left</span>
           </a>
           <div class="flex overflow-x-auto max-w-[200px] sm:max-w-xs scrollbar-hide">
             {{#each pagination.pages}}
-              <a href="?page={{this}}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 {{#if (eq this ../pagination.currentPage)}} z-10 bg-blue-600 text-white {{else}} text-gray-900 hover:bg-gray-50 {{/if}}">
+              <a href="?page={{this}}{{#if ../pagination.companyId}}&companyId={{../pagination.companyId}}{{/if}}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 {{#if (eq this ../pagination.currentPage)}} z-10 bg-blue-600 text-white {{else}} text-gray-900 hover:bg-gray-50 {{/if}}">
               {{this}}
               </a>
             {{/each}}
           </div>
-          <a href="{{#if pagination.hasNext}}?page={{pagination.nextPage}}{{else}}#{{/if}}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 {{#unless pagination.hasNext}}opacity-50 cursor-not-allowed{{/unless}}">
+          <a href="{{#if pagination.hasNext}}?page={{pagination.nextPage}}{{#if ../pagination.companyId}}&companyId={{../pagination.companyId}}{{/if}}{{else}}#{{/if}}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 {{#unless pagination.hasNext}}opacity-50 cursor-not-allowed{{/unless}}">
           <span class="material-symbols-outlined text-sm">chevron_right</span>
           </a>
         </nav>
@@ -112,7 +120,7 @@
           duration: 3000,
           gravity: "top",
           position: "right",
-          style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+          style: { background: "linear-gradient(to right, #00b09b, #96c93d)", borderRadius: "8px" }
         }).showToast();
         setTimeout(() => window.location.reload(), 1500);
       } catch(e) {
@@ -121,7 +129,7 @@
           duration: 3000,
           gravity: "top",
           position: "right",
-          style: { background: "#ef4444" }
+          style: { background: "#ef4444", borderRadius: "8px" }
         }).showToast();
       }
     }

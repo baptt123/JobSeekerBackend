@@ -27,10 +27,9 @@ import { JwtService } from '@nestjs/jwt';
 export class JobController {
   constructor(
     private readonly jobService: JobService,
-    private readonly jwtService: JwtService, // Inject JwtService để giải mã token thủ công cho các route public
+    private readonly jwtService: JwtService,
   ) {}
 
-  // --- HELPER: Lấy userId từ header (nếu có) cho các route Public ---
   private getUserIdFromHeader(authHeader?: string): number | null {
     if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
     const token = authHeader.split(' ')[1];
@@ -45,15 +44,23 @@ export class JobController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  // [NEW] API Gợi ý việc làm dựa trên lịch sử lưu (Saved Jobs)
+  @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  @Get('recommended')
-  async getRecommendedJobs(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+  @Get('recommended-by-history')
+  async getRecommendedJobsByHistory(@Req() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId;
-    console.log('>>> userId:', userId);
-    return this.jobService.findJobsByUserCV(userId);
+    console.log('Request gợi ý việc làm (History) cho User:', userId);
+
+    const jobs = await this.jobService.findJobsBySavedHistory(userId);
+
+    return {
+      message: 'Lấy danh sách gợi ý thành công',
+      data: jobs
+    };
   }
+
 
   @Get('search-jobs')
   async searchJobs(@Query() dto: SearchJobDto) {
@@ -71,11 +78,6 @@ export class JobController {
     return this.jobService.filterJobs(dto);
   }
 
-  /**
-   * Xem chi tiết Job
-   * - Thực tế: User chưa đăng nhập vẫn xem được.
-   * - Nếu đã đăng nhập: Cần biết đã Save/Apply chưa.
-   */
   @Get('detail/:title')
   @HttpCode(200)
   async getJobDetail(
@@ -83,15 +85,10 @@ export class JobController {
     @Headers('authorization') authHeader?: string,
   ) {
     const userId = this.getUserIdFromHeader(authHeader);
-    // userId có thể là number hoặc null
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.jobService.findJobDetail(title, userId);
   }
 
-  /**
-   * Lấy danh sách Job trang chủ
-   * - Thực tế: Cần trả về `isSaved` để hiển thị nút trái tim ngay trên list.
-   */
   @Get('get-all-jobs')
   async getAllJobs(
     @Query('page') page: number = 1,
@@ -105,16 +102,11 @@ export class JobController {
     return await this.jobService.displayJob(currentPage, pageLimit, userId);
   }
 
-  /*
-   * Lưu Job yêu thích
-   * - Yêu cầu bắt buộc phải đăng nhập
-   */
   @Post('create-save-job')
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(OrAuthGuard) // Guard xác thực
+  @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   saveJob(@Req() req: any, @Body() saveJobDto: SaveJobDto) {
-    // ✅ Lấy userId từ token thật
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return this.jobService.saveJob(req.user.userId, saveJobDto.job_id);
   }
@@ -123,7 +115,6 @@ export class JobController {
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   getMySavedJobs(@Req() req: any) {
-    // ✅ Lấy userId từ token thật
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
     return this.jobService.getMySavedJobs(req.user.userId);
   }
@@ -133,11 +124,10 @@ export class JobController {
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
   @HttpCode(HttpStatus.NO_CONTENT)
   unsaveJob(@Req() req: any, @Param('jobId', ParseIntPipe) jobId: number) {
-    // ✅ Lấy userId từ token thật
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
     return this.jobService.unsaveJob(req.user.userId, jobId);
   }
-  // [THÊM MỚI] API lấy chi tiết công ty và jobs
+
   @Get('company/:id/jobs')
   @HttpCode(200)
   async getCompanyJobs(@Param('id', ParseIntPipe) id: number) {
@@ -150,6 +140,7 @@ export class JobController {
     }
     return { data: result };
   }
+
   @Get('random')
   async getRandomJobs() {
     try {

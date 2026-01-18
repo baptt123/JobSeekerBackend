@@ -54,8 +54,9 @@
             </td>
 
             <td class="p-5">
-              <a href="/jobs/{{this.job.job_id}}" target="_blank" class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+              <a href="/admin/jobs/{{this.job.job_id}}" class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 transition">
                 {{this.job.title}}
+                <span class="material-symbols-outlined text-[14px]">open_in_new</span>
               </a>
             </td>
 
@@ -68,7 +69,7 @@
             </td>
 
             <td class="p-5 text-sm text-slate-400 whitespace-nowrap">
-              {{this.createdAt}}
+              {{formatDate this.createdAt}}
             </td>
 
             <td class="p-5 text-right">
@@ -112,7 +113,7 @@
   async function deleteComment(id) {
     const result = await Swal.fire({
       title: 'CẢNH BÁO ADMIN',
-      text: "Bạn có chắc muốn xóa bình luận này? (Soft Delete)",
+      text: "Bạn có chắc muốn xóa bình luận này?",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
@@ -128,7 +129,7 @@
           duration: 2000,
           gravity: "top",
           position: "right",
-          style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+          style: { background: "linear-gradient(to right, #00b09b, #96c93d)", borderRadius: "8px" }
         }).showToast();
         setTimeout(() => window.location.reload(), 1500);
       } catch (e) {
@@ -137,7 +138,7 @@
           duration: 3000,
           gravity: "top",
           position: "right",
-          style: { background: "#ef4444" }
+          style: { background: "#ef4444", borderRadius: "8px" }
         }).showToast();
       }
     }

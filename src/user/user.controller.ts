@@ -47,30 +47,6 @@ export class UserController {
       data: updatedUser,
     };
   }
-
-  // ✅ API MỚI CHO DANH SÁCH HỘI THOẠI
-  @UseGuards(JwtAuthGuard) // Yêu cầu phải đăng nhập
-  @Get('conversations')
-  @UseGuards(OrAuthGuard)
-  @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')
-  async getConversationList(@Req() req) {
-    // req.user được gán từ JwtStrategy (payload)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-    const currentUserId = req.user.userId;
-
-    // Lấy tất cả user TRỪ chính mình
-    return await this.userService.userRepo.find({
-      where: {
-        user_id: Not(currentUserId), // Loại bỏ ID của chính mình
-      },
-      select: {
-        user_id: true,
-        full_name: true,
-        email: true,
-        avatar_url: true,
-      },
-    });
-  }
   @Get('profile')
   @UseGuards(OrAuthGuard)
   @Roles('CANDIDATE', 'ADMIN', 'RECRUITER')

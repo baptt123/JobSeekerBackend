@@ -20,7 +20,7 @@ export class WebAuthController {
 
       // ... (Logic cookie & redirect giữ nguyên)
       res.cookie('access_token', result.accessToken, {
-        httpOnly: true,
+        httpOnly: false,
         secure: false,
         maxAge: 24 * 60 * 60 * 1000,
       });

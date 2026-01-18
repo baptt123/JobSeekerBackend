@@ -32,7 +32,6 @@ export class RecruiterController {
   constructor(
     private readonly service: RecruiterService,
     private readonly commentService: CommentService,
-    private readonly firebaseService: FirebaseModuleService,
     @InjectRepository(NotificationEntity)
     private readonly notiRepo: Repository<NotificationEntity>
   ) {}
@@ -41,183 +40,129 @@ export class RecruiterController {
   @Render('recruiter/dashboard')
   async getDashboard(@Req() req: any) {
     const userId = req.user.userId;
+    // 1. Lấy thống kê tổng quan
     const data = await this.service.getRecruiterStats(userId);
-    const chartData = await this.service.getRecruiterChartData(userId);
+
+    // 2. Lấy dữ liệu biểu đồ (MỚI)
+    const chartDataObj = await this.service.getRecruiterChartData(userId);
 
     return {
       user: req.user,
       company: data.company,
       stats: data.stats,
-      chartData: JSON.stringify(chartData),
+      chartData: JSON.stringify(chartDataObj), // Chuyển thành chuỗi JSON để HBS dùng
       activePage: 'dashboard',
     };
   }
 
-  // --- QUẢN LÝ VIỆC LÀM ---
-
+  // ... (Giữ nguyên các method khác: jobs/create, jobs, jobs/:id, notifications...)
   @Get('jobs/create')
   @Render('recruiter/post-job')
   getPostJobPage(@Req() req: any) {
-    return {
-      user: req.user,
-      activePage: 'post-job',
-    };
+    return { user: req.user, activePage: 'post-job' };
   }
 
   @Post('jobs/generate-ai')
   async generateJobAI(@Body('prompt') prompt: string) {
-    if (!prompt) return { success: false, message: 'Vui lòng nhập mô tả' };
+    if (!prompt) return { success: false, message: 'Nhập mô tả!' };
     try {
       const data = await this.service.generateJobContentWithAI(prompt);
       return { success: true, data };
-    } catch (error) {
-      return { success: false, message: error.message };
+    } catch (e) {
+      return { success: false, message: e.message };
     }
   }
 
   @Get('jobs')
   @Render('recruiter/my-jobs')
   async getMyJobs(@Req() req: any) {
-    const userId = req.user.userId;
-    const jobs = await this.service.getMyJobs(userId);
-
-    const jobsWithSkills = jobs.map((job) => {
-      const safeSkillNames =
-        job.jobSkills && Array.isArray(job.jobSkills)
-          ? job.jobSkills
-            .filter((js) => js && js.skill)
-            .map((js) => js.skill.skill_name)
-            .join(', ')
-          : '';
-
-      return { ...job, skillNames: safeSkillNames };
-    });
-
-    return {
-      jobs: jobsWithSkills,
-      user: req.user,
-      activePage: 'jobs',
-    };
+    const jobs = await this.service.getMyJobs(req.user.userId);
+    return { jobs, user: req.user, activePage: 'jobs' };
   }
 
   @Post('jobs')
   async createJob(
     @Req() req: any,
-    @Body(new ValidationPipe({ whitelist: true, transform: true }))
-    dto: RecruiterCreateJobDto,
+    @Body(new ValidationPipe({ whitelist: true, transform: true })) dto: RecruiterCreateJobDto,
   ) {
-    const userId = req.user.userId;
-    return await this.service.createJob(userId, dto);
+    return await this.service.createJob(req.user.userId, dto);
   }
 
   @Get('jobs/:id')
   @Render('recruiter/job-detail')
   async getJobDetail(@Req() req: any, @Param('id') id: string) {
-    const userId = req.user.userId;
-    const jobId = +id;
+    const job = await this.service.getJobDetail(req.user.userId, +id);
+    if (!job) throw new NotFoundException('Job not found');
+    const apps = await this.service.getJobApplications(req.user.userId, +id);
 
-    const job = await this.service.getJobDetail(userId, jobId);
-    if (!job) {
-      throw new NotFoundException('Job không tìm thấy');
-    }
-
-    const applications = await this.service.getJobApplications(userId, jobId);
-
-    const safeSkillList =
-      job.jobSkills && Array.isArray(job.jobSkills)
-        ? job.jobSkills.filter((js) => js && js.skill).map((js) => js.skill.skill_name)
-        : [];
-
-    const safeApplications = applications.map((app) => ({
+    const safeApps = apps.map(app => ({
       ...app,
-      user: app.user || {
-        full_name: 'Người dùng không xác định',
-        email: '',
-        avatar_url: null,
-      },
-      cv: app.cv || null,
+      user: app.user || { full_name: 'Unknown', email: '', avatar_url: '' },
+      cv: app.cv
     }));
 
     return {
-      job: { ...job, skillList: safeSkillList },
-      applications: safeApplications,
+      job: { ...job, skillList: job.jobSkills?.map(js => js.skill.skill_name) || [] },
+      applications: safeApps,
       user: req.user,
       activePage: 'jobs',
     };
   }
 
-  @Get('jobs/:jobId/applications')
-  async getJobApplications(@Req() req: any, @Param('jobId') jobId: string) {
-    return this.service.getJobApplications(req.user.userId, +jobId);
+  @Post('analyze-cv/:id')
+  async analyzeCv(@Param('id') id: number) {
+    const html = await this.service.analyzeCvMatch(id);
+    return { html };
   }
 
   @Patch('applications/:id/status')
   async updateApplicationStatus(
-    @Req() req: any,
-    @Param('id') id: string,
-    @Body(new ValidationPipe()) dto: UpdateApplicationStatusDto,
+    @Req() req: any, @Param('id') id: string, @Body() dto: UpdateApplicationStatusDto
   ) {
     return this.service.updateApplicationStatus(req.user.userId, +id, dto);
   }
 
-  // --- CÁC CHỨC NĂNG KHÁC (ĐÃ XÓA CHAT) ---
-
   @Get('company-profile')
   @Render('recruiter/company-profile')
-  async getCompanyProfilePage(@Req() req: any) {
+  async getCompanyProfile(@Req() req: any) {
     const company = await this.service.getMyCompanyProfile(req.user.userId);
-    return {
-      user: req.user,
-      company: company,
-      activePage: 'profile',
-    };
+    return { user: req.user, company, activePage: 'profile' };
   }
 
   @Patch('company-profile')
-  async updateCompanyProfile(
-    @Req() req: any,
-    @Body(new ValidationPipe()) dto: UpdateCompanyDto,
-  ) {
-    return await this.service.updateCompanyProfile(req.user.userId, dto);
+  async updateCompany(@Req() req: any, @Body() dto: UpdateCompanyDto) {
+    return this.service.updateCompanyProfile(req.user.userId, dto);
   }
 
-  @Get('comments')
-  @Render('recruiter/comments')
-  async getCommentsPage(@Req() req: any) {
-    const comments = await this.commentService.getCommentsByRecruiter(
-      req.user.userId,
-    );
-    return {
-      user: req.user,
-      comments: comments,
-      activePage: 'comments',
-    };
-  }
-
-  @Delete('comments/:id')
-  async deleteComment(@Req() req: any, @Param('id') id: string) {
-    await this.commentService.deleteComment(+id, req.user.userId, 'RECRUITER');
-    return { message: 'Xoá thành công' };
-  }
   @Get('notifications')
   @Render('recruiter/notifications')
-  async viewNotifications(@Req() req: any) {
+  async getNotis(@Req() req: any) {
     const notifications = await this.notiRepo.find({
       where: { user: { user_id: req.user.userId } },
       order: { created_at: 'DESC' },
       take: 20
     });
-
-    // Format ngày giờ Việt Nam
-    const formattedNotis = notifications.map(n => ({
-      ...n,
-      timeDisplay: new Date(n.created_at).toLocaleString('vi-VN')
-    }));
-
     return {
-      notifications: formattedNotis,
+      notifications,
       user: req.user,
-      activeNoti: true // Active menu sidebar
+      activeNoti: true,
+      activePage: 'notifications'
     };
+  }
+
+  @Get('comments')
+  @Render('recruiter/comments')
+  async getCommentsPage(@Req() req: any) {
+    const comments = await this.commentService.getCommentsByRecruiter(req.user.userId);
+    return {
+      user: req.user,
+      comments: comments,
+      activePage: 'comments'
+    };
+  }
+
+  @Delete('comments/:id')
+  async deleteComment(@Req() req: any, @Param('id') id: number) {
+    return await this.commentService.deleteComment(id, req.user.userId, 'RECRUITER');
   }
 }

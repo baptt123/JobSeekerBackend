@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Thông báo | Recruiter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script>tailwind.config = { theme: { extend: { colors: { primary: '#6b26d9' } } } }</script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .unread-noti { background-color: #f0fdf4; border-left: 4px solid #16a34a; }
+  </style>
+  <script>
+    // Auto reload sau 30s để cập nhật thông báo mới
+    setTimeout(() => window.location.reload(), 30000);
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-900 h-screen flex overflow-hidden">
+
+{{> recruiter_sidebar activePage='notifications'}}
+
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+  <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+    <div class="flex items-center gap-3">
+      <h1 class="text-xl font-bold text-slate-800">Thông báo</h1>
+<!--      <span class="px-2 py-1 rounded bg-indigo-50 text-indigo-600 text-xs font-medium">Real-time update (30s)</span>-->
+    </div>
+<!--    <div class="flex items-center gap-4">-->
+<!--      <span class="text-sm text-slate-500">Xin chào, {{user.full_name}}</span>-->
+<!--      <img src="{{user.avatar_url}}" class="w-8 h-8 rounded-full border border-slate-200">-->
+<!--    </div>-->
+  </header>
+
+  <div class="flex-1 overflow-y-auto p-8 custom-scroll">
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        {{#if notifications.length}}
+          <ul class="divide-y divide-slate-100">
+            {{#each notifications}}
+              <li class="p-5 hover:bg-slate-50 transition group {{#unless this.is_read}}unread-noti{{/unless}}">
+                <div class="flex gap-4">
+                  <div class="shrink-0 pt-1">
+                    {{#if (eq this.type 'NEW_JOB')}}
+                      <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                        <span class="material-symbols-outlined">work</span>
+                      </div>
+                    {{else if (eq this.type 'APPLICATION_UPDATE')}}
+                      <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                        <span class="material-symbols-outlined">check_circle</span>
+                      </div>
+                    {{else}}
+                      <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                        <span class="material-symbols-outlined">notifications</span>
+                      </div>
+                    {{/if}}
+                  </div>
+
+                  <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                      <h4 class="text-sm font-semibold text-slate-900 {{#unless this.is_read}}text-indigo-700{{/unless}}">
+                        {{this.title}}
+                      </h4>
+                      <span class="text-xs text-slate-400 whitespace-nowrap ml-2">{{ formatDate this.created_at}}</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-1 leading-relaxed">{{this.message}}</p>
+                  </div>
+                </div>
+              </li>
+            {{/each}}
+          </ul>
+        {{else}}
+          <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-400">
+              <span class="material-symbols-outlined text-3xl">notifications_off</span>
+            </div>
+            <h3 class="text-slate-900 font-medium text-lg">Chưa có thông báo nào</h3>
+            <p class="text-slate-500 text-sm mt-1 max-w-xs">Các hoạt động ứng tuyển và cập nhật từ hệ thống sẽ xuất hiện tại đây.</p>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

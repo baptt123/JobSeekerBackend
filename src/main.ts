@@ -34,18 +34,13 @@ async function bootstrap() {
   // 👇 QUAN TRỌNG: HELPER HANDLEBARS ĐÃ CẬP NHẬT 👇
   // ======================================================
 
-  // --- CẬP NHẬT HELPER FORMAT TIỀN TỆ (USD, Không thập phân) ---
+  // --- CẬP NHẬT HELPER FORMAT TIỀN TỆ (Việt Nam, dấu chấm) ---
   hbs.registerHelper('formatCurrency', function (value) {
-    if (value === undefined || value === null) return '$0';
-    // style: 'currency', currency: 'USD' -> mặc định có .00
-    // Thêm maximumFractionDigits: 0 để bỏ số thập phân
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+    if (value === undefined || value === null) return '0';
+    // Sử dụng locale 'vi-VN' để có dấu chấm phân cách hàng nghìn (VD: 10.000.000)
+    return new Intl.NumberFormat('vi-VN').format(value);
   });
+
   // Helper: So sánh Role ID và in ra chữ "selected"
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   hbs.registerHelper('isSelected', function (currentValue, targetValue) {
@@ -74,7 +69,21 @@ async function bootstrap() {
     return args.some(Boolean);
   });
   // ======================================================
+// --- [MỚI] HELPER FORMAT NGÀY GIỜ ---
+  // Input: Fri Jan 23 2026... -> Output: Thứ Sáu, 23/01/2026
+  hbs.registerHelper('formatDate', function (dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    // Kiểm tra nếu date không hợp lệ
+    if (isNaN(date.getTime())) return dateString;
 
+    return new Intl.DateTimeFormat('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  });
   // Cấu hình Swagger
   const config = new DocumentBuilder()
     .setTitle('Job Seeker API')

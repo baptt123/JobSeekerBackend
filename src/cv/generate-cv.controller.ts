@@ -38,17 +38,7 @@ export class GenerateCvController {
     res.send(pdfBuffer);
   }
 
-  // @Post('generate-template')
-  // @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  // async generateTemplate(@Body() body: GenerateTemplateDto, @Res() res: express.Response, @Req() req) {
-  //   const pdfBuffer = await this.service.generateCvFromTemplate(body.templateId, body.data, req.user.userId);
-  //   res.set({
-  //     'Content-Type': 'application/pdf',
-  //     'Content-Disposition': `attachment; filename="cv_template_${body.templateId}.pdf"`,
-  //     'Content-Length': pdfBuffer.length,
-  //   });
-  //   res.send(pdfBuffer);
-  // }
+
 
   @Get('list')
   async list(@Req() req) {

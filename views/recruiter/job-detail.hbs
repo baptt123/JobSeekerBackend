@@ -6,7 +6,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>tailwind.config = { theme: { extend: { colors: { primary: '#6b26d9' } } } };</script>
 </head>
@@ -22,13 +22,19 @@
       <div class="flex justify-between items-start">
         <div>
           <h1 class="text-3xl font-bold text-gray-900">{{job.title}}</h1>
+
+          <div class="flex items-center gap-4 text-sm text-gray-500 mt-1 mb-2">
+            <span class="flex items-center gap-1"><i class="far fa-calendar-alt"></i> Đăng: {{formatDate job.created_at}}</span>
+            <span class="flex items-center gap-1"><i class="far fa-clock"></i> Hạn: <span class="text-red-600 font-medium">{{formatDate job.deadline}}</span></span>
+          </div>
+
           <div class="flex gap-2 mt-2">
             {{#each job.skillList}}
               <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-bold border border-indigo-100">{{this}}</span>
             {{/each}}
           </div>
         </div>
-        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">Đang hoạt động</span>
+        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium border border-green-200">Đang hoạt động</span>
       </div>
     </div>
 
@@ -39,7 +45,9 @@
       </div>
       <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
         <p class="text-gray-500 text-sm">Mức lương</p>
-        <p class="text-lg font-bold text-gray-800">{{formatCurrency job.salary_min}} - {{formatCurrency job.salary_max}}</p>
+        <p class="text-lg font-bold text-gray-800">
+          <span class="salary-text">{{job.salary_min}}</span> - <span class="salary-text">{{job.salary_max}}</span> VNĐ
+        </p>
       </div>
       <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
         <p class="text-gray-500 text-sm">Địa điểm</p>
@@ -49,24 +57,24 @@
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="p-5 border-b border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800">Danh sách ứng viên ({{applications.length}})</h2>
+        <h2 class="text-lg font-bold text-gray-800">Danh sách ứng viên</h2>
       </div>
       <table class="w-full text-left border-collapse">
         <thead class="bg-gray-50">
         <tr>
           <th class="p-4 text-sm font-semibold text-gray-600">Ứng viên</th>
-          <th class="p-4 text-sm font-semibold text-gray-600">Ngày nộp</th>
-          <th class="p-4 text-sm font-semibold text-gray-600">Trạng thái</th>
           <th class="p-4 text-sm font-semibold text-gray-600">CV</th>
+          <th class="p-4 text-sm font-semibold text-gray-600 w-1/3">AI Phân Tích</th>
+          <th class="p-4 text-sm font-semibold text-gray-600">Trạng thái</th>
           <th class="p-4 text-sm font-semibold text-gray-600 text-right">Hành động</th>
         </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
         {{#each applications}}
-          <tr class="hover:bg-gray-50 group">
+          <tr class="hover:bg-gray-50">
             <td class="p-4">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
                   <img src="{{this.user.avatar_url}}" onerror="this.src='https://ui-avatars.com/api/?name={{this.user.full_name}}'" class="w-full h-full object-cover">
                 </div>
                 <div>
@@ -75,27 +83,49 @@
                 </div>
               </div>
             </td>
-            <td class="p-4 text-sm text-gray-600"><script>document.write(new Date("{{this.applied_at}}").toLocaleDateString('vi-VN'))</script></td>
+            <td class="p-4">
+              {{#if this.cv}}
+                <button onclick="openCvModal('{{this.cv.file_url}}')" class="text-primary hover:underline text-sm flex items-center gap-1">
+                  <span class="material-symbols-outlined text-base">visibility</span> Xem CV
+                </button>
+              {{else}}
+                <span class="text-gray-400 text-sm italic">Chưa có CV</span>
+              {{/if}}
+            </td>
+
+            <td class="p-4 text-sm text-gray-700">
+              <div id="ai-result-{{this.application_id}}">
+                {{#if this.ai_match_analysis}}
+                  {{{this.ai_match_analysis}}}
+                {{else}}
+                  <button onclick="analyzeCV({{this.application_id}})" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold hover:bg-purple-200 flex items-center gap-1 transition">
+                    <span class="material-symbols-outlined text-sm">smart_toy</span> Phân tích
+                  </button>
+                {{/if}}
+              </div>
+            </td>
+
             <td class="p-4">
                <span class="px-2 py-1 rounded text-xs font-bold border
-                 {{#if (eq this.status 'Applied')}}bg-gray-50 border-gray-200 text-gray-600{{/if}}
-                 {{#if (eq this.status 'Accepted')}}bg-green-50 border-green-200 text-green-600{{/if}}
-                 {{#if (eq this.status 'Rejected')}}bg-red-50 border-red-200 text-red-600{{/if}}">
+                 {{#if (eq this.status 'Applied')}}bg-gray-50 text-gray-600 border-gray-200{{/if}}
+                 {{#if (eq this.status 'Accepted')}}bg-green-50 text-green-600 border-green-200{{/if}}
+                 {{#if (eq this.status 'Rejected')}}bg-red-50 text-red-600 border-red-200{{/if}}">
                  {{#if (eq this.status 'Applied')}}Chờ duyệt{{/if}}
-                 {{#if (eq this.status 'Accepted')}}Đã xác nhận{{/if}}
-                 {{#if (eq this.status 'Rejected')}}Đã từ chối{{/if}}
+                 {{#if (eq this.status 'Accepted')}}Đã duyệt{{/if}}
+                 {{#if (eq this.status 'Rejected')}}Từ chối{{/if}}
                </span>
-            </td>
-            <td class="p-4">
-              {{#if this.cv}}<button onclick="openCvModal('{{this.cv.file_url}}')" class="text-primary hover:underline text-sm flex items-center gap-1"><span class="material-symbols-outlined text-base">visibility</span> Xem CV</button>{{else}}<span class="text-gray-400 text-sm">Chưa có CV</span>{{/if}}
             </td>
             <td class="p-4 text-right">
               {{#if (eq this.status 'Applied')}}
                 <div class="flex justify-end gap-2">
-                  <button onclick="updateStatus({{this.application_id}}, 'Accepted')" class="p-2 rounded bg-green-50 text-green-600 hover:bg-green-100 flex items-center gap-1" title="Xác nhận"><span class="material-symbols-outlined text-lg">check_circle</span></button>
-                  <button onclick="updateStatus({{this.application_id}}, 'Rejected')" class="p-2 rounded bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-1" title="Từ chối"><span class="material-symbols-outlined text-lg">cancel</span></button>
+                  <button onclick="updateStatus({{this.application_id}}, 'Accepted')" class="text-green-600 hover:bg-green-50 p-1.5 rounded transition" title="Duyệt">
+                    <span class="material-symbols-outlined">check_circle</span>
+                  </button>
+                  <button onclick="updateStatus({{this.application_id}}, 'Rejected')" class="text-red-600 hover:bg-red-50 p-1.5 rounded transition" title="Từ chối">
+                    <span class="material-symbols-outlined">cancel</span>
+                  </button>
                 </div>
-              {{else}}<span class="text-gray-400 text-xs italic">Đã xử lý</span>{{/if}}
+              {{/if}}
             </td>
           </tr>
         {{/each}}
@@ -104,68 +134,75 @@
     </div>
   </main>
 </div>
+
 <div id="cvModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
   <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[90vh] flex flex-col p-2">
-    <div class="flex justify-between items-center px-4 py-2 border-b"><h3 class="font-bold text-gray-800">Chi tiết CV</h3><button onclick="closeCvModal()" class="text-gray-500 hover:text-red-600"><span class="material-symbols-outlined">close</span></button></div>
-    <div class="flex-1 bg-gray-100 relative"><iframe id="cvFrame" src="" class="w-full h-full" frameborder="0"></iframe></div>
+    <div class="flex justify-between items-center px-4 py-2 border-b">
+      <h3 class="font-bold text-gray-800">Chi tiết CV</h3>
+      <button onclick="closeCvModal()" class="text-gray-500 hover:text-red-600 transition"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="flex-1 bg-gray-100 relative">
+      <iframe id="cvFrame" src="" class="w-full h-full" frameborder="0"></iframe>
+    </div>
   </div>
 </div>
+
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-  // [UPDATED] Hàm cập nhật trạng thái
+  // Format tiền tệ
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.salary-text').forEach(el => {
+      const val = parseFloat(el.innerText);
+      if(!isNaN(val)) el.innerText = val.toLocaleString('vi-VN');
+    });
+  });
+
+  async function analyzeCV(appId) {
+    const div = document.getElementById(`ai-result-${appId}`);
+    div.innerHTML = '<span class="text-gray-500 text-xs italic flex items-center gap-1"><span class="animate-spin material-symbols-outlined text-xs">sync</span> Đang phân tích...</span>';
+    try {
+      const res = await fetch(`/recruiter/analyze-cv/${appId}`, { method: 'POST' });
+      const data = await res.json();
+      div.innerHTML = data.html || '<span class="text-red-500 text-xs">Không thể phân tích.</span>';
+    } catch (e) {
+      div.innerHTML = '<span class="text-red-500 text-xs">Lỗi mạng.</span>';
+    }
+  }
+
   async function updateStatus(appId, newStatus) {
-    const actionText = newStatus === 'Accepted' ? 'Xác nhận' : 'Từ chối';
+    const actionText = newStatus === 'Accepted' ? 'Duyệt' : 'Từ chối';
     const confirmColor = newStatus === 'Accepted' ? '#22c55e' : '#ef4444';
 
     const result = await Swal.fire({
-      title: `${actionText} hồ sơ?`,
-      text: `Bạn có chắc chắn muốn ${actionText.toLowerCase()} hồ sơ này không? Ứng viên sẽ nhận được thông báo ngay lập tức.`,
+      title: `${actionText} hồ sơ này?`,
+      text: "Hành động này sẽ gửi thông báo đến ứng viên.",
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: confirmColor,
-      confirmButtonText: `Vâng, ${actionText}`,
-      cancelButtonText: 'Đóng'
+      confirmButtonText: `Đồng ý ${actionText}`,
+      cancelButtonText: 'Huỷ'
     });
 
     if (!result.isConfirmed) return;
 
     try {
-      Swal.showLoading(); // Hiển thị loading khi đang gọi API & gửi Notification
-
-      const response = await fetch(`/recruiter/applications/${appId}/status`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }),
+      Swal.showLoading();
+      const res = await fetch(`/recruiter/applications/${appId}/status`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: newStatus})
       });
-
       Swal.close();
 
-      if (response.ok) {
-        Toastify({
-          text: `✅ ${actionText} thành công! Đã gửi thông báo cho ứng viên.`,
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
-        }).showToast();
-        setTimeout(() => window.location.reload(), 2000);
+      if(res.ok) {
+        Toastify({ text: `✅ Đã ${actionText.toLowerCase()} hồ sơ thành công!`, style: { background: "#10b981", borderRadius: "8px" } }).showToast();
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        const err = await res.json();
+        Toastify({ text: `❌ Lỗi: ${err.message}`, style: { background: "#ef4444", borderRadius: "8px" } }).showToast();
       }
-      else {
-        const err = await response.json();
-        Toastify({
-          text: 'Thất bại: ' + err.message,
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          style: { background: "#ef4444" }
-        }).showToast();
-      }
-    } catch (error) {
-      Toastify({
-        text: 'Lỗi mạng, vui lòng thử lại sau.',
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        style: { background: "#ef4444" }
-      }).showToast();
+    } catch (e) {
+      Toastify({ text: "❌ Lỗi kết nối mạng", style: { background: "#ef4444", borderRadius: "8px" } }).showToast();
     }
   }
 

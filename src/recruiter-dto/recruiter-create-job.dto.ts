@@ -1,43 +1,61 @@
-// src/recruiter/dto/recruiter-create-job.dto.ts
-import { IsNotEmpty, IsString, IsNumber, IsArray, IsDateString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class RecruiterCreateJobDto {
-  @IsString({ message: 'Tiêu đề phải là chuỗi ký tự' })
   @IsNotEmpty({ message: 'Tiêu đề không được để trống' })
+  @IsString()
   title: string;
 
+  @IsNotEmpty({ message: 'Mô tả không được để trống' })
   @IsString()
-  @IsNotEmpty()
-  job_type: string;
+  description: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
+  requirements?: string;
+
+  @IsOptional()
+  @IsString()
+  benefits?: string;
+
+  @IsNotEmpty({ message: 'Địa điểm không được để trống' })
+  @IsString()
   location: string;
 
-  @Type(() => Number) // Ép kiểu sang số
-  @IsNumber({}, { message: 'Lương tối thiểu phải là số' })
+  // [UPDATED] Thêm các loại hình công việc mới vào validation
+  @IsNotEmpty()
+  @IsEnum(['Full-time', 'Part-time', 'Freelance', 'Contract', 'Internship'], {
+    message: 'Loại công việc không hợp lệ',
+  })
+  job_type: string;
+
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsNumber()
   @Min(0)
   salary_min: number;
 
-  @Type(() => Number) // Ép kiểu sang số
-  @IsNumber({}, { message: 'Lương tối đa phải là số' })
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsNumber()
   @Min(0)
   salary_max: number;
 
-  // Quan trọng: Validate mảng String cho Skills
-  @IsArray({ message: 'Kỹ năng phải là một danh sách' })
-  @IsString({ each: true, message: 'Mỗi kỹ năng phải là chuỗi ký tự' })
-  skills: string[];
-
-  @IsDateString({}, { message: 'Deadline sai định dạng ngày tháng' })
+  @IsNotEmpty({ message: 'Hạn nộp hồ sơ không được để trống' })
+  @IsDateString()
   deadline: string;
 
-  @IsString()
-  @IsNotEmpty()
-  description: string;
-
-  @IsString()
-  @IsNotEmpty()
-  requirements: string;
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skills?: string[];
 }

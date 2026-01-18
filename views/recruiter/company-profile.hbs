@@ -30,31 +30,39 @@
     .gradient-bg {
       background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
     }
+    /* Tùy chỉnh thanh cuộn */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 h-screen overflow-hidden flex">
 
 {{> recruiter_sidebar activePage='profile'}}
 
-<main class="flex-1 overflow-y-auto relative">
+<main class="flex-1 overflow-y-auto relative h-full">
   <div class="h-64 gradient-bg w-full absolute top-0 left-0 z-0">
-    <div class="absolute inset-0 bg-black/10"></div> <div class="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+    <div class="absolute inset-0 bg-black/10"></div>
+    <div class="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
     <div class="absolute bottom-5 left-20 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
   </div>
 
-  <div class="relative z-10 px-8 pt-48 pb-12 max-w-5xl mx-auto">
+  <div class="relative z-10 px-8 pt-48 pb-24 max-w-5xl mx-auto">
 
     <form id="companyForm" class="glass-effect rounded-3xl shadow-xl border border-white/50 p-8 pt-0 animate-fade-in-up">
 
       <div class="flex flex-col md:flex-row items-center md:items-end gap-6 -mt-16 mb-8 px-4">
         <div class="relative group">
           <div class="w-32 h-32 rounded-2xl bg-white p-1 shadow-lg ring-4 ring-white/50 overflow-hidden relative">
-          <img id="logoPreview"
-            src="{{#if company.logo_url}}{{company.logo_url}}{{else}}https://ui-avatars.com/api/?name={{company.name}}&background=6366f1&color=fff&size=128{{/if}}"
-            class="w-full h-full object-cover rounded-xl bg-slate-100"
-            alt="Company Logo">
+            <img id="logoPreview"
+                 src="{{company.logo_url}}"
+                 data-default="https://ui-avatars.com/api/?name={{company.name}}&background=6366f1&color=fff&size=128"
+            class="w-full h-full object-contain rounded-xl bg-slate-100"
+            alt="Company Logo"
+            onerror="this.onerror=null; this.src=this.dataset.default;">
 
-            <label for="logoInput" class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-xl">
+            <label for="logoInput" class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-xl z-10">
               <span class="material-symbols-outlined text-white text-3xl mb-1">photo_camera</span>
               <span class="text-white text-xs font-medium">Đổi Logo</span>
             </label>
@@ -65,7 +73,7 @@
         <div class="flex-1 text-center md:text-left mb-2">
           <h1 class="text-3xl font-bold text-slate-800">{{company.name}}</h1>
           <p class="text-slate-500 font-medium flex items-center justify-center md:justify-start gap-1">
-            <span class="material-symbols-outlined text-lg">verified</span>
+            <span class="material-symbols-outlined text-lg text-blue-500">verified</span>
             Công ty đã xác minh
           </p>
         </div>
@@ -106,18 +114,18 @@
             <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Địa chỉ trụ sở</label>
             <div class="relative">
               <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">location_on</span>
-              <input type="text" name="address" value="{{company.address}}" placeholder="VD: 123 Đường ABC, Quận 1, TP.HCM"
-                     class="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none font-medium text-slate-700 placeholder-slate-400">
+              <textarea name="address" rows="3" placeholder="VD: 123 Đường ABC, Quận 1, TP.HCM"
+                        class="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none font-medium text-slate-700 placeholder-slate-400 resize-none">{{company.address}}</textarea>
             </div>
           </div>
         </div>
 
         <div class="space-y-6">
-          <div class="h-full flex flex-col">
+          <div>
             <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Giới thiệu công ty</label>
-            <div class="relative flex-1">
-                                <textarea name="description" rows="8" placeholder="Giới thiệu về sứ mệnh, văn hóa và giá trị của công ty bạn..."
-                                          class="w-full h-full p-4 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none font-medium text-slate-700 placeholder-slate-400 resize-none">{{company.description}}</textarea>
+            <div class="relative">
+              <textarea name="description" rows="10" placeholder="Giới thiệu về sứ mệnh, văn hóa và giá trị của công ty bạn..."
+                        class="w-full p-4 bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none font-medium text-slate-700 placeholder-slate-400 resize-none">{{company.description}}</textarea>
               <span class="material-symbols-outlined absolute right-4 top-4 text-slate-300">format_quote</span>
             </div>
           </div>
@@ -134,9 +142,31 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-  // 1. PREVIEW LOGO KHI CHỌN FILE
+  // 0. HÀM LẤY COOKIE TOKEN (Để xác thực khi upload)
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  // 1. INIT LOGIC: Kiểm tra ảnh khi load trang
+  document.addEventListener("DOMContentLoaded", () => {
+    const img = document.getElementById('logoPreview');
+    const currentSrc = img.getAttribute('src');
+    const defaultSrc = img.dataset.default;
+
+    // Nếu src rỗng, hoặc chứa text rác "Tạm thời", hoặc không phải link http
+    // thì thay thế ngay lập tức bằng ảnh mặc định
+    if (!currentSrc || currentSrc.includes('Tạm thời') || !currentSrc.startsWith('http')) {
+      img.src = defaultSrc;
+    }
+  });
+
+  // 2. PREVIEW LOGO TRƯỚC KHI UPLOAD
   function previewLogo(input) {
     if (input.files && input.files[0]) {
       const reader = new FileReader();
@@ -147,64 +177,82 @@
     }
   }
 
-  // 2. XỬ LÝ SUBMIT FORM
+  // 3. XỬ LÝ SUBMIT FORM
   document.getElementById('companyForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const btn = document.getElementById('btnSave');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Đang lưu...';
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-xl">sync</span> Đang lưu...';
     btn.disabled = true;
     btn.classList.add('opacity-75', 'cursor-not-allowed');
 
     try {
-      // Bước 1: Upload Logo (nếu có file mới)
+      // B1: Upload Logo nếu có file mới
       const fileInput = document.getElementById('logoInput');
-      let logoUrl = "{{company.logo_url}}"; // Giữ nguyên ảnh cũ nếu không đổi
+      // Lấy URL từ thẻ img (đã được xử lý ở bước Init)
+      let logoUrl = document.getElementById('logoPreview').src;
 
       if (fileInput.files.length > 0) {
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
 
-        // Tận dụng API upload của message module
-        const uploadRes = await axios.post('/messages/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+        // Lấy token từ cookie
+        const token = getCookie('access_token');
+
+        // [QUAN TRỌNG] Gọi endpoint upload với Header Authorization
+        const uploadRes = await axios.post('/cloudinary-custom/upload-file', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`
+          }
         });
         logoUrl = uploadRes.data.url;
       }
 
-      // Bước 2: Chuẩn bị dữ liệu JSON
-      const formData = new FormData(this);
+      // B2: Chuẩn bị dữ liệu cập nhật
+      const formEl = new FormData(this);
       const payload = {
-        name: formData.get('name'),
-        website: formData.get('website'),
-        address: formData.get('address'),
-        description: formData.get('description'),
+        name: formEl.get('name'),
+        website: formEl.get('website'),
+        address: formEl.get('address'),
+        description: formEl.get('description'),
         logo_url: logoUrl
       };
-      // Bước 3: Gửi lên Server
+
+      // B3: Gửi request cập nhật profile
       const response = await fetch('/recruiter/company-profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
       if (response.ok) {
         Toastify({
           text: "🎉 Cập nhật hồ sơ thành công!",
           duration: 3000,
           gravity: "top",
-          position: "center",
-          style: { background: "linear-gradient(to right, #00b09b, #96c93d)" },
+          position: "right",
+          style: {
+            background: "linear-gradient(to right, #00b09b, #96c93d)",
+            borderRadius: "10px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+          },
         }).showToast();
       } else {
-        throw new Error('Update failed');
+        const errData = await response.json();
+        throw new Error(errData.message || 'Cập nhật thất bại');
       }
 
     } catch (error) {
       console.error(error);
+      const msg = error.response?.data?.message || error.message || "Lỗi khi lưu hồ sơ";
       Toastify({
-        text: "❌ Lỗi khi lưu hồ sơ",
-        style: { background: "#ef4444" }
+        text: `❌ ${msg}`,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        style: { background: "#ef4444", borderRadius: "10px" }
       }).showToast();
     } finally {
       btn.innerHTML = originalText;

@@ -25,7 +25,6 @@ import { SkillEntity } from './entity/skill.entity';
 import { UserCVEntity } from './entity/user-cv.entity';
 import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { GenAIModule } from 'nestjs-genai';
-import { CallHistoryEntity } from './entity/call-history.entity';
 import { FirebaseModuleModule } from './firebase-module/firebase-module.module';
 import { JobApplicationModule } from './job-application/job-application.module';
 import { AppController } from './app.controller';
@@ -63,7 +62,6 @@ import { CommentEntity } from './entity/comment.entity';
         SavedJobEntity,
         SkillEntity,
         UserCVEntity,
-        CallHistoryEntity,
         CommentEntity,
       ],
       autoLoadEntities: true,

@@ -8,6 +8,7 @@ import { JobApplicationsService } from './job-application.service';
 import { UserEntity } from '../entity/user.entity';
 import { FirebaseModuleModule } from '../firebase-module/firebase-module.module';
 import { UserModule } from '../user/user.module';
+import { NotificationEntity } from '../entity/notification.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserModule } from '../user/user.module';
       JobEntity,
       UserCVEntity,
       UserEntity,
+      NotificationEntity
     ]),
     FirebaseModuleModule,
     // BỎ COMMENT DÒNG NÀY

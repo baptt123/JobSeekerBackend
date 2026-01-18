@@ -18,10 +18,6 @@
 <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
   <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
     <h1 class="text-xl font-bold text-slate-800">Tạo tin tuyển dụng mới</h1>
-    <div class="flex items-center gap-3">
-      <img src="{{user.avatar_url}}" class="w-8 h-8 rounded-full border border-slate-200 object-cover">
-      <span class="text-sm font-medium text-slate-700">{{user.full_name}}</span>
-    </div>
   </header>
 
   <div class="flex-1 overflow-y-auto p-8">
@@ -29,10 +25,6 @@
       <div class="flex justify-end gap-2">
         <button type="button" onclick="openAIPrompt()" class="text-xs font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 px-4 py-2 rounded-full shadow-md flex items-center gap-1 transition-all">
           <span class="material-symbols-outlined text-sm">auto_awesome</span> Tạo nhanh bằng AI
-        </button>
-
-        <button type="button" onclick="fillSampleData()" class="text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-          ⚡ Điền dữ liệu mẫu
         </button>
       </div>
 
@@ -43,39 +35,42 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="md:col-span-2">
             <label class="block text-sm font-medium text-slate-700 mb-1">Tiêu đề công việc <span class="text-red-500">*</span></label>
-            <input type="text" name="title" required placeholder="VD: Senior Frontend Developer" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <input type="text" name="title" id="title" required placeholder="VD: Senior Frontend Developer" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Địa điểm <span class="text-red-500">*</span></label>
-            <input type="text" name="location" required placeholder="VD: Hồ Chí Minh" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <input type="text" name="location" id="location" required placeholder="VD: Hồ Chí Minh" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
           </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Lương tối thiểu (VNĐ) <span class="text-red-500">*</span></label>
+            <input type="number" name="salary_min" id="salary_min" step="1" min="0" required placeholder="VD: 10000000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Lương tối đa (VNĐ) <span class="text-red-500">*</span></label>
+            <input type="number" name="salary_max" id="salary_max" step="1" min="0" required placeholder="VD: 30000000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+          </div>
+
           <div class="md:col-span-2">
             <label class="block text-sm font-medium text-slate-700 mb-1">Kỹ năng yêu cầu <span class="text-red-500">*</span></label>
-            <input type="text" id="skillsInput" placeholder="VD: ReactJS, NodeJS, MySQL" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
-            <p class="text-xs text-slate-500 mt-1">Nhập các kỹ năng phân cách nhau bằng dấu phẩy.</p>
+            <input type="text" id="skillsInput" required placeholder="VD: ReactJS, NodeJS, MySQL" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <p class="text-xs text-slate-500 mt-1">Phân cách bằng dấu phẩy.</p>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Lương tối thiểu ($)</label>
-              <input type="number" name="salary_min" required placeholder="VD: 1000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Lương tối đa ($)</label>
-              <input type="number" name="salary_max" required placeholder="VD: 3000" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
-            </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Hạn nộp <span class="text-red-500">*</span></label>
+            <input type="date" name="deadline" id="deadline" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
           </div>
+
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Loại hình</label>
-            <select name="job_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
-              <option value="Full-time">Toàn thời gian</option>
-              <option value="Part-time">Bán thời gian</option>
-              <option value="Remote">Làm từ xa</option>
-              <option value="Freelance">Tự do</option>
+            <select name="job_type" class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white">
+              <option value="Full-time">Toàn thời gian (Full-time)</option>
+              <option value="Part-time">Bán thời gian (Part-time)</option>
+              <option value="Freelance">Làm tự do (Freelance)</option>
+              <option value="Contract">Hợp đồng (Contract)</option>
+              <option value="Internship">Thực tập (Internship)</option>
             </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Hạn nộp</label>
-            <input type="date" name="deadline" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
           </div>
         </div>
       </div>
@@ -86,24 +81,23 @@
         </h2>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả công việc</label>
-            <textarea name="description" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả công việc <span class="text-red-500">*</span></label>
+            <textarea name="description" id="description" rows="4" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition"></textarea>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Yêu cầu</label>
-            <textarea name="requirements" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Yêu cầu <span class="text-red-500">*</span></label>
+            <textarea name="requirements" id="requirements" rows="4" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition"></textarea>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Quyền lợi</label>
-            <textarea name="benefits" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"></textarea>
+            <textarea name="benefits" id="benefits" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition"></textarea>
           </div>
         </div>
       </div>
 
       <div class="flex justify-end gap-3 pb-8">
-        <button type="button" onclick="window.history.back()" class="px-6 py-2 border border-slate-300 text-slate-600 font-bold rounded-lg hover:bg-slate-50 transition">Hủy bỏ</button>
-        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm">send</span> Đăng tin ngay
+        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg transition flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">send</span> Đăng tin
         </button>
       </div>
     </form>
@@ -112,86 +106,96 @@
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-  // HÀM ĐIỀN DỮ LIỆU MẪU (Giữ nguyên)
-  function fillSampleData() {
-    const form = document.getElementById('postJobForm');
-    const rand = Math.floor(Math.random() * 1000);
-    form.elements['title'].value = `Senior Backend Developer (NodeJS) #${rand}`;
-    form.elements['location'].value = 'Hà Nội, Việt Nam';
-    form.elements['salary_min'].value = 1500;
-    form.elements['salary_max'].value = 3000;
-    form.elements['job_type'].value = 'Full-time';
-    const date = new Date(); date.setDate(date.getDate() + 30);
-    form.elements['deadline'].value = date.toISOString().split('T')[0];
-    document.getElementById('skillsInput').value = "NestJS, TypeScript, PostgreSQL";
-    form.elements['description'].value = "- Phát triển API RESTful.\n- Tối ưu hóa Database.";
-    form.elements['requirements'].value = "- 3 năm kinh nghiệm NodeJS.\n- Tiếng Anh đọc hiểu.";
-    form.elements['benefits'].value = "- Lương thưởng hấp dẫn.\n- BHXH đầy đủ.";
+  function validateFullForm() {
+    const requiredIds = ['title', 'location', 'salary_min', 'salary_max', 'skillsInput', 'deadline', 'description', 'requirements'];
+    let isValid = true;
+
+    requiredIds.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el.value.trim()) {
+        el.classList.add('border-red-500', 'bg-red-50');
+        isValid = false;
+      } else {
+        el.classList.remove('border-red-500', 'bg-red-50');
+      }
+    });
+
+    if (!isValid) {
+      showError("Vui lòng điền đầy đủ tất cả các trường bắt buộc!");
+      return false;
+    }
+
+    const min = parseFloat(document.getElementById('salary_min').value);
+    const max = parseFloat(document.getElementById('salary_max').value);
+    if (min >= max) {
+      showError("Lương tối đa phải lớn hơn lương tối thiểu!");
+      document.getElementById('salary_max').focus();
+      return false;
+    }
+
+    const deadline = new Date(document.getElementById('deadline').value);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    if (deadline < today) {
+      showError("Hạn nộp hồ sơ phải là ngày trong tương lai!");
+      document.getElementById('deadline').focus();
+      return false;
+    }
+
+    return true;
   }
 
-  // [NEW] HÀM GỌI AI
+  function showError(msg) {
+    Toastify({ text: "⚠️ " + msg, duration: 3000, gravity: "top", position: "center", style: { background: "#ef4444" } }).showToast();
+  }
+
   async function openAIPrompt() {
     const { value: prompt } = await Swal.fire({
-      title: 'Trợ lý AI tuyển dụng 🤖',
+      title: 'AI Hỗ trợ tạo tin 🤖',
       input: 'textarea',
-      inputLabel: 'Mô tả vị trí bạn muốn tuyển dụng',
-      inputPlaceholder: 'VD: Tuyển Senior React Developer, 3 năm kinh nghiệm, lương $2000, làm việc tại Hà Nội...',
-      inputAttributes: { 'aria-label': 'Nhập mô tả job' },
+      inputLabel: 'Mô tả ngắn gọn vị trí cần tuyển',
+      inputPlaceholder: 'VD: Cần tuyển React Dev, lương khoảng 20tr...',
       showCancelButton: true,
-      confirmButtonText: '✨ Tạo nội dung',
-      cancelButtonText: 'Hủy',
-      confirmButtonColor: '#6366f1',
+      confirmButtonText: 'Tạo ngay',
       showLoaderOnConfirm: true,
       preConfirm: async (prompt) => {
-        if (!prompt) return Swal.showValidationMessage('Vui lòng nhập mô tả');
+        if(!prompt) return Swal.showValidationMessage('Vui lòng nhập mô tả');
         try {
-          // Gọi API
-          const response = await axios.post('/recruiter/jobs/generate-ai', { prompt });
-          if (!response.data.success) throw new Error(response.data.message);
-          return response.data.data;
-        } catch (error) {
-          Swal.showValidationMessage(`Lỗi: ${error}`);
-        }
-      },
-      allowOutsideClick: () => !Swal.isLoading()
+          const res = await axios.post('/recruiter/jobs/generate-ai', { prompt });
+          if(!res.data.success) throw new Error(res.data.message);
+          return res.data.data;
+        } catch(e) { Swal.showValidationMessage(e.message); }
+      }
     });
 
     if (prompt) {
-      // prompt lúc này là object data trả về từ AI
       const data = prompt;
       const form = document.getElementById('postJobForm');
+      ['title', 'location', 'description', 'requirements', 'benefits'].forEach(f => {
+        if(data[f]) form.elements[f].value = data[f];
+      });
+      // Hiển thị số nguyên từ AI
+      if(data.salary_min) document.getElementById('salary_min').value = Math.floor(data.salary_min);
+      if(data.salary_max) document.getElementById('salary_max').value = Math.floor(data.salary_max);
 
-      // Điền dữ liệu vào form
-      if(data.title) form.elements['title'].value = data.title;
-      if(data.location) form.elements['location'].value = "Hồ Chí Minh"; // Hoặc lấy từ AI
-      if(data.description) form.elements['description'].value = data.description;
-      if(data.requirements) form.elements['requirements'].value = data.requirements;
-      if(data.benefits) form.elements['benefits'].value = data.benefits;
+      if(data.skills && Array.isArray(data.skills)) document.getElementById('skillsInput').value = data.skills.join(', ');
 
-      if(data.skills && Array.isArray(data.skills)) {
-        document.getElementById('skillsInput').value = data.skills.join(', ');
-      }
-
-      Toastify({
-        text: "✨ Đã tạo nội dung thành công!",
-        duration: 3000,
-        gravity: "top", position: "center",
-        style: { background: "linear-gradient(to right, #8e2de2, #4a00e0)" }
-      }).showToast();
+      Toastify({ text: "✨ Đã điền nội dung từ AI! Vui lòng kiểm tra lại.", style: { background: "linear-gradient(to right, #8e2de2, #4a00e0)" } }).showToast();
     }
   }
 
-  // XỬ LÝ SUBMIT FORM
   document.getElementById('postJobForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if(!validateFullForm()) return;
+
     const formData = new FormData(e.target);
     const skillsArray = document.getElementById('skillsInput').value.split(',').map(s => s.trim()).filter(s => s);
 
     const payload = {
       title: formData.get('title'),
       location: formData.get('location'),
-      salary_min: Number(formData.get('salary_min')),
-      salary_max: Number(formData.get('salary_max')),
+      salary_min: parseInt(formData.get('salary_min')), // Gửi số nguyên
+      salary_max: parseInt(formData.get('salary_max')), // Gửi số nguyên
       job_type: formData.get('job_type'),
       deadline: formData.get('deadline'),
       description: formData.get('description'),
@@ -202,24 +206,10 @@
 
     try {
       await axios.post('/recruiter/jobs', payload);
-
-      Toastify({
-        text: "✅ Đăng tin & Gửi thông báo thành công!",
-        duration: 2000,
-        gravity: "top",
-        position: "right",
-        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
-      }).showToast();
-
-      setTimeout(() => { window.location.href = '/recruiter/jobs'; }, 1500);
-    } catch (error) {
-      Toastify({
-        text: '⚠️ Lỗi: ' + (error.response?.data?.message || error.message),
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        style: { background: "#ef4444" }
-      }).showToast();
+      Toastify({ text: "✅ Đăng tin thành công!", style: { background: "#10b981" } }).showToast();
+      setTimeout(() => window.location.href = '/recruiter/jobs', 1500);
+    } catch (e) {
+      showError(e.response?.data?.message || e.message);
     }
   });
 </script>

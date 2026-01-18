@@ -20,7 +20,8 @@
     <h1 class="text-xl font-bold text-slate-800">Doanh nghiệp</h1>
     <div class="flex gap-3 items-center">
       <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold">Tổng: {{pagination.total}}</span>
-      <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2">
+
+      <button onclick="showDevMessage()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow-lg shadow-blue-200 transition flex items-center gap-2">
         <span class="material-symbols-outlined text-sm">add</span> Thêm mới
       </button>
     </div>
@@ -57,17 +58,17 @@
             </td>
             <td class="p-5 text-sm">
               {{#if this.website}}
-                <a href="{{this.website}}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
+                <button onclick="showDevMessage()" class="text-blue-600 hover:underline flex items-center gap-1">
                   <span class="material-symbols-outlined text-[16px]">link</span> Truy cập
-                </a>
+                </button>
               {{else}}
                 <span class="text-slate-400">--</span>
               {{/if}}
             </td>
             <td class="p-5">
-                 <span class="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium border border-slate-200">
-                        <span class="material-symbols-outlined text-[14px]">work</span> {{this.jobs.length}} tin
-                 </span>
+              <a href="/admin/jobs?companyId={{this.company_id}}" class="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-full text-xs font-medium border border-indigo-100 transition cursor-pointer" title="Xem danh sách việc làm">
+              <span class="material-symbols-outlined text-[14px]">work</span> {{this.jobs.length}} tin
+              </a>
             </td>
             <td class="p-5 text-right">
               <button onclick="deleteCompany({{this.company_id}})" class="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Xóa">
@@ -107,9 +108,25 @@
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
+  // [NEW] Hàm hiển thị thông báo phát triển
+  function showDevMessage() {
+    Toastify({
+      text: "🚧 Tính năng đang phát triển",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      style: {
+        background: "linear-gradient(to right, #f59e0b, #d97706)", // Màu cam/vàng cảnh báo
+        borderRadius: "8px",
+        boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+      },
+      onClick: function(){} // Callback after click
+    }).showToast();
+  }
+
   async function deleteCompany(id) {
     const result = await Swal.fire({
-      title: 'CẢNH BÁO XÓA (Soft Delete)!',
+      title: 'CẢNH BÁO XÓA!',
       text: "Công ty và tất cả tin tuyển dụng sẽ bị ẩn khỏi hệ thống. Bạn có chắc muốn tiếp tục?",
       icon: 'warning',
       showCancelButton: true,

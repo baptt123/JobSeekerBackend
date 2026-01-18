@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chi tiết công việc - Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-900 h-screen flex overflow-hidden">
+
+{{> admin_sidebar activePage='jobs'}}
+
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+  <header class="bg-white border-b border-slate-200 px-8 py-5 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <a href="/admin/jobs" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition" title="Quay lại">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </a>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800">{{job.title}}</h1>
+        <div class="flex items-center gap-2 text-sm text-slate-500 mt-1">
+          <span class="material-symbols-outlined text-[16px]">calendar_today</span>
+          Đăng ngày: {{formatDate job.created_at}}
+        </div>
+      </div>
+    </div>
+
+    <button onclick="deleteJob({{job.job_id}})" class="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium border border-red-100">
+      <span class="material-symbols-outlined text-[20px]">delete</span> Gỡ bài đăng
+    </button>
+  </header>
+
+  <div class="flex-1 overflow-y-auto p-8 custom-scroll">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <div class="lg:col-span-2 space-y-6">
+        {{#if job.skillList}}
+          <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Kỹ năng yêu cầu</h3>
+            <div class="flex flex-wrap gap-2">
+              {{#each job.skillList}}
+                <span class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-semibold border border-indigo-100">
+                  {{this}}
+                </span>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-600">description</span> Mô tả công việc
+          </h3>
+          <div class="prose prose-slate max-w-none text-slate-600 text-sm leading-relaxed whitespace-pre-line">{{job.description}}</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-purple-600">fact_check</span> Yêu cầu ứng viên
+          </h3>
+          <div class="prose prose-slate max-w-none text-slate-600 text-sm leading-relaxed whitespace-pre-line">{{job.requirements}}</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-green-600">card_giftcard</span> Quyền lợi
+          </h3>
+          <div class="prose prose-slate max-w-none text-slate-600 text-sm leading-relaxed whitespace-pre-line">{{job.benefits}}</div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Thông tin chung</h3>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-slate-400 mt-0.5">apartment</span>
+              <div>
+                <span class="block text-xs text-slate-500">Công ty</span>
+                <span class="font-medium text-slate-800">{{#if job.company}}{{job.company.name}}{{else}}Freelance/Tự do{{/if}}</span>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-slate-400 mt-0.5">person</span>
+              <div>
+                <span class="block text-xs text-slate-500">Người đăng</span>
+                <span class="font-medium text-slate-800">{{job.postedBy.full_name}}</span>
+                <span class="block text-xs text-slate-400">{{job.postedBy.email}}</span>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-slate-400 mt-0.5">payments</span>
+              <div>
+                <span class="block text-xs text-slate-500">Mức lương</span>
+                <span class="font-medium text-slate-800">
+                  <span class="salary-text">{{job.salary_min}}</span> - <span class="salary-text">{{job.salary_max}}</span> VNĐ
+                </span>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-slate-400 mt-0.5">location_on</span>
+              <div>
+                <span class="block text-xs text-slate-500">Địa điểm</span>
+                <span class="font-medium text-slate-800">{{job.location}}</span>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-slate-400 mt-0.5">category</span>
+              <div>
+                <span class="block text-xs text-slate-500">Loại hình</span>
+                <span class="font-medium text-slate-800">{{job.job_type}}</span>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-slate-400 mt-0.5">event_busy</span>
+              <div>
+                <span class="block text-xs text-slate-500">Hạn nộp</span>
+                <span class="font-medium text-red-600">{{formatDate job.deadline}}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+  // Format tiền tệ
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.salary-text').forEach(el => {
+      const val = parseFloat(el.innerText);
+      if(!isNaN(val)) el.innerText = val.toLocaleString('vi-VN');
+    });
+  });
+
+  async function deleteJob(id) {
+    const result = await Swal.fire({
+      title: 'Xác nhận xóa?',
+      text: "Hành động này sẽ ẩn bài đăng khỏi hệ thống.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Đồng ý xóa',
+      cancelButtonText: 'Hủy'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(`/admin/jobs/${id}`);
+        await Swal.fire({title: 'Đã xóa!', text: 'Bài đăng đã được gỡ thành công.', icon: 'success', confirmButtonColor: '#10b981'});
+        window.location.href = '/admin/jobs';
+      } catch (e) {
+        Swal.fire({title: 'Lỗi', text: 'Không thể xóa bài đăng này.', icon: 'error', confirmButtonColor: '#ef4444'});
+      }
+    }
+  }
+</script>
+</body>
+</html>
