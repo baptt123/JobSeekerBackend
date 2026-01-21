@@ -84,6 +84,12 @@ async function bootstrap() {
       day: '2-digit',
     }).format(date);
   });
+  hbs.registerHelper("addDays", function (date, days) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+
+    return d;
+  });
   // Cấu hình Swagger
   const config = new DocumentBuilder()
     .setTitle('Job Seeker API')

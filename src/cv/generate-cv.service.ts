@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, InternalServerErrorException, NotFound
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { UserCVEntity } from '../entity/user-cv.entity';
-import { LogEntity } from '../entity/log.entity';
 import { UserEntity } from '../entity/user.entity';
 import { KeywordEntity } from '../entity/keyword.entity';
 import { CVKeywordEntity } from '../entity/cv-keyword.entity';
@@ -23,8 +22,6 @@ export class GenerateCvService {
   constructor(
     @InjectRepository(UserCVEntity)
     private userCvRepo: Repository<UserCVEntity>,
-    @InjectRepository(LogEntity)
-    private logRepo: Repository<LogEntity>,
     @InjectRepository(UserEntity)
     private userRepo: Repository<UserEntity>,
     @InjectRepository(KeywordEntity)
@@ -42,13 +39,6 @@ export class GenerateCvService {
   // --- HELPER LOG ---
   private async logStep(userId: number, action: string, message: string) {
     console.log(`[GEMINI-PROCESS] User:${userId} | ${action}: ${message}`);
-    try {
-      await this.logRepo.save({
-        action: action,
-        details: message,
-        user: { user_id: userId } as UserEntity,
-      });
-    } catch (err) { console.error('Log Error:', err); }
   }
 
   // --- [FIXED] CLEANUP: Xóa đích danh File (nếu có) -> Xóa Store ---
@@ -122,7 +112,7 @@ export class GenerateCvService {
 
       // 3. Kiểm tra xem có phải CV không
       const checkResponse = await this.aiClient.models.generateContent({
-        model: "gemini-2.5-flash-lite",
+        model: "gemini-2.5-flash",
         contents: "Bạn là chuyên gia nhân sự. Hãy phân tích file đính kèm. Trả lời chính xác 'YES' nếu nội dung file là một bản CV (Sơ yếu lý lịch/Resume) hợp lệ. Trả lời 'NO' nếu không phải. Không giải thích gì thêm.",
         config: {
           tools: [{ fileSearch: { fileSearchStoreNames: [fileSearchStore.name] } }]
@@ -280,7 +270,7 @@ export class GenerateCvService {
 
     try {
       const response = await this.aiClient.models.generateContent({
-        model: "gemini-2.5-flash-lite",
+        model: "gemini-2.5-flash",
         contents: systemPrompt
       });
       let htmlContent = response.text || "";

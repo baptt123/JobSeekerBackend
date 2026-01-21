@@ -275,7 +275,7 @@ export class RecruiterService {
     newJob.salary_min = Math.floor(dto.salary_min);
     newJob.salary_max = Math.floor(dto.salary_max);
 
-    newJob.deadline = new Date(dto.deadline);
+    newJob.created_at = new Date(dto.created_at);
     newJob.postedBy = user;
     newJob.posted_by = user.user_id;
     if (user.company_id) newJob.company_id = user.company_id;

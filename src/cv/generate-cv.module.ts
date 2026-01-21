@@ -9,7 +9,6 @@ import { GenerateCvService } from './generate-cv.service';
 import { GenAIModule } from 'nestjs-genai';
 import { GenerateCvController } from './generate-cv.controller';
 import { CloudinaryCustomModule } from '../cloudinary-custom/cloudinary-custom.module';
-import { LogEntity } from '../entity/log.entity';
 import { SkillEntity } from '../entity/skill.entity';
 @Module({
   imports: [
@@ -19,7 +18,6 @@ import { SkillEntity } from '../entity/skill.entity';
       KeywordEntity,
       CVKeywordEntity,
       JobEntity,
-      LogEntity,
       SkillEntity, // <--- Đăng ký Repository
     ]),
     GenAIModule.forRoot({

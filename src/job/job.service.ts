@@ -83,7 +83,7 @@ export class JobService {
       let keywordList: string[] = [];
       try {
         const aiResponse = await this.aiClient.models.generateContent({
-          model: "gemini-2.5-flash-lite",
+          model: "gemini-2.5-flash",
           contents: prompt
         });
 

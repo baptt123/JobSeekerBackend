@@ -50,9 +50,9 @@ export class RecruiterCreateJobDto {
   @Min(0)
   salary_max: number;
 
-  @IsNotEmpty({ message: 'Hạn nộp hồ sơ không được để trống' })
+  @IsNotEmpty({ message: 'Ngày tạo công việc không được để trống' })
   @IsDateString()
-  deadline: string;
+  created_at: string;
 
   @IsOptional()
   @IsArray()
