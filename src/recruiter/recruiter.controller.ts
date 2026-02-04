@@ -19,14 +19,13 @@ import { UpdateApplicationStatusDto } from '../recruiter-dto/update-application-
 import { WebAuthGuard } from '../guard/web-auth.guard';
 import { UpdateCompanyDto } from '../recruiter-dto/update-company.dto';
 import { CommentService } from '../comments/comments.service';
-import { FirebaseModuleService } from '../firebase-module/firebase-module.service';
 import { RolesGuard } from '../guard/role-auth.guard.admin.recruiter';
 import { NotificationEntity } from '../entity/notification.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 @Controller('recruiter')
-@UseGuards(WebAuthGuard, RolesGuard)
+@UseGuards(WebAuthGuard,RolesGuard)
 @Roles(1, 3)
 export class RecruiterController {
   constructor(
@@ -55,7 +54,6 @@ export class RecruiterController {
     };
   }
 
-  // ... (Giữ nguyên các method khác: jobs/create, jobs, jobs/:id, notifications...)
   @Get('jobs/create')
   @Render('recruiter/post-job')
   getPostJobPage(@Req() req: any) {

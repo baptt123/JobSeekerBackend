@@ -9,8 +9,7 @@ import { CompanyEntity } from '../entity/company.entity';
 import { JobApplicationEntity } from '../entity/job-application.entity';
 import { CommentEntity } from '../entity/comment.entity';
 
-// DTOs
-import { AdminCreateCompanyDto } from '../admin-dto/admin-create-company.dto';
+
 
 const ITEMS_PER_PAGE = 10;
 
@@ -27,7 +26,6 @@ export class AdminService {
     private readonly commentRepo: Repository<CommentEntity>,
   ) {}
 
-  // ... (Giữ nguyên các hàm Dashboard, Users, Companies cũ) ...
   async getDashboardStats() {
     const totalUsers = await this.userRepo.count();
     const totalJobs = await this.jobRepo.count();

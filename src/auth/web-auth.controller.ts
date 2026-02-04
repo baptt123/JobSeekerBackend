@@ -18,7 +18,6 @@ export class WebAuthController {
     try {
       const result = await this.authService.login(dto);
 
-      // ... (Logic cookie & redirect giữ nguyên)
       res.cookie('access_token', result.accessToken, {
         httpOnly: false,
         secure: false,

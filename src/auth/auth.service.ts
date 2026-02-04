@@ -74,7 +74,7 @@ export class AuthService {
       // ... (Logic Google login giữ nguyên)
       if (!user.password_hash)
         throw new UnauthorizedException(
-          'Tài khoản này đăng nhập bằng Google/Facebook',
+          'Tài khoản này đăng nhập bằng Google',
         );
 
       const match = await argon2.verify(user.password_hash, dto.password);
@@ -123,7 +123,6 @@ export class AuthService {
     }
   }
 
-  // ... (Giữ nguyên logic Google Login) ...
 
   // Helper: Tạo Token và Format Response chuẩn
   private async _generateSystemJwt(user: UserEntity): Promise<AuthResponseDto> {

@@ -21,10 +21,9 @@ export class CommentService {
     private commentRepository: Repository<CommentEntity>,
   ) {}
 
-  // ... (Giữ nguyên các hàm create, findByJobId, getCommentsByRecruiter)
+
 
   async create(userId: number, createCommentDto: CreateCommentDto): Promise<CommentEntity> {
-    // ... (Giữ nguyên logic create như cũ)
     if (!userId) {
       throw new BadRequestException('User ID không hợp lệ.');
     }
@@ -86,11 +85,9 @@ export class CommentService {
 
   // [CHỈNH SỬA] Hàm xóa của Admin cũng đảm bảo là soft delete
   async deleteCommentByAdmin(id: number) {
-    // Hàm này trong code cũ của bạn đã là softDelete, tôi giữ nguyên để đảm bảo
     return await this.commentRepository.softDelete(id);
   }
 
-  // ... (Giữ nguyên hàm getAllComments)
   async getAllComments(page: number) {
     const skip = (page - 1) * this.ITEMS_PER_PAGE;
     const [comments, total] = await this.commentRepository.findAndCount({

@@ -55,8 +55,6 @@ export class RecruiterService {
     }
   }
 
-  // ... (Giữ nguyên các hàm AI, createJob, getMyJobs...)
-
   // --- THỐNG KÊ DASHBOARD (CẬP NHẬT) ---
   async getRecruiterStats(userId: number) {
     const user = await this.userRepository.findOne({ where: { user_id: userId }, relations: ['company'] });
@@ -121,7 +119,6 @@ export class RecruiterService {
     return { labels, data };
   }
 
-  // ... (Giữ nguyên các hàm khác: getJobDetail, updateApplicationStatus...)
   async getMyCompanyProfile(userId: number) {
     const user = await this.userRepository.findOne({ where: { user_id: userId }, relations: ['company'] });
     return user?.company;
@@ -134,7 +131,6 @@ export class RecruiterService {
     return this.companyRepository.findOne({ where: { company_id: user.company_id } });
   }
 
-  // ... (Giữ nguyên phần còn lại của file service)
   async getMyJobs(userId: number) {
     return this.jobRepository.find({
       where: { posted_by: userId },

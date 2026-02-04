@@ -33,6 +33,7 @@ import { AdminModule } from './admin/admin.module';
 import { RecruiterModule } from './recruiter/recruiter.module';
 import { CommentsModule } from './comments/comments.module';
 import { CommentEntity } from './entity/comment.entity';
+import { CrawlerService } from './crawler/crawler.service';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -109,6 +110,7 @@ import { CommentEntity } from './entity/comment.entity';
       useClass: GlobalExceptionFilter,
     },
     AppService,
+    CrawlerService,
   ],
   exports: [AppService],
 })

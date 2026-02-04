@@ -288,33 +288,33 @@ export class GenerateCvService {
     }
   }
 
-  async uploadAndExtractKeywords(file: Express.Multer.File, userId: number) {
-    if (file.mimetype !== 'application/pdf') {
-      throw new BadRequestException('Định dạng file không hợp lệ. Chỉ chấp nhận file PDF.');
-    }
-    let uploadRes;
-    try {
-      uploadRes = await this.cloudinaryService.uploadFile(file);
-    } catch (e) {
-      throw new InternalServerErrorException('Lỗi khi upload file lên Cloudinary: ' + e.message);
-    }
-    const extractedKeywords = "Kỹ năng được rút trích từ PDF (Placeholder)";
-    try {
-      const newCV = this.userCvRepo.create({
-        user_id: userId,
-        file_url: uploadRes.url,
-        title: file.originalname,
-        content: extractedKeywords,
-        is_default: false,
-        is_deleted: false
-      });
-      const savedCV = await this.userCvRepo.save(newCV);
-      await this.logStep(userId, 'UPLOAD_CV', `Người dùng ${userId} đã tải lên CV ${savedCV.cv_id}.`);
-      return { message: "Tải lên thành công", cv: savedCV, keywords: extractedKeywords };
-    } catch (e) {
-      throw new InternalServerErrorException('Lỗi khi lưu CV vào DB: ' + e.message);
-    }
-  }
+  // async uploadAndExtractKeywords(file: Express.Multer.File, userId: number) {
+  //   if (file.mimetype !== 'application/pdf') {
+  //     throw new BadRequestException('Định dạng file không hợp lệ. Chỉ chấp nhận file PDF.');
+  //   }
+  //   let uploadRes;
+  //   try {
+  //     uploadRes = await this.cloudinaryService.uploadFile(file);
+  //   } catch (e) {
+  //     throw new InternalServerErrorException('Lỗi khi upload file lên Cloudinary: ' + e.message);
+  //   }
+  //   const extractedKeywords = "Kỹ năng được rút trích từ PDF (Placeholder)";
+  //   try {
+  //     const newCV = this.userCvRepo.create({
+  //       user_id: userId,
+  //       file_url: uploadRes.url,
+  //       title: file.originalname,
+  //       content: extractedKeywords,
+  //       is_default: false,
+  //       is_deleted: false
+  //     });
+  //     const savedCV = await this.userCvRepo.save(newCV);
+  //     await this.logStep(userId, 'UPLOAD_CV', `Người dùng ${userId} đã tải lên CV ${savedCV.cv_id}.`);
+  //     return { message: "Tải lên thành công", cv: savedCV, keywords: extractedKeywords };
+  //   } catch (e) {
+  //     throw new InternalServerErrorException('Lỗi khi lưu CV vào DB: ' + e.message);
+  //   }
+  // }
 
   private async createPdfFromHtml(html: string): Promise<Buffer> {
     const browser = await puppeteer.launch({

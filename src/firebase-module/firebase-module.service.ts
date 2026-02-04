@@ -128,37 +128,37 @@ export class FirebaseModuleService implements OnModuleInit {
     }
 
     try {
-      // 4. Cố gắng gửi Push Notification
-      return await this.sendPushNotification({
-        token: user.fcm_token,
-        title,
-        body,
-        // Không truyền userId vào đây nữa để tránh lưu DB 2 lần (vì đã lưu ở bước 2)
-        // Hoặc nếu hàm sendPushNotification logic cũ có check userId để lưu thì bỏ userId ở dòng này
-        // userId: userId,
-        type,
-        data: metadata,
-      });
-    } catch (error: any) {
-      // 5. [FIX LỖI] Xử lý token chết/không hợp lệ
-      if (
-        error.code === 'messaging/registration-token-not-registered' ||
-        error.code === 'messaging/invalid-argument'
-      ) {
-        this.logger.warn(`FCM Token của user ${userId} không hợp lệ hoặc đã hết hạn. Đang xóa token...`);
+  // 4. Cố gắng gửi Push Notification
+  return await this.sendPushNotification({
+                                           token: user.fcm_token,
+                                           title,
+                                           body,
+                                           // Không truyền userId vào đây nữa để tránh lưu DB 2 lần (vì đã lưu ở bước 2)
+                                           // Hoặc nếu hàm sendPushNotification logic cũ có check userId để lưu thì bỏ userId ở dòng này
+                                           // userId: userId,
+                                           type,
+                                           data: metadata,
+                                         });
+} catch (error: any) {
+  // 5. [FIX LỖI] Xử lý token chết/không hợp lệ
+  if (
+    error.code === 'messaging/registration-token-not-registered' ||
+    error.code === 'messaging/invalid-argument'
+  ) {
+    this.logger.warn(`FCM Token của user ${userId} không hợp lệ hoặc đã hết hạn. Đang xóa token...`);
 
-        // Xóa token trong DB để lần sau không gửi lỗi nữa
-        // @ts-ignore
-        await userService.userRepo.update({ user_id: userId }, { fcm_token: null });
-      } else {
-        // Log các lỗi khác (ví dụ lỗi mạng, lỗi server Firebase) nhưng không throw 500
-        this.logger.error(`Lỗi khi gửi Push cho user ${userId}: ${error.message}`);
-      }
-      return null;
-    }
+    // Xóa token trong DB để lần sau không gửi lỗi nữa
+    // @ts-ignore
+    await userService.userRepo.update({ user_id: userId }, { fcm_token: null });
+  } else {
+    // Log các lỗi khác (ví dụ lỗi mạng, lỗi server Firebase) nhưng không throw 500
+    this.logger.error(`Lỗi khi gửi Push cho user ${userId}: ${error.message}`);
   }
+  return null;
+}
+}
 
-  async sendNotificationToTopic(
+async sendNotificationToTopic(
     topic: string,
     title: string,
     body: string,

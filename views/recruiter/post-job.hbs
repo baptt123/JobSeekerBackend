@@ -59,7 +59,7 @@
 
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Ngày tạo tin<span class="text-red-500">*</span></label>
-            <input type="date" name="deadline" id="deadline" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <input type="date" name="created_at" id="created_at" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition">
           </div>
 
           <div>
@@ -107,7 +107,7 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
   function validateFullForm() {
-    const requiredIds = ['title', 'location', 'salary_min', 'salary_max', 'skillsInput', 'deadline', 'description', 'requirements'];
+    const requiredIds = ['title', 'location', 'salary_min', 'salary_max', 'skillsInput', 'created_at', 'description', 'requirements'];
     let isValid = true;
 
     requiredIds.forEach(id => {
@@ -133,12 +133,12 @@
       return false;
     }
 
-    const deadline = new Date(document.getElementById('deadline').value);
+    const created_at = new Date(document.getElementById('created_at').value);
     const today = new Date();
     today.setHours(0,0,0,0);
-    if (deadline < today) {
-      showError("Hạn nộp hồ sơ phải là ngày trong tương lai!");
-      document.getElementById('deadline').focus();
+    if (created_at <= today) {
+      showError("Ngày tạo tin  phải là ngày trong tương lai hoặc là hôm nay!");
+      document.getElementById('created_at').focus();
       return false;
     }
 
@@ -197,7 +197,7 @@
       salary_min: parseInt(formData.get('salary_min')), // Gửi số nguyên
       salary_max: parseInt(formData.get('salary_max')), // Gửi số nguyên
       job_type: formData.get('job_type'),
-      deadline: formData.get('deadline'),
+      created_at: formData.get('created_at'),
       description: formData.get('description'),
       requirements: formData.get('requirements'),
       benefits: formData.get('benefits'),

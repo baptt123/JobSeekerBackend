@@ -21,11 +21,11 @@ export class GenerateCvController {
   }
 
   // --- CÁC HÀM CŨ GIỮ NGUYÊN ---
-  @Post('upload-extract')
-  @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: Express.Multer.File, @Req() req) {
-    return this.service.uploadAndExtractKeywords(file, req.user.userId);
-  }
+  // @Post('upload-extract')
+  // @UseInterceptors(FileInterceptor('file'))
+  // async upload(@UploadedFile() file: Express.Multer.File, @Req() req) {
+  //   return this.service.uploadAndExtractKeywords(file, req.user.userId);
+  // }
 
   @Post('generate-ai')
   async generateAi(@Body('prompt') prompt: string, @Res() res: express.Response, @Req() req) {

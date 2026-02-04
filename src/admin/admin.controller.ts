@@ -29,7 +29,7 @@ export class AdminController {
     private readonly commentService: CommentService,
   ) {}
 
-  // ... (Giữ nguyên các route Dashboard, Users, Companies) ...
+
   @Get('dashboard')
   @Render('admin/dashboard')
   async getDashboard(@Req() req: any) {
